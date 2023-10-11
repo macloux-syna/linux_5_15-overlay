@@ -46,10 +46,10 @@ static int syna_lcdc_add_extra_modes(struct drm_connector *connector)
 
 	if( i < MAX_CRTC) {
 		dev_priv->panel[i] = ((i == 0) ?\
-			 of_drm_find_panel(of_find_node_by_name(NULL, "lcdc_panel")):\
+			 of_drm_find_panel(of_find_compatible_node(NULL, NULL, "syna,drm-lcdc")):\
 			 of_drm_find_panel(of_find_compatible_node(NULL, NULL, "syna,drm-dsi")));
 
-		if (dev_priv->panel[i])
+		if (!IS_ERR(dev_priv->panel[i]))
 			drm_panel_get_modes(dev_priv->panel[i], connector);
 
 		num_modes++;

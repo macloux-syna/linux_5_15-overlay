@@ -45,6 +45,11 @@ typedef struct dsi_desc_t {
 
 static int lcdc_rgb_swap;
 
+static const char *compatible_name[] = {
+		"syna,drm-lcdc",
+		"syna,drm-dsi"
+};
+
 static int syna_encoder_parse_lcdc_dt(void)
 {
 	struct device_node *lcdc_node;
@@ -127,6 +132,11 @@ struct drm_encoder *syna_encoder_create(struct drm_device *dev,
 						DRM_MODE_ENCODER_DPI :\
 						DRM_MODE_ENCODER_DSI;
 
+	if (!of_find_compatible_node(NULL, NULL, compatible_name[cpcb_id])) {
+		DRM_ERROR("Node not found %s\n", compatible_name[cpcb_id]);
+		return ERR_PTR(-ENODEV);
+	}
+
 	syna_encoder_parse_lcdc_dt();
 
 	encoder = kzalloc(sizeof(*encoder), GFP_KERNEL);
@@ -139,6 +149,8 @@ struct drm_encoder *syna_encoder_create(struct drm_device *dev,
 		DRM_ERROR("Failed to initialise encoder - %d", vout_id);
 		kfree(encoder);
 		return ERR_PTR(err);
+	} else {
+		encoder->index = cpcb_id;
 	}
 
 	drm_encoder_helper_add(encoder, &syna_encoder_helper_funcs);

@@ -76,31 +76,29 @@ int syna_modeset_createEntries(struct syna_drm_private *dev_priv)
 	}
 
 	for (panelId = 0; panelId < MAX_PANELS; panelId++) {
-		dev_priv->connector[panelId] = syna_lcdc_connector_create(dev);
-
-		if (IS_ERR(dev_priv->connector[panelId])) {
-			DRM_ERROR("failed to create a connector\n");
-			err = PTR_ERR(dev_priv->connector[panelId]);
-			goto err_syna_modeset_createEntries;
-		}
-
 		dev_priv->encoder[panelId] = syna_encoder_create(dev, panelId, panelId);
-		if (IS_ERR(dev_priv->encoder[panelId])) {
-			DRM_ERROR("failed to create an encoder\n");
-			err = PTR_ERR(dev_priv->encoder[panelId]);
-			goto err_syna_modeset_createEntries;
-		}
 
-		err = drm_connector_attach_encoder(dev_priv->connector[panelId],
-						   dev_priv->encoder[panelId]);
-		if (err) {
-			DRM_ERROR
-				("failed to attach [ENCODER:%d:%s] to [CONNECTOR:%d:%s] (err=%d)\n",
-				 dev_priv->encoder[panelId]->base.id,
-				 dev_priv->encoder[panelId]->name,
-				 dev_priv->connector[panelId]->base.id,
-				 dev_priv->connector[panelId]->name, err);
-			goto err_syna_modeset_createEntries;
+		if (IS_ERR(dev_priv->encoder[panelId])) {
+			DRM_ERROR("failed to create a connector %d\n", panelId);
+		} else {
+			dev_priv->connector[panelId] = syna_lcdc_connector_create(dev);
+
+			if (IS_ERR(dev_priv->connector[panelId])) {
+				DRM_ERROR("failed to create an encoder %d\n", panelId);
+			} else {
+				err = drm_connector_attach_encoder(dev_priv->connector[panelId],
+								dev_priv->encoder[panelId]);
+
+				if (err) {
+					DRM_ERROR
+						("failed to attach [ENCODER:%d:%s] to [CONNECTOR:%d:%s] (err=%d)\n",
+						dev_priv->encoder[panelId]->base.id,
+						dev_priv->encoder[panelId]->name,
+						dev_priv->connector[panelId]->base.id,
+						dev_priv->connector[panelId]->name, err);
+					goto err_syna_modeset_createEntries;
+				}
+			}
 		}
 	}
 err_syna_modeset_createEntries:

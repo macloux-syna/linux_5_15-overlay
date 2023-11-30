@@ -1,8 +1,10 @@
+ifneq ($(filter y m, $(CONFIG_BERLIN_TZD)),)
 TEE_INC_PATH += -I$(srctree)/drivers/soc/berlin/modules/tzd/tee/client_api \
 				 -I$(srctree)/drivers/soc/berlin/modules/tzd/tee/common \
 				 -I$(srctree)/drivers/soc/berlin/modules/tzd/tz/common \
 				 -I$(srctree)/drivers/soc/berlin/modules/tzd/include \
 				 -I$(srctree)/drivers/soc/berlin/modules/tzd
+endif
 
 ccflags-$(CONFIG_POWERVR_ROGUE_WS:m=y) += -I$(srctree)/drivers/soc/berlin/modules/rogue_ws/include/
 ccflags-$(CONFIG_POWERVR_ROGUE_WS:m=y) += -I$(srctree)/drivers/soc/berlin/modules/rogue_ws/include/km/
@@ -156,6 +158,10 @@ pvrsrvkm-y += src/rgxfwtrace_strings.o
 pvrsrvkm-y += src/rgxmulticore.o
 pvrsrvkm-y += src/rgxshader.o
 #pvrsrvkm-y += src/pvr_procfs.o
+ifneq ($(filter y m, $(CONFIG_OPTEE)),)
+pvrsrvkm-y += src/gpu_tee.o
+else
 pvrsrvkm-y += src/gpu_tz.o
+endif
 pvrsrvkm-y += src/pvr_buffer_sync.o
 #pvrsrvkm-y += src/physmem_tdfwmem.o

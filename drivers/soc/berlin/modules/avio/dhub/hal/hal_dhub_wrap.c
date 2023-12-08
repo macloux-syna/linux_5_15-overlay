@@ -230,6 +230,53 @@ void wrap_DhubEnableAutoPush(bool enable,    /* enable/disable autopush command 
 		msleep((1000 / frameRate) * AUTOPUSH_MAX_FRAME_DELAY);
 }
 
+void wrap_dhub2nd_channel_start_seq(void *hdl, SIGN32 id)
+{
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+	if (hDhubCtx->isTeeEnabled) {
+		if (Dhub_is_VPP_dhubHandle(&(((struct HDL_dhub2d *)hdl)->dhub))) {
+			tz_dhub2nd_channel_start_seq(hdl, id);
+		}
+	}
+}
+
+void wrap_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id)
+{
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+	if (hDhubCtx->isTeeEnabled) {
+		if (Dhub_is_VPP_dhubHandle(&(((struct HDL_dhub2d *)hdl)->dhub))) {
+			tz_dhub2nd_channel_clear_seq(hdl, id);
+		}
+	}
+}
+
+int wrap_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ) {
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+	if ((hDhubCtx->isTeeEnabled) &&
+		(!cfgQ)) {
+		return tz_BCM_SCHED_PushCmd(QID, pCmd, cfgQ);
+	}
+	return BCM_SCHED_PushCmd(QID, pCmd, cfgQ);
+}
+
+void wrap_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent) {
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+	if (hDhubCtx->isTeeEnabled) {
+		tz_BCM_SCHED_SetMux(QID, TrigEvent);
+	} else {
+		BCM_SCHED_SetMux(QID, TrigEvent);
+	}
+}
+
+void wrap_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts) {
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+	if (hDhubCtx->isTeeEnabled) {
+		tz_BCM_SCHED_GetEmptySts(QID, EmptySts);
+	} else {
+		BCM_SCHED_GetEmptySts(QID, EmptySts);
+	}
+}
+
 EXPORT_SYMBOL(wrap_dhub_semaphore);
 EXPORT_SYMBOL(wrap_DhubInitialization);
 EXPORT_SYMBOL(wrap_semaphore_pop);
@@ -237,3 +284,8 @@ EXPORT_SYMBOL(wrap_dhub_channel_write_cmd);
 EXPORT_SYMBOL(wrap_semaphore_chk_full);
 EXPORT_SYMBOL(wrap_semaphore_clr_full);
 EXPORT_SYMBOL(wrap_DhubEnableAutoPush);
+EXPORT_SYMBOL(wrap_dhub2nd_channel_start_seq);
+EXPORT_SYMBOL(wrap_dhub2nd_channel_clear_seq);
+EXPORT_SYMBOL(wrap_BCM_SCHED_PushCmd);
+EXPORT_SYMBOL(wrap_BCM_SCHED_SetMux);
+EXPORT_SYMBOL(wrap_BCM_SCHED_GetEmptySts);

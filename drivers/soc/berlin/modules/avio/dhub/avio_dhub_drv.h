@@ -46,6 +46,7 @@ DHUB_CONFIG_INFO *Dhub_GetConfigInfo_ByDhub2dHandle(HDL_dhub2d *pdhubHandle);
 DHUB_CONFIG_INFO *Dhub_GetConfigInfo_ByDhubHandle(HDL_dhub *pdhubHandle);
 HDL_dhub2d *Dhub_GetDhub2dHandle_ByDhubId(DHUB_ID dhub_id);
 HDL_dhub *Dhub_GetDhubHandle_ByDhubId(DHUB_ID dhub_id);
+int Dhub_SetChannelMtu(HDL_dhub2d *pdhubHandle, SIGN32 IChannel, s32 chanMtuSize);
 
 int Dhub_is_VPP_dhubHandle(void *hdl);
 int Dhub_is_AG_dhubHandle(void *hdl);

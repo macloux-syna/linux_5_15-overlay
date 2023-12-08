@@ -92,6 +92,11 @@ void wrap_DhubEnableAutoPush(bool enable,    /* enable/disable autopush command 
 				unsigned int frameRate/*! frame-rate in Hz, 60Hz/50Hz/etc. ! */
 	);
 
+void wrap_dhub2nd_channel_start_seq(void *hdl, SIGN32 id);
+void wrap_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id);
+int wrap_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ);
+void wrap_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent);
+void wrap_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts);
 
 #ifdef __cplusplus
 }

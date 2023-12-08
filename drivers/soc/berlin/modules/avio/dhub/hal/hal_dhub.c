@@ -1562,13 +1562,6 @@ void dhub2d_channel_start_seq(void *hdl, SIGN32 id)
  *  DHub/HBO clear/disable/enable functions
  *  Same as original ones, but use BCM buffer for VIP VBI clear sequence.
  *******************************************************************************/
-typedef struct VIP_BCMBUF_T {
-	unsigned int *head;	// head of total BCM buffer
-	unsigned int *tail;	// tail of the buffer, used for checking wrap around
-	unsigned int *writer;	// write pointer of queue
-	int size;		// size of total BCM buffer
-} VIP_BCMBUF;
-
 void dhub_channel_clear_bcmbuf(void *hdl,	/*Handle to HDL_dhub */
 				   SIGN32 id,	/*Channel ID in $dHubReg */
 				   VIP_BCMBUF * pbcmbuf)
@@ -1742,6 +1735,47 @@ void dhub_channel_clear_seq(void *hdl, SIGN32 id, VIP_BCMBUF *pbcmbuf)
 	dhub_channel_enable_bcmbuf(hdl, id, 1, pbcmbuf);
 }
 
+void dhub2nd_channel_clear_bcmbuf(void *hdl, SIGN32 id, VIP_BCMBUF *pbcmbuf)
+{
+	HDL_dhub2d *dhub2d = (HDL_dhub2d *)hdl;
+	UNSG32 a;
+
+	a = dhub2d->ra + RA_dHubReg2D_ARR_2ND + id*sizeof(SIE_dHubCmd2ND);
+	/*save the data to the buffer*/
+	*pbcmbuf->writer = 1;
+	pbcmbuf->writer++;
+	*pbcmbuf->writer = a + RA_dHubCmd2ND_CLEAR;
+	pbcmbuf->writer++;
+}
+/****************************************************
+ *  dhub2nd_channel_clear_seq_bcm()
+ *
+ *  dHub 2ND channel clear sequence
+ *  No wait, return immediately. Use BCM buffer.
+ ****************************************************/
+void dhub2nd_channel_clear_seq_bcm(void *hdl, SIGN32 id, VIP_BCMBUF *pbcmbuf)
+{
+	UNSG32 cmdID = dhub_id2hbo_cmdQ(id), dataID = dhub_id2hbo_data(id);
+
+	dhub2nd_channel_clear_bcmbuf((HDL_dhub2d *)hdl, id, pbcmbuf);
+
+	hbo_queue_enable_bcmbuf(dhub_hbo(&((HDL_dhub2d *)hdl)->dhub), cmdID, 0, pbcmbuf);
+
+	dhub_channel_enable_bcmbuf(&((HDL_dhub2d *)hdl)->dhub, id, 0, pbcmbuf);
+	dhub_channel_clear_bcmbuf(&((HDL_dhub2d *)hdl)->dhub, id, pbcmbuf);
+
+	hbo_queue_clear_bcmbuf(dhub_hbo(&((HDL_dhub2d *)hdl)->dhub), cmdID, pbcmbuf);
+
+	hbo_queue_enable_bcmbuf(dhub_hbo(&((HDL_dhub2d *)hdl)->dhub), dataID, 0, pbcmbuf);
+	hbo_queue_clear_bcmbuf(dhub_hbo(&((HDL_dhub2d *)hdl)->dhub), dataID, pbcmbuf);
+
+	/* restart */
+	hbo_queue_enable_bcmbuf(dhub_hbo(&((HDL_dhub2d *)hdl)->dhub), cmdID, 1, pbcmbuf);
+	hbo_queue_enable_bcmbuf(dhub_hbo(&((HDL_dhub2d *)hdl)->dhub), dataID, 1, pbcmbuf);
+	dhub_channel_enable_bcmbuf(&((HDL_dhub2d *)hdl)->dhub, id, 1, pbcmbuf);
+}
+
+
 /**	ENDOFSECTION
  */
 
@@ -1778,3 +1812,7 @@ EXPORT_SYMBOL(hbo_queue_getspace);
 EXPORT_SYMBOL(hbo_queue_getdepth);
 EXPORT_SYMBOL(hbo_fifoCtl);
 EXPORT_SYMBOL(dhub2nd_channel_cfg);
+EXPORT_SYMBOL(dhub2d_channel_start_seq);
+EXPORT_SYMBOL(dhub2d_channel_clear_seq);
+EXPORT_SYMBOL(dhub2d_channel_clear_seq_bcm);
+EXPORT_SYMBOL(dhub2nd_channel_clear_seq_bcm);

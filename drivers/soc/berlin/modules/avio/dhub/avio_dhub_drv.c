@@ -141,6 +141,34 @@ int Dhub_GetChannelInfo(HDL_dhub2d *pdhubHandle, SIGN32 IChannel,
 	return ret;
 }
 
+/******************************************************************************
+ *	  Function: SetChannelMtu
+ *	  Description: Set the Dhub configuration of requested channel Mtu.
+ *	  Parameter : pdhubHandle ----- pointer to 2D dhubHandle
+ *			 IChannel		----- Channel of the dhub
+ *			 chanMtuSize	----- Mtu size to be set.
+ *	  Return:  0 	----	Success
+ ******************************************************************************/
+int Dhub_SetChannelMtu(HDL_dhub2d *pdhubHandle, SIGN32 IChannel,
+				s32 chanMtuSize)
+{
+	DHUB_CONFIG_INFO *dhub_cfg_info;
+	int ret = -1;
+
+	dhub_cfg_info = Dhub_GetConfigInfo_ByDhub2dHandle(pdhubHandle);
+	if (dhub_cfg_info) {
+		DHUB_channel_config *dhub_config;
+
+		dhub_config = dhub_cfg_info->pDhubConfig;
+
+		//Update the MTU.
+		dhub_config[IChannel].chanMtuSize = chanMtuSize;
+		ret = 0;
+	}
+
+	return ret;
+}
+
 DHUB_CONFIG_INFO *Dhub_GetConfigInfo(int nCfgNdx)
 {
 	DHUB_CONFIG_INFO *p_dhub_config_info = NULL;
@@ -416,3 +444,5 @@ EXPORT_SYMBOL(Dhub_IntrRegisterHandler);
 EXPORT_SYMBOL(DhubChannelClear);
 EXPORT_SYMBOL(Dhub_GetDhub2dHandle_ByDhubId);
 EXPORT_SYMBOL(Dhub_GetDhubHandle_ByDhubId);
+EXPORT_SYMBOL(Dhub_GetChannelInfo);
+EXPORT_SYMBOL(Dhub_SetChannelMtu);

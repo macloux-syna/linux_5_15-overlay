@@ -89,6 +89,12 @@ void tz_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
 
 	);
 
+void tz_dhub2nd_channel_start_seq(void *hdl, SIGN32 id);
+void tz_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id);
+int tz_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ);
+void tz_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent);
+void tz_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts);
+
 #ifdef __cplusplus
 }
 #endif

@@ -757,6 +757,16 @@ UNSG32 dhub_channel_enable_InverseScan(void *hdl, SIGN32 id,
 void dhub2d_channel_clear_seq(void *hdl, SIGN32 id);
 void dhub2d_channel_start_seq(void *hdl, SIGN32 id);
 
+typedef struct VIP_BCMBUF_T {
+	unsigned int *head; // head of total BCM buffer
+	unsigned int *tail; // tail of the buffer, used for checking wrap around
+	unsigned int *writer; // write pointer of queue
+	int size; // size of total BCM buffer
+} VIP_BCMBUF;
+
+void dhub2d_channel_clear_seq_bcm(void *hdl, SIGN32 id, VIP_BCMBUF *pbcmbuf);
+void dhub2nd_channel_clear_seq_bcm(void *hdl, SIGN32 id, VIP_BCMBUF *pbcmbuf);
+
 #ifdef __cplusplus
 }
 #endif

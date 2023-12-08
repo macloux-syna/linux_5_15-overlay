@@ -400,6 +400,107 @@ void tz_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
 					DHUB_SEM_INTR_ENABLE, &operation, NULL);
 
 }
+
+void tz_dhub2nd_channel_start_seq(void *hdl, SIGN32 id)
+{
+	TEEC_Result result;
+	TEEC_Operation operation;
+
+	operation.paramTypes = TEEC_PARAM_TYPES(
+		TEEC_VALUE_INPUT,
+		TEEC_NONE,
+		TEEC_NONE,
+		TEEC_NONE);
+
+	operation.params[0].value.a = id;
+
+	operation.started = 1;
+	result = TEEC_InvokeCommand(&session,
+			DHUB_2ND_CHANNEL_START_SEQ, &operation, NULL);
+}
+
+void tz_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id)
+{
+	TEEC_Result result;
+	TEEC_Operation operation;
+
+	operation.paramTypes = TEEC_PARAM_TYPES(
+		TEEC_VALUE_INPUT,
+		TEEC_NONE,
+		TEEC_NONE,
+		TEEC_NONE);
+
+	operation.params[0].value.a = id;
+
+	operation.started = 1;
+	result = TEEC_InvokeCommand(&session,
+		DHUB_2ND_CHANNEL_CLEAR_SEQ, &operation, NULL);
+}
+
+int tz_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ)
+{
+	TEEC_Result result;
+	TEEC_Operation operation;
+
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
+		TEEC_VALUE_INOUT,
+		TEEC_NONE,
+		TEEC_NONE);
+
+	operation.params[0].value.a = QID;
+	operation.params[0].value.b = pCmd[0];
+	operation.params[1].value.a = pCmd[1];
+
+	/* clear result */
+	operation.params[1].value.b = 0xdeadbeef;
+
+	operation.started = 1;
+	result = TEEC_InvokeCommand(&session,
+		DHUB_BCM_SCHED_PUSHCMD, &operation, NULL);
+
+	return operation.params[1].value.b;
+}
+
+void tz_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts)
+{
+	TEEC_Result result;
+	TEEC_Operation operation;
+
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INOUT,
+		TEEC_NONE,
+		TEEC_NONE,
+		TEEC_NONE);
+
+	operation.params[0].value.a = QID;
+
+	/* clear result */
+	operation.params[0].value.b = 0xdeadbeef;
+
+	operation.started = 1;
+	result = TEEC_InvokeCommand(&session,
+		DHUB_BCM_SCHED_GETEMPTYSTS, &operation, NULL);
+
+	*EmptySts = operation.params[0].value.b;
+}
+
+void tz_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent)
+{
+	TEEC_Result result;
+	TEEC_Operation operation;
+
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
+		TEEC_NONE,
+		TEEC_NONE,
+		TEEC_NONE);
+
+	operation.params[0].value.a = QID;
+	operation.params[0].value.b = TrigEvent;
+
+	operation.started = 1;
+	result = TEEC_InvokeCommand(&session,
+		DHUB_BCM_SCHED_SETMUX, &operation, NULL);
+}
+
 EXPORT_SYMBOL(DhubEnableAutoPush);
 EXPORT_SYMBOL(DhubInitialize);
 EXPORT_SYMBOL(DhubFinalize);

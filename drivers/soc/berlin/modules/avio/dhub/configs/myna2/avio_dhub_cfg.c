@@ -109,6 +109,9 @@ int drv_dhub_initialize_dhub(void *h_dhub_ctx)
 	if (atomic_cmpxchg(&dhub_init_done, 0, 1))
 		return 0;
 
+	/*Disable Autopush before initialization of VPP DHUB*/
+	wrap_DhubEnableAutoPush(false, true, hDhubCtx->fastlogo_framerate);
+
 	DhubInitialization(DHUB_ID_VPP_DHUB, DHUB_TYPE_128BIT,
 				CPUINDEX, hDhubCtx->vpp_dhub_base,
 				hDhubCtx->vpp_sram_base, &VPP_dhubHandle,

@@ -22,7 +22,7 @@
 	_AVIO_GBL_REG_(RA_avioGbl_SWPDWN_CTRL, 0x00), \
 	_AVIO_GBL_REG_(RA_avioGbl_APLL0_WRAP, 0x260), \
 	_AVIO_GBL_REG_(RA_avioGbl_APLL1_WRAP, 0x260), \
-	_AVIO_GBL_REG_(RA_avioGbl_AVPLLA_CLK_EN, 0x7D), \
+	_AVIO_GBL_REG_(RA_avioGbl_AVPLLA_CLK_EN, 0x7F), \
 	_AVIO_GBL_REG_(RA_avioGbl_CTRL0, 0x2400),
 
 #define IS_INVALID_ID(id)			((id) >= AIO_ID_I2S_MAX_NUM)

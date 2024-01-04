@@ -265,7 +265,7 @@ int TZ_MV_VPPOBJ_DisplayFrame(int planeID, void *frame)
 
 	/* pass frame info */
 #ifndef CONFIG_VPP_ENABLE_PASSPAR
-	VPP_CA_PassVbufInfo_Phy(is_vpp_ta, (unsigned int *)frame, sizeof(VPP_VBUF),
+	VPP_CA_PassVbufInfo(is_vpp_ta, (unsigned int *)frame, sizeof(VPP_VBUF),
 					(unsigned int *)NULL, sizeof(VPP_VBUF),
 					planeID, 0, DISPLAY_FRAME);
 #else

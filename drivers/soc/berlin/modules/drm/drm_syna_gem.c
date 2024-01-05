@@ -63,6 +63,7 @@ static void syna_gem_free_buf(struct drm_gem_object *obj, struct syna_gem_object
 	struct syna_drm_private *dev_priv = obj->dev->dev_private;
 
 	if (syna_obj->shm_handle.handle) {
+		syna_vpp_reset_buffers(syna_obj);
 		VPP_MEM_FreeMemory(dev_priv->mem_list, VPP_MEM_TYPE_DMA, &syna_obj->shm_handle);
 	} else if (syna_obj->sgt) {
 		DRM_DMABUF_UNMAP(syna_obj)

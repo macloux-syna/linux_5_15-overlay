@@ -38,7 +38,6 @@ static phys_addr_t rotate_buffer_phy_addr[MAX_PLANE_NUM][MAX_ROTATE_BUFFER];
 static int last_rot_frame[MAX_PLANE_NUM+1];
 #endif
 
-#ifdef VPP_BUILD_IN_FRAME_ENABLE
 typedef struct __VPP_BUILD_IN_FRAME_INFO__ {
 	uint32_t format_type;               //ARGB/YUV
 	uint32_t pattern_wid, pattern_hgt;  //checker bar pattern size
@@ -87,7 +86,6 @@ static const VPP_BUILD_IN_FRAME_INFO vpp_buildin_frame_info[] = {
 VPP_MEM vpp_buildin_buffer_shm_handle[VPP_BUILD_IN_FRAME_TYPE_MAX];
 static void *buildin_buffer_kernel_addr[VPP_BUILD_IN_FRAME_TYPE_MAX];
 static phys_addr_t buildin_buffer_phy_addr[VPP_BUILD_IN_FRAME_TYPE_MAX];
-#endif //VPP_BUILD_IN_FRAME_ENABLE
 
 VPP_MEM vpp_disp_info_shm_handle[MAX_NUM_PLANES][MAX_VBUF_INFO];
 static VBUF_INFO vpp_disp_desc_array[MAX_NUM_PLANES][MAX_VBUF_INFO];
@@ -367,7 +365,6 @@ static void syna_vpp_init(struct drm_device *dev)
 	}
 #endif
 
-#ifdef VPP_BUILD_IN_FRAME_ENABLE
 	for (i = 0; i < VPP_BUILD_IN_FRAME_TYPE_MAX; i++) {
 		uint32_t frame_type;
 		const VPP_BUILD_IN_FRAME_INFO *bframe_info = &vpp_buildin_frame_info[i];
@@ -401,7 +398,6 @@ static void syna_vpp_init(struct drm_device *dev)
 			("Init Buildin frame vpp_disp_info_phys_addr[%d]=%lx\n",
 			 i,  buildin_buffer_phy_addr[i]);
 	}
-#endif //VPP_BUILD_IN_FRAME_ENABLE
 }
 
 void syna_vpp_exit(struct drm_device *dev)
@@ -437,12 +433,10 @@ void syna_vpp_exit(struct drm_device *dev)
 	}
 #endif
 
-#ifdef VPP_BUILD_IN_FRAME_ENABLE
 	for (plane = 0; plane < MAX_PLANE_NUM; plane++) {
 		VPP_MEM_FreeMemory(shm_list, VPP_MEM_TYPE_DMA,
 			&vpp_buildin_buffer_shm_handle[plane]);
 	}
-#endif //VPP_BUILD_IN_FRAME_ENABLE
 
 	VPP_MEM_FreeMemory(vpp_mem_list, VPP_MEM_TYPE_DMA,
 			&dev_priv->vpp_config_param.vpp_dsi_info_shm_handle);
@@ -519,6 +513,7 @@ void syna_vpp_reset_buffers(struct syna_gem_object *syna_obj)
 
 	for (i = 0; i < MAX_NUM_PLANES; i++) {
 		if (last_addr[i] == syna_obj->phyaddr) {
+			syna_push_buildin_frame(i);
 			last_addr[i] = (phys_addr_t)NULL;
 			DRM_DEBUG_DRIVER("plane-%d, buffer released/reset-%lx\n", i,
 								syna_obj->phyaddr);
@@ -818,7 +813,6 @@ void syna_vpp_set_surface(struct drm_device *dev, void __iomem *syna_reg,
 	vbuf_info_num[plane] = (vbuf_info_num[plane] + 1) % MAX_VBUF_INFO;
 }
 
-#ifdef VPP_BUILD_IN_FRAME_ENABLE
 void syna_vpp_push_buildin_null_frame(u32 plane)
 {
 	VPP_VBUF *curr_vpp_vbuf;
@@ -870,7 +864,6 @@ void syna_vpp_push_buildin_frame(u32 plane)
 
 	vbuf_info_num[plane] = (vbuf_info_num[plane] + 1) % MAX_VBUF_INFO;
 }
-#endif //VPP_BUILD_IN_FRAME_ENABLE
 
 int syna_vpp_dev_init(struct drm_device *dev)
 {

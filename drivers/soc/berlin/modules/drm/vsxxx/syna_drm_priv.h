@@ -12,7 +12,6 @@
 #define MAX_CRTC	MAX_NUM_CPCBS
 #define VOUT_DEVICE VOUT_DSI
 
-#define VPP_BUILD_IN_FRAME_ENABLE
 #define VPP_BUILD_IN_FRAME_GFX_WIDTH    720
 #define VPP_BUILD_IN_FRAME_GFX_HEIGHT   480
 #define VPP_BUILD_IN_FRAME_VID_WIDTH    720
@@ -37,5 +36,6 @@ typedef enum __VPP_BUILD_IN_FRAME_TYPE__ {
 VPP_BUILD_IN_FRAME_TYPE syna_get_buidin_frame_type(ENUM_PLANE_ID plane_id);
 struct drm_encoder *syna_tmds_encoder_create(struct drm_device *dev,
 					ENUM_VOUT_CONNECTOR vout_id, ENUM_CPCB_ID cpcb_id);
+void syna_push_buildin_frame(u32 plane);
 
 #endif /* !defined(__SYNA_DRM_PRIV_H__) */

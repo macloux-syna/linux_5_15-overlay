@@ -25,10 +25,8 @@ VPP_BUILD_IN_FRAME_TYPE syna_get_buidin_frame_type(ENUM_PLANE_ID plane_id)
 
 void syna_vpp_dev_init_priv(struct drm_device *dev)
 {
-#ifdef VPP_BUILD_IN_FRAME_ENABLE
 	syna_vpp_push_buildin_frame(PLANE_GFX0);
 	syna_vpp_push_buildin_frame(PLANE_GFX1);
-#endif //VPP_BUILD_IN_FRAME_ENABLE
 }
 
 void syna_read_config_priv(vpp_config_params *p_vpp_config_param)
@@ -108,4 +106,9 @@ int syna_vpp_get_bm_details(struct dma_buf *dma_buf,
 int syna_dsi_panel_send_cmd (unsigned int cmdsize, unsigned char *pcmd)
 {
 	return wrap_mipi_send_panel_cmd(cmdsize, pcmd);
+}
+
+void syna_push_buildin_frame(u32 plane)
+{
+	syna_vpp_push_buildin_null_frame(plane);
 }

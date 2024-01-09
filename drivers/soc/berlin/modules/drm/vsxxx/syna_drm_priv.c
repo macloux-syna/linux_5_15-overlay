@@ -51,11 +51,17 @@ void syna_read_config_priv(vpp_config_params *p_vpp_config_param)
 #endif
 }
 
-enum drm_plane_type syna_modeset_getPlaneType(ENUM_PLANE_ID plane_id)
+enum drm_plane_type syna_modeset_getPlaneType(struct syna_drm_private *dev_priv, ENUM_PLANE_ID plane_id)
 {
 	ENUM_CPCB_ID cpcb_id;
 
+
 	for (cpcb_id = FIRST_CPCB; cpcb_id < MAX_NUM_CPCBS; cpcb_id++) {
+		if ((dev_priv->vpp_config_param.display_mode != \
+			VPP_VOUT_DUAL_MODE_PIP) && \
+			(cpcb_id > FIRST_CPCB))
+				break;
+
 		//Ensure one TYPE_PRIMARY per CPCB, rest can be TYPE_OVERLAY
 		if (syna_primary_plane_id[cpcb_id] == plane_id)
 			return DRM_PLANE_TYPE_PRIMARY;
@@ -77,8 +83,17 @@ int syna_modeset_createEntries(struct syna_drm_private *dev_priv)
 
 	plane_possible_crtc_mask = (1 << MAX_NUM_CPCBS) - 1;
 
+	if (MAX_NUM_CPCBS > 1)
+	{
+		plane_possible_crtc_mask = \
+				(dev_priv->vpp_config_param.display_mode == \
+					VPP_VOUT_DUAL_MODE_PIP) ? \
+				plane_possible_crtc_mask : \
+				(1 << 0);
+	}
+
 	for (plane_id = FIRST_PLANE; plane_id < MAX_NUM_PLANES; plane_id++) {
-		plane_type = syna_modeset_getPlaneType(plane_id);
+		plane_type = syna_modeset_getPlaneType(dev_priv, plane_id);
 		dev_priv->plane[plane_id] = syna_plane_create(dev,
 				plane_possible_crtc_mask, plane_id, plane_type);
 		if (IS_ERR(dev_priv->plane[plane_id])) {
@@ -90,6 +105,11 @@ int syna_modeset_createEntries(struct syna_drm_private *dev_priv)
 
 	for (cpcb_id = FIRST_CPCB; cpcb_id < MAX_NUM_CPCBS; cpcb_id++) {
 		plane_id = syna_primary_plane_id[cpcb_id];
+		if ((dev_priv->vpp_config_param.display_mode != \
+			VPP_VOUT_DUAL_MODE_PIP) && \
+			(cpcb_id > FIRST_CPCB))
+				continue;
+
 		dev_priv->crtc[cpcb_id] = syna_crtc_create(dev, cpcb_id, dev_priv->plane[plane_id]);
 		if (IS_ERR(dev_priv->crtc[cpcb_id])) {
 			DRM_ERROR("failed to create a CRTC\n");
@@ -101,11 +121,16 @@ int syna_modeset_createEntries(struct syna_drm_private *dev_priv)
 	for (vout_id = FIRST_VOUT_CONNECTOR, cpcb_id = FIRST_CPCB;
 		vout_id < MAX_NUM_VOUT_CONNECTORS; vout_id++, cpcb_id++) {
 		cpcb_id %= MAX_NUM_CPCBS;
-#ifndef USE_DOLPHIN
-		//Allow only one(default/cofigured) connector active on PLATYPUS
-		if (vout_id != PLATYPUS_VOUT_CONNECTOR_DEFAULT)
-			continue;
-#endif
+
+		if ((dev_priv->vpp_config_param.display_mode != \
+			VPP_VOUT_DUAL_MODE_PIP) && \
+			(dev_priv->vpp_config_param.display_mode !=\
+			vout_id))
+				continue;
+		else if((dev_priv->vpp_config_param.display_mode != \
+				VPP_VOUT_DUAL_MODE_PIP))
+					cpcb_id = FIRST_CPCB;
+
 		if (VOUT_CONNECTOR_HDMI == vout_id)
 			dev_priv->connector[vout_id] = syna_dvi_connector_create(dev);
 		else
@@ -154,5 +179,11 @@ int syna_vpp_get_bm_details(struct dma_buf *dma_buf,
 		*bm_meta = bm_fetch_meta(dma_buf);
 
 	return ret;
+}
+
+int syna_dsi_panel_send_cmd (unsigned int cmdsize, unsigned char *pcmd)
+{
+	/* Currently VSXXX has the TA to send the commands */
+	return 0;
 }
 MODULE_IMPORT_NS(SYNA_BM);

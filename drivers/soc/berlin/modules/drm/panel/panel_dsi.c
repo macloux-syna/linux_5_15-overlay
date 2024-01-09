@@ -12,6 +12,7 @@
 #include <linux/of_platform.h>
 #include <linux/platform_device.h>
 #include <linux/delay.h>
+#include <linux/gpio/consumer.h>
 
 #include <video/display_timing.h>
 #include <video/of_display_timing.h>
@@ -23,10 +24,6 @@
 #include <drm/drm_panel.h>
 
 #include "panel/panel.h"
-#include "dsih_core.h"
-#include "dsih_api.h"
-#include "includes.h"
-#include "dsih_displays.h"
 
 typedef struct panel_timing_info_t {
 	unsigned int hact;
@@ -38,7 +35,6 @@ typedef struct panel_timing_info_t {
 	unsigned int vsa;
 	unsigned int vbp;
 	unsigned int pixelclock;
-
 } PANEL_TIMING_INFO;
 
 typedef struct panel_desc_t {
@@ -46,24 +42,9 @@ typedef struct panel_desc_t {
 	int                 outformat;
 	int                 bpp;
 	int                 byteclock;
-	int                 lpcmd;
-	int                 non_continuous_clock;
-	int                 lanes;
-	int                 eotp_tx;
-	int                 datapolarity;
-	int                 eotp_rx;
-	int                 h_polarity;
-	int                 v_polarity;
-	int                 data_polarity;
 	int                 cmdsize;
-	int                 htotal;
-	int                 video_mode;
-	int                 receive_ack;
-	int                 is_18_loose;
-	int                 color_coding;
-	int                 chunks;
-	int                 null_pkt;
 	unsigned char		*cmd;
+
 	struct gpio_desc 	*mipirst;
 	struct gpio_desc 	*mipibl;
 } SYNA_PANEL_DESC;
@@ -90,7 +71,7 @@ static int syna_panel_dsi_prepare(struct drm_panel *panel)
 {
 	/* Release MIPI from Reset */
 	gpiod_set_value_cansleep(synaPanelInfo.mipirst, 0);
-	dsi_panel_send_cmd(synaPanelInfo.cmdsize, synaPanelInfo.cmd);
+	syna_dsi_panel_send_cmd(synaPanelInfo.cmdsize, synaPanelInfo.cmd);
 
 	return 0;
 }
@@ -157,15 +138,15 @@ int syna_panel_dsi_init(struct platform_device *pdev)
 	if (!dsi_panel)
 		return -ENOMEM;
 
-	of_property_read_u32(mipi_dev->of_node, "hact", &synaPanelInfo.panel_timing.hact);
-	of_property_read_u32(mipi_dev->of_node, "hfp", &synaPanelInfo.panel_timing.hfp);
-	of_property_read_u32(mipi_dev->of_node, "hsa", &synaPanelInfo.panel_timing.hsa);
-	of_property_read_u32(mipi_dev->of_node, "hbp", &synaPanelInfo.panel_timing.hbp);
-	of_property_read_u32(mipi_dev->of_node, "vact", &synaPanelInfo.panel_timing.vact);
-	of_property_read_u32(mipi_dev->of_node, "vfp", &synaPanelInfo.panel_timing.vfp);
-	of_property_read_u32(mipi_dev->of_node, "vsa", &synaPanelInfo.panel_timing.vsa);
-	of_property_read_u32(mipi_dev->of_node, "vbp", &synaPanelInfo.panel_timing.vbp);
-	of_property_read_u32(mipi_dev->of_node, "pixclockKhz", &synaPanelInfo.panel_timing.pixelclock);
+	of_property_read_u32(mipi_dev->of_node, "ACTIVE_WIDTH", &synaPanelInfo.panel_timing.hact);
+	of_property_read_u32(mipi_dev->of_node, "HFP", &synaPanelInfo.panel_timing.hfp);
+	of_property_read_u32(mipi_dev->of_node, "HSYNCWIDTH", &synaPanelInfo.panel_timing.hsa);
+	of_property_read_u32(mipi_dev->of_node, "HBP", &synaPanelInfo.panel_timing.hbp);
+	of_property_read_u32(mipi_dev->of_node, "ACTIVE_HEIGHT", &synaPanelInfo.panel_timing.vact);
+	of_property_read_u32(mipi_dev->of_node, "VFP", &synaPanelInfo.panel_timing.vfp);
+	of_property_read_u32(mipi_dev->of_node, "VSYNCWIDTH", &synaPanelInfo.panel_timing.vsa);
+	of_property_read_u32(mipi_dev->of_node, "VBP", &synaPanelInfo.panel_timing.vbp);
+	of_property_read_u32(mipi_dev->of_node, "FREQ", &synaPanelInfo.panel_timing.pixelclock);
 
 	of_property_read_u32(mipi_dev->of_node, "bits_per_pixel", &synaPanelInfo.bpp);
 	of_property_read_u32(mipi_dev->of_node, "busformat", &synaPanelInfo.outformat);

@@ -38,5 +38,5 @@ typedef enum __VPP_BUILD_IN_FRAME_TYPE__ {
 VPP_BUILD_IN_FRAME_TYPE syna_get_buidin_frame_type(ENUM_PLANE_ID plane_id);
 struct drm_encoder *syna_tmds_encoder_create(struct drm_device *dev,
 					ENUM_VOUT_CONNECTOR vout_id, ENUM_CPCB_ID cpcb_id);
-
+int syna_dsi_panel_send_cmd (unsigned int cmdsize, unsigned char *pcmd);
 #endif /* !defined(__SYNA_DRM_PRIV_H__) */

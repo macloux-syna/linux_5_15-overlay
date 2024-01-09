@@ -185,6 +185,7 @@ static void syna_late_unload(struct drm_device *dev)
 	dev_priv = dev->dev_private;
 	syna_modeset_late_cleanup(dev_priv);
 
+	syna_vpp_exit(dev);
 	syna_gem_deinit(dev);
 	kfree(dev_priv);
 }
@@ -390,7 +391,6 @@ static void __exit syna_exit(void)
 	DRM_DEBUG_DRIVER("%s:%d\n", __func__, __LINE__);
 
 	platform_driver_unregister(&syna_platform_driver);
-	syna_vpp_exit();
 }
 
 late_initcall(syna_init);

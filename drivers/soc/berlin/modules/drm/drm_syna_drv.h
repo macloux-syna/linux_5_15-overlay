@@ -22,6 +22,7 @@
 #include "syna_vpp.h"
 #include "vpp_mem.h"
 #include "syna_drm_priv.h"
+#include "vpp_config.h"
 #include "vpp_fb.h"
 
 struct syna_gem_context;
@@ -40,6 +41,7 @@ struct syna_drm_private {
 
 	bool display_enabled;
 	VPP_MEM_LIST *mem_list;
+	vpp_config_params vpp_config_param;
 };
 
 struct syna_plane {

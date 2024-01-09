@@ -6,6 +6,12 @@
  * Author: Lijun Fan <Lijun.Fan@synaptics.com>
  *
  */
+
+#include <linux/module.h>
+#include <linux/of_platform.h>
+#include <linux/platform_device.h>
+#include <linux/gpio/consumer.h>
+
 #include <drm/drmP.h>
 #include <linux/delay.h>
 #include "syna_vpp.h"
@@ -14,6 +20,7 @@
 #include "vpp_api.h"
 
 #include "syna_drm_priv.h"
+#include "syna_vpp_config.h"
 
 #define VPP_GET_MTR_STRIDE(mtrcfg2) (((mtrcfg2 >> 4) & 0x3FFFFF) << (6 + 2))
 #define DEFAULT_DEVICE_ROTATION 0
@@ -95,6 +102,9 @@ static int init_vbuf_info;
 static VPP_WIN curr_fb_win[MAX_NUM_PLANES];
 
 static VPP_MEM_LIST *shm_list;
+VPP_MEM vpp_dsi_info_shm_handle;
+VPP_MEM vpp_resinfo_shm_handle;
+VPP_MEM vpp_cmdinfo_shm_handle;
 
 static phys_addr_t last_addr[MAX_NUM_PLANES];
 
@@ -395,10 +405,12 @@ static void syna_vpp_init(struct drm_device *dev)
 #endif //VPP_BUILD_IN_FRAME_ENABLE
 }
 
-void syna_vpp_exit(void)
+void syna_vpp_exit(struct drm_device *dev)
 {
 	int i;
 	int plane;
+	struct syna_drm_private *dev_priv = dev->dev_private;
+	VPP_MEM_LIST *vpp_mem_list = dev_priv->mem_list;
 
 	if (!init_vbuf_info)
 		return;
@@ -432,6 +444,13 @@ void syna_vpp_exit(void)
 			&vpp_buildin_buffer_shm_handle[plane]);
 	}
 #endif //VPP_BUILD_IN_FRAME_ENABLE
+
+	VPP_MEM_FreeMemory(vpp_mem_list, VPP_MEM_TYPE_DMA,
+			&dev_priv->vpp_config_param.vpp_dsi_info_shm_handle);
+	VPP_MEM_FreeMemory(vpp_mem_list, VPP_MEM_TYPE_DMA,
+			&dev_priv->vpp_config_param.vpp_cmdinfo_shm_handle);
+	VPP_MEM_FreeMemory(vpp_mem_list, VPP_MEM_TYPE_DMA,
+			&dev_priv->vpp_config_param.vpp_resinfo_shm_handle);
 
 	wrap_MV_VPP_DeInit();
 }
@@ -791,7 +810,6 @@ void syna_vpp_set_surface(struct drm_device *dev, void __iomem *syna_reg,
 		wrap_MV_VPPOBJ_SetRefWindow(plane, &curr_fb_win[plane]);
 	}
 
-
 	MV_VPP_SetInputFrameSize(plane, width, height);
 
 	MV_VPP_DisplayFrame(plane, VPP_video_format, (void *)
@@ -851,27 +869,17 @@ void syna_vpp_push_buildin_frame(u32 plane)
 int syna_vpp_dev_init(struct drm_device *dev)
 {
 	int ret = 0;
+	struct syna_drm_private *dev_priv = dev->dev_private;
+	VPP_MEM_LIST *vpp_mem_list = dev_priv->mem_list;
 
-	vpp_config_params vpp_config_param;
-	vpp_config_param.disp_res_id = 24;
-	vpp_config_param.disp_out_type = 0;
-	vpp_config_param.frame_rate = 60;
-	vpp_config_param.enable_frame_buf_copy = 0;
-	vpp_config_param.fb_count = 3;
-	vpp_config_param.callback = NULL;
-	vpp_config_param.data = NULL;
-	syna_read_config_priv(&vpp_config_param);
-
-	if (VPP_Is_Recovery_Mode()) {
-		struct syna_drm_private *dev_priv = dev->dev_private;
-		VPP_MEM_LIST *vpp_mem_list = dev_priv->mem_list;
-
-		syna_vpp_init(dev);
-
-		ret = MV_VPP_Init(vpp_mem_list, vpp_config_param);
-
-		if (!ret)
-			syna_vpp_dev_init_priv(dev);
+	ret = syna_read_config(dev_priv);
+	if (!ret) {
+		if (VPP_Is_Recovery_Mode()) {
+			syna_vpp_init(dev);
+			ret = MV_VPP_Init(vpp_mem_list, dev_priv->vpp_config_param);
+			if (!ret)
+				syna_vpp_dev_init_priv(dev);
+		}
 	}
 
 	return ret;

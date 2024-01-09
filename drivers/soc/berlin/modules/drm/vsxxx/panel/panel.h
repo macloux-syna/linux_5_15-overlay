@@ -9,12 +9,10 @@
 #ifndef __PANEL_SYNA
 #define __PANEL_SYNA
 
-#define MAX_PANELS           2
-#define PANEL_MAX_WIDTH     1920
-#define PANEL_MAX_HEIGHT    1080
+#define MAX_PANELS           1
+#define PANEL_MAX_WIDTH     3840
+#define PANEL_MAX_HEIGHT    2160
 
-int syna_panel_lcdc_init(struct platform_device *pdev);
-void syna_panel_lcdc_deinit(void);
 void syna_panel_dsi_deinit(void);
 int syna_dsi_panel_send_cmd (unsigned int cmdsize, unsigned char *pcmd);
 #endif

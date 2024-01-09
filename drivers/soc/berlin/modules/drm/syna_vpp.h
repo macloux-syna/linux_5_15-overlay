@@ -66,7 +66,7 @@ void syna_vpp_mode_set(struct device *dev, void __iomem *syna_reg,
 		       u32 vbps, u32 vt, u32 vas,
 		       u32 vtbs, u32 vfps, u32 vbbs, bool nhsync, bool nvsync);
 
-void syna_vpp_exit(void);
+void syna_vpp_exit(struct drm_device *dev);
 int syna_vpp_dev_init(struct drm_device *dev);
 void syna_vpp_wait_vsync(int Id);
 void syna_vpp_load_config(int devID, void *pconfig);

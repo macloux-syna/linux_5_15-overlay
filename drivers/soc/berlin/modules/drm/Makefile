@@ -62,6 +62,7 @@ else
 HEADER_PATH += -I$(srctree)/drivers/soc/berlin/modules/drm/port/ion
 endif
 
+HEADER_PATH += -I$(SYNA_DRM_TYPE)
 ccflags-y += $(HEADER_PATH)
 ccflags-y += -Werror
 
@@ -73,6 +74,7 @@ syna_drm-y += drm_syna_gem.o
 syna_drm-y += drm_syna_plane.o
 syna_drm-y += drm_syna_modeset.o
 syna_drm-y += syna_vpp.o
+syna_drm-y += syna_vpp_config.o
 
 ifeq ($(SYNA_DRM_TYPE), asxxx)
 syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_lcdc.o
@@ -80,7 +82,6 @@ syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_encoder.o
 syna_drm-y += $(SYNA_DRM_TYPE)/syna_drm_priv.o
 syna_drm-y += $(SYNA_DRM_TYPE)/panel/panel_lcdc.o
 
-syna_drm-y += $(SYNA_DRM_TYPE)/panel/panel_dsi.o
 syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_api.o
 syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_core.o
 syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_dphy.o
@@ -96,6 +97,7 @@ syna_drm-y += $(SYNA_DRM_TYPE)/syna_drm_priv.o
 endif
 
 syna_drm-y += port/drm_syna_common.o
+syna_drm-y += panel/panel_dsi.o
 
 ifeq ($(KV_GT_5_10_0), true)
 syna_drm-y += port/dmabuf/drm_syna_port.o

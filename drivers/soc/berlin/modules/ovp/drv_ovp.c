@@ -35,8 +35,19 @@
 #include "ovp_debug.h"
 #include "ovp_ioctl.h"
 #include "drv_ovp.h"
-#include "tz_utils.h"
 #include "tee_ca_ovp.h"
+#include <linux/arm-smccc.h>
+#include <soc/berlin/berlin_sip.h>
+
+typedef enum _tz_secure_reg_ {
+	TZ_REG_SEM_INTR_ENABLE_1	=   SEM_INTR_ENABLE_1,
+	TZ_REG_SEM_INTR_ENABLE_2 	=   SEM_INTR_ENABLE_2,
+	TZ_REG_SEM_INTR_ENABLE_3	=   SEM_INTR_ENABLE_3,
+	TZ_REG_SEM_CHK_FULL		=   SEM_CHK_FULL,
+	TZ_REG_SEM_POP			=   SEM_POP,
+	TZ_REG_OVP_INTR_STATUS 		=   OVP_INTSTATUS,
+	TZ_REG_MAX,
+}tz_secure_reg;
 
 /***********************************************************************
  * Module Variable
@@ -61,6 +72,32 @@ static atomic_t ovp_dev_refcnt = ATOMIC_INIT(0);
  */
 #ifdef OVP_ENABLE_FASTCALL_FOR_REG_ACCESS
 
+static void wrap_tz_secure_reg_rw(tz_secure_reg reg,
+			uint32_t ops, uint32_t *value)
+{
+	if ((reg >= 0) && (reg < TZ_REG_MAX)) {
+		struct arm_smccc_res res = {};
+		uint32_t regVal = *value;
+
+		//Valid register, so access it
+		arm_smccc_smc(SYNA_SIP_SMC64_SREGISTER_OP,
+				ops, reg, regVal,
+				0, 0, 0, 0,
+				&res);
+		if (res.a0) {
+			ovp_trace(
+				"%s:%d:ERR:  reg:%x, ops:%d, val:%x, ret:0x%lx/%ld\n",
+				__func__, __LINE__, reg, ops, *value, res.a0, res.a0);
+		} else if (ops == SYNA_SREGISTER_READ) {
+			*value = res.a1;
+		}
+	} else {
+		//Invalid register, log error
+		ovp_trace("%s:%d:INVALID: reg:%x, ops:%d, val:%x\n",
+			__func__, __LINE__, reg, ops, *value);
+	}
+}
+
 static tz_secure_reg ovp_tz_phy_to_secure_reg(unsigned int regAddr)
 {
 	tz_secure_reg secureReg = TZ_REG_MAX;
@@ -75,14 +112,18 @@ static int ovp_wrap_register_read(unsigned int regAddr, unsigned int *pRegVal)
 {
 	tz_secure_reg secureReg = ovp_tz_phy_to_secure_reg(regAddr);
 
-	return tz_secure_reg_rw(secureReg, TZ_SECURE_REG_READ, pRegVal);
+	wrap_tz_secure_reg_rw(secureReg, SYNA_SREGISTER_READ, pRegVal);
+
+	return 0;
 }
 
 static int ovp_wrap_register_write(unsigned int regAddr, unsigned int regVal)
 {
 	tz_secure_reg secureReg = ovp_tz_phy_to_secure_reg(regAddr);
 
-	return tz_secure_reg_rw(secureReg, TZ_SECURE_REG_WRITE, &regVal);
+	wrap_tz_secure_reg_rw(secureReg, SYNA_SREGISTER_WRITE, &regVal);
+
+	return 0;
 }
 
 #else //!OVP_ENABLE_FASTCALL_FOR_REG_ACCESS

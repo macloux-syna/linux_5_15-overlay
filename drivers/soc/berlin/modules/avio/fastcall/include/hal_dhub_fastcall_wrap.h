@@ -25,7 +25,18 @@
 #include "hal_dhub_wrap.h"
 #include "avio_debug.h"
 
-#include "tz_utils.h"
+#include <linux/arm-smccc.h>
+#include <soc/berlin/berlin_sip.h>
+
+typedef enum _tz_secure_reg_ {
+	TZ_REG_SEM_INTR_ENABLE_1	=   SEM_INTR_ENABLE_1,
+	TZ_REG_SEM_INTR_ENABLE_2 	=   SEM_INTR_ENABLE_2,
+	TZ_REG_SEM_INTR_ENABLE_3	=   SEM_INTR_ENABLE_3,
+	TZ_REG_SEM_CHK_FULL		=   SEM_CHK_FULL,
+	TZ_REG_SEM_POP			=   SEM_POP,
+	TZ_REG_OVP_INTR_STATUS 		=   OVP_INTSTATUS,
+	TZ_REG_MAX,
+}tz_secure_reg;
 
 #define VPP_ENABLE_DIRECT_REG_ACCESS
 

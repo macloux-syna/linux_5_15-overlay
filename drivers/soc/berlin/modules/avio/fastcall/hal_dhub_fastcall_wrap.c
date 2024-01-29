@@ -66,17 +66,24 @@ static void wrap_tz_secure_reg_rw(tz_secure_reg reg,
 			uint32_t ops, uint32_t *value)
 {
 	if ((reg >= 0) && (reg < TZ_REG_MAX)) {
-		int ret;
+		struct arm_smccc_res res = {};
+		uint32_t regVal = *value;
 
 		//Valid register, so access it
-		ret = tz_secure_reg_rw(reg, ops, value);
+		arm_smccc_smc(SYNA_SIP_SMC64_SREGISTER_OP,
+				ops, reg, regVal,
+				0, 0, 0, 0,
+				&res);
 		VPP_FASTCALL_DEBUG_LOG(
-			"%s:%d: reg:%x, ops:%d, val:%x, ret:0x%x/%d\n",
-			__func__, __LINE__, reg, ops, *value, ret, ret);
-		if (ret < 0)
+			"%s:%d: reg:%x, ops:%d, val:%x, ret:0x%lx/%ld\n",
+			__func__, __LINE__, reg, ops, *value, res.a0, res.a0);
+		if (res.a0) {
 			avio_trace(
-				"%s:%d:ERR:  reg:%x, ops:%d, val:%x, ret:0x%x/%d\n",
-				__func__, __LINE__, reg, ops, *value, ret, ret);
+				"%s:%d:ERR:  reg:%x, ops:%d, val:%x, ret:0x%lx/%ld\n",
+				__func__, __LINE__, reg, ops, *value, res.a0, res.a0);
+		} else if (ops == SYNA_SREGISTER_READ) {
+			*value = res.a1;
+		}
 	} else {
 		//Invalid register, log error
 		avio_trace("%s:%d:INVALID: reg:%x, ops:%d, val:%x\n",
@@ -87,13 +94,13 @@ static void wrap_tz_secure_reg_rw(tz_secure_reg reg,
 static void wrap_register_read(uint32_t regAddr, uint32_t *pRegVal)
 {
 	wrap_tz_secure_reg_rw(tz_phy_to_secure_reg(regAddr),
-		TZ_SECURE_REG_READ, pRegVal);
+		SYNA_SREGISTER_READ, pRegVal);
 }
 
 static void wrap_register_write(uint32_t regAddr, uint32_t regVal)
 {
 	wrap_tz_secure_reg_rw(tz_phy_to_secure_reg(regAddr),
-		TZ_SECURE_REG_WRITE, &regVal);
+		SYNA_SREGISTER_WRITE, &regVal);
 }
 
 #else //!VPP_ENABLE_FASTCALL_FOR_REG_ACCESS

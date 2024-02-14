@@ -152,18 +152,18 @@ int MV_VPP_SetDisplayResolution(ENUM_CPCB_ID cpcbID,
 	return res;
 }
 
-void MV_VPP_DisplayFrame(int uiPlaneId, int isVideoFormat, VPP_VBUF *pVppBuf_phy)
+void MV_VPP_DisplayFrame(int uiPlaneId, int isVideoFormat, VBUF_INFO *pVppDesc)
 {
 	if (!VPP_Is_Recovery_Mode()) {
 		if (isVideoFormat)
-			wrap_MV_VPPOBJ_DisplayFrame(uiPlaneId, pVppBuf_phy);
-        else
-			wrap_MV_VPPOBJ_SetStillPicture(uiPlaneId, pVppBuf_phy);
+			wrap_MV_VPPOBJ_DisplayFrame(uiPlaneId, pVppDesc);
+		else
+			wrap_MV_VPPOBJ_SetStillPicture(uiPlaneId, pVppDesc);
 	} else {
 	#ifndef VPP_ENABLE_USE_SET_STILL_PICTURE
-		wrap_MV_VPPOBJ_DisplayFrame(uiPlaneId, pVppBuf_phy);
+		wrap_MV_VPPOBJ_DisplayFrame(uiPlaneId, pVppDesc);
 	#else
-		wrap_MV_VPPOBJ_SetStillPicture(uiPlaneId, pVppBuf_phy);
+		wrap_MV_VPPOBJ_SetStillPicture(uiPlaneId, pVppDesc);
 	#endif
 	}
 }

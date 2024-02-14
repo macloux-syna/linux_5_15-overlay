@@ -28,8 +28,6 @@
  * Note : MAX_NUM_PLANES is defined in vpp_defines.h
  */
 #define MAX_PLANE_NUM 2
-#define VPP_GET_VBUF_INFO_PADDR(PLANE, VBUF_NUM)	vpp_disp_info_phys_addr[PLANE][VBUF_NUM]
-#define VPP_GET_VBUF_INFO_VADDR(PLANE, VBUF_NUM)	vpp_disp_info[PLANE][VBUF_NUM]
 
 #ifndef CONFIG_SYNA_DRM_DISABLE_ROTATION
 long device_rotate;
@@ -91,9 +89,8 @@ static void *buildin_buffer_kernel_addr[VPP_BUILD_IN_FRAME_TYPE_MAX];
 static phys_addr_t buildin_buffer_phy_addr[VPP_BUILD_IN_FRAME_TYPE_MAX];
 #endif //VPP_BUILD_IN_FRAME_ENABLE
 
-static VPP_VBUF *vpp_disp_info[MAX_NUM_PLANES][MAX_VBUF_INFO];
-static phys_addr_t vpp_disp_info_phys_addr[MAX_NUM_PLANES][MAX_VBUF_INFO];
 VPP_MEM vpp_disp_info_shm_handle[MAX_NUM_PLANES][MAX_VBUF_INFO];
+static VBUF_INFO vpp_disp_desc_array[MAX_NUM_PLANES][MAX_VBUF_INFO];
 static int vbuf_info_num[MAX_NUM_PLANES] = {0};
 static int init_vbuf_info;
 static VPP_WIN curr_fb_win[MAX_NUM_PLANES];
@@ -311,6 +308,8 @@ static void syna_vpp_init(struct drm_device *dev)
 	int i, ret;
 	int plane;
 	struct syna_drm_private *dev_priv = dev->dev_private;
+	VBUF_INFO *vbufinfo;
+	VPP_MEM *shm_handle;
 
 	DRM_DEBUG_DRIVER("%s:%d\n", __func__, __LINE__);
 
@@ -323,20 +322,23 @@ static void syna_vpp_init(struct drm_device *dev)
 	for (plane = 0; plane < MAX_NUM_PLANES; plane++) {
 		for (i = 0; i < MAX_VBUF_INFO; i++) {
 			DRM_DEBUG_DRIVER("Init %d\n", i);
+			vbufinfo = &vpp_disp_desc_array[plane][i];
+			shm_handle = &vpp_disp_info_shm_handle[plane][i];
 
-			vpp_disp_info_shm_handle[plane][i].size = sizeof(VPP_VBUF);
+			shm_handle->size = sizeof(VPP_VBUF);
 			ret = VPP_MEM_AllocateMemory(dev_priv->mem_list, VPP_MEM_TYPE_DMA,
-					&vpp_disp_info_shm_handle[plane][i], 0);
+					shm_handle, 0);
 			if (ret != 0) {
 				DRM_ERROR("%s %d  gem alloc failed!\n", __func__, __LINE__);
 				return;
 			}
-			vpp_disp_info[plane][i] = vpp_disp_info_shm_handle[plane][i].k_addr;
-			vpp_disp_info_phys_addr[plane][i] =
-				(phys_addr_t)vpp_disp_info_shm_handle[plane][i].p_addr;
+
+			vbufinfo->hShm_vbuf = shm_handle;
+			vbufinfo->pVppVbufInfo_virt = shm_handle->k_addr;
+			vbufinfo->pVppVbufInfo_phy = (void *)shm_handle->p_addr;
 
 			DRM_DEBUG_DRIVER("Init vpp_disp_info_phys_addr[%d][%d]=%lx\n",
-					 plane, i, vpp_disp_info_phys_addr[plane][i]);
+					 plane, i, (phys_addr_t)shm_handle->p_addr);
 			MV_VPP_SetInputFrameSize(plane, 720, 480);
 		}
 	}
@@ -558,6 +560,7 @@ void syna_vpp_set_surface(struct drm_device *dev, void __iomem *syna_reg,
 	VDEC_META_INFO kernel_vir_meta_addr = {0};
 	struct berlin_meta *bm_meta_y = NULL, *bm_meta_uv = NULL;
 	VPP_VBUF *curr_vpp_vbuf;
+	VBUF_INFO *curr_disp_desc;
 	int ret;
 
 	syna_obj = (struct syna_gem_object *)(syna_fb->obj[0]);
@@ -751,7 +754,8 @@ void syna_vpp_set_surface(struct drm_device *dev, void __iomem *syna_reg,
 		rotate_display_buffer(kernel_vir_dst_addr, kernel_vir_src_addr, width, height);
 #endif
 
-	curr_vpp_vbuf = vpp_disp_info[plane][vbuf_info_num[plane]];
+	curr_disp_desc = &vpp_disp_desc_array[plane][vbuf_info_num[plane]];
+	curr_vpp_vbuf = curr_disp_desc->pVppVbufInfo_virt;
 #ifdef SYNA_VPP_FORCE_PIP_FORMAT_ORDER
 	if (plane == PLANE_PIP) {
 		convert_frame_info(curr_vpp_vbuf, SRCFMT_ARGB32,
@@ -809,8 +813,7 @@ void syna_vpp_set_surface(struct drm_device *dev, void __iomem *syna_reg,
 
 	MV_VPP_SetInputFrameSize(plane, width, height);
 
-	MV_VPP_DisplayFrame(plane, VPP_video_format, (void *)
-				VPP_GET_VBUF_INFO_ADDR(plane, vbuf_info_num[plane]));
+	MV_VPP_DisplayFrame(plane, VPP_video_format, (void *)curr_disp_desc);
 
 	vbuf_info_num[plane] = (vbuf_info_num[plane] + 1) % MAX_VBUF_INFO;
 }
@@ -818,6 +821,8 @@ void syna_vpp_set_surface(struct drm_device *dev, void __iomem *syna_reg,
 #ifdef VPP_BUILD_IN_FRAME_ENABLE
 void syna_vpp_push_buildin_null_frame(u32 plane)
 {
+	VPP_VBUF *curr_vpp_vbuf;
+	VBUF_INFO *curr_disp_desc;
 	//Hardcode the frame type to GFX_NULL
 	VPP_BUILD_IN_FRAME_TYPE ftype = VPP_BUILD_IN_FRAME_TYPE_GFX_NULL;
 	const VPP_BUILD_IN_FRAME_INFO *bframe_info = &vpp_buildin_frame_info[ftype];
@@ -829,18 +834,21 @@ void syna_vpp_push_buildin_null_frame(u32 plane)
 	phys_addr_t disp_phyaddr =
 		(phys_addr_t)vpp_buildin_buffer_shm_handle[ftype].p_addr;
 
-	convert_frame_info(vpp_disp_info[plane][vbuf_info_num[plane]],
+	curr_disp_desc = &vpp_disp_desc_array[plane][vbuf_info_num[plane]];
+	curr_vpp_vbuf = curr_disp_desc->pVppVbufInfo_virt;
+	convert_frame_info(curr_vpp_vbuf,
 				   bframe_info->format_type, 0, 0,
 				   width, height, disp_phyaddr, (phys_addr_t)0);
 
-	MV_VPP_DisplayFrame(plane, VPP_video_format, (void *)
-				VPP_GET_VBUF_INFO_ADDR(plane, vbuf_info_num[plane]));
+	MV_VPP_DisplayFrame(plane, VPP_video_format, (void *)curr_disp_desc);
 
 	vbuf_info_num[plane] = (vbuf_info_num[plane] + 1) % MAX_VBUF_INFO;
 }
 
 void syna_vpp_push_buildin_frame(u32 plane)
 {
+	VPP_VBUF *curr_vpp_vbuf;
+	VBUF_INFO *curr_disp_desc;
 	VPP_BUILD_IN_FRAME_TYPE ftype = syna_get_buidin_frame_type(plane);
 	const VPP_BUILD_IN_FRAME_INFO *bframe_info = &vpp_buildin_frame_info[ftype];
 	int VPP_video_format =
@@ -850,14 +858,15 @@ void syna_vpp_push_buildin_frame(u32 plane)
 	phys_addr_t disp_phyaddr =
 		(phys_addr_t)vpp_buildin_buffer_shm_handle[ftype].p_addr;
 
-	convert_frame_info(vpp_disp_info[plane][vbuf_info_num[plane]],
+	curr_disp_desc = &vpp_disp_desc_array[plane][vbuf_info_num[plane]];
+	curr_vpp_vbuf = curr_disp_desc->pVppVbufInfo_virt;
+	convert_frame_info(curr_vpp_vbuf,
 				   bframe_info->format_type, 0, 0,
 				   width, height, disp_phyaddr, (phys_addr_t)0);
 
 	MV_VPP_SetInputFrameSize(plane, width, height);
 
-	MV_VPP_DisplayFrame(plane, VPP_video_format, (void *)
-				VPP_GET_VBUF_INFO_ADDR(plane, vbuf_info_num[plane]));
+	MV_VPP_DisplayFrame(plane, VPP_video_format, (void *)curr_disp_desc);
 
 	vbuf_info_num[plane] = (vbuf_info_num[plane] + 1) % MAX_VBUF_INFO;
 }

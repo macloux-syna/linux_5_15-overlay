@@ -17,7 +17,8 @@ int NTZ_MV_VPPOBJ_GetResolutionDescription(int ResId, VPP_RESOLUTION_DESCRIPTION
 
 int NTZ_MV_VPPOBJ_SetStillPicture(int planeID, void *pnew, void **pold)
 {
-	VPP_VBUF *pvbufinfo = pnew;
+	VBUF_INFO *pVppDesc = pnew;
+	VPP_VBUF *pvbufinfo = pVppDesc->pVppVbufInfo_virt;
 
 	switch (pvbufinfo->m_srcfmt) {
 		case SRCFMT_ARGB32:
@@ -41,7 +42,7 @@ int NTZ_MV_VPPOBJ_SetStillPicture(int planeID, void *pnew, void **pold)
 		break;
 	}
 
-	syna_lcdc_pushframe(planeID, pnew);
+	syna_lcdc_pushframe(planeID, pvbufinfo);
 
 	return MV_VPP_OK;
 }

@@ -73,12 +73,12 @@ int TZ_MV_VPPOBJ_SetStillPicture(int planeID, void *pnew, void **pold)
 		ClutValid = 1;
 
 	/* pass frame info */
-	VPP_CA_PassVbufInfo((unsigned int *)pVBufInfo, sizeof(VPP_VBUF),
+	VPP_CA_PassVbufInfo(is_vpp_ta, (unsigned int *)pVBufInfo, sizeof(VPP_VBUF),
 					pVBufInfo->m_clut_ptr, pVBufInfo->m_clut_num_items * 4,
 					planeID, ClutValid, SET_STILL_PICTURE);
 #else
 	/* pass frame info */
-	VPP_CA_PassVbufInfo(pVBufInfo, sizeof(VPP_VBUF),
+	VPP_CA_PassVbufInfo(is_vpp_ta, pVBufInfo, sizeof(VPP_VBUF),
 					0, 0, planeID, 0, SET_STILL_PICTURE);
 #endif
 
@@ -257,7 +257,7 @@ int TZ_MV_VPPOBJ_SetDisplayMode(int planeID, int mode)
 int TZ_MV_VPPOBJ_DisplayFrame(int planeID, void *frame)
 {
 	if (is_vpp_ta) {
-		VPP_CA_PassVbufInfo((unsigned int *)frame, sizeof(VPP_VBUF),
+		VPP_CA_PassVbufInfo(is_vpp_ta, (unsigned int *)frame, sizeof(VPP_VBUF),
 					(unsigned int *)NULL, sizeof(VPP_VBUF),
 					planeID, 0, DISPLAY_FRAME);
 		return MV_VPP_OK;
@@ -265,7 +265,7 @@ int TZ_MV_VPPOBJ_DisplayFrame(int planeID, void *frame)
 
 	/* pass frame info */
 #ifndef CONFIG_VPP_ENABLE_PASSPAR
-	VPP_CA_PassVbufInfo_Phy((unsigned int *)frame, sizeof(VPP_VBUF),
+	VPP_CA_PassVbufInfo_Phy(is_vpp_ta, (unsigned int *)frame, sizeof(VPP_VBUF),
 					(unsigned int *)NULL, sizeof(VPP_VBUF),
 					planeID, 0, DISPLAY_FRAME);
 #else

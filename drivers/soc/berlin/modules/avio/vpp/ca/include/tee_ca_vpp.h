@@ -30,14 +30,14 @@ int VPP_CA_GetCPCBOutputResolution(int cpcbID, int *resID);
 int VppGetResDescription(void *pOutBuffer, VPP_SHM_ID shmCmdId,
 						unsigned int sOutBufferSize, unsigned int ResId);
 int VPP_CA_GetCurrentHDCPVersion(int *pHDCPVersion);
-int VPP_CA_PassVbufInfo(void *Vbuf, unsigned int VbufSize,
+int VPP_CA_PassVbufInfo(int is_vpp_ta, void *Vbuf, unsigned int VbufSize,
 						 void *Clut, unsigned int ClutSize,
 						 int PlaneID, int ClutValid, VPP_SHM_ID ShmID);
 
 int VPP_CA_Initialize(ENUM_TA_UUID_TYPE uuidType, struct device *dev);
 void VPP_CA_Finalize(void);
 
-int VPP_CA_PassVbufInfo_Phy(void *Vbuf, unsigned int VbufSize,
+int VPP_CA_PassVbufInfo_Phy(int is_vpp_ta, void *Vbuf, unsigned int VbufSize,
 						 void *Clut, unsigned int ClutSize,
 						 int PlaneID, int ClutValid, VPP_SHM_ID ShmID);
 int VPP_CA_Init(VPP_INIT_PARM *vpp_init_parm);

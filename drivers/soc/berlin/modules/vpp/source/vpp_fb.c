@@ -358,7 +358,7 @@ void MV_VPP_FB_DisplayFrame(VPP_MEM *shm_handle, int x,
 				pVppBuf_virt->m_srcfmt, pVppBuf_virt->m_order);
 
 		VPP_MEM_FlushCache(vpp_shm_list, pVbufInfo->hShm_vbuf, sizeof(VPP_VBUF));
-		MV_VPP_DisplayFrame(uiPlaneId, 0, pVppBuf_phy);
+		MV_VPP_DisplayFrame(uiPlaneId, 0, pVbufInfo);
 	}
 }
 

@@ -40,7 +40,7 @@ int MV_VPP_make_frame_data(unsigned int iVideo, unsigned int *pStartAddr,
 			  unsigned int uiHeight, unsigned int uiPicA, unsigned int uiPicB);
 int MV_VPP_Init(VPP_MEM_LIST *shm_list, vpp_config_params vpp_config_param);
 void MV_VPP_Deinit(void);
-void MV_VPP_DisplayFrame(int uiPlaneId, int isVideoFormat, VPP_VBUF *pVppBuf_phy);
+void MV_VPP_DisplayFrame(int uiPlaneId, int isVideoFormat, VBUF_INFO *pVppDesc);
 void MV_VPP_GetInputFrameSize(ENUM_PLANE_ID plane_id, int *width, int *height);
 void MV_VPP_SetInputFrameSize(ENUM_PLANE_ID plane_id, int width, int height);
 int MV_VPP_SetDisplayResolution(ENUM_CPCB_ID cpcbID,

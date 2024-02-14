@@ -11,6 +11,7 @@
 
 #include "tee_ca_vpp.h"
 #include "tee_ca_common.h"
+#include "vbuf.h"
 
 #define bTST(x, b) (((x) >> (b)) & 1)
 
@@ -366,7 +367,7 @@ int VPP_CA_GetCurrentHDCPVersion(int *pHDCPVersion)
 	return operation.params[0].value.b;
 }
 
-int VPP_CA_PassVbufInfo_Phy(void *Vbuf, unsigned int VbufSize,
+int VPP_CA_PassVbufInfo_Phy(int is_vpp_ta, void *Vbuf, unsigned int VbufSize,
 						 void *Clut, unsigned int ClutSize,
 						 int PlaneID, int ClutValid, VPP_SHM_ID ShmID)
 {
@@ -374,6 +375,8 @@ int VPP_CA_PassVbufInfo_Phy(void *Vbuf, unsigned int VbufSize,
 	TEEC_Session *pSession;
 	TEEC_Result result;
 	TEEC_Operation operation;
+	VBUF_INFO *pVppDesc = Vbuf;
+	VPP_VBUF *pVBufInfo = pVppDesc->pVppVbufInfo_phy;
 
 	index = VPP_CA_GetInstanceID();
 	pSession = &(TAVPPInstance[index].session);
@@ -386,7 +389,7 @@ int VPP_CA_PassVbufInfo_Phy(void *Vbuf, unsigned int VbufSize,
 			TEEC_VALUE_INOUT);
 
 	operation.params[0].value.a = ShmID;
-	operation.params[0].value.b = (int)(long)Vbuf;
+	operation.params[0].value.b = (int)(long)pVBufInfo;
 	operation.params[3].value.a = PlaneID;
 
 	/* clear result */
@@ -403,7 +406,7 @@ int VPP_CA_PassVbufInfo_Phy(void *Vbuf, unsigned int VbufSize,
 	return operation.params[3].value.b;
 }
 
-int VPP_CA_PassVbufInfo(void *Vbuf_phyAddr, unsigned int VbufSize,
+int VPP_CA_PassVbufInfo(int is_vpp_ta, void *Vbuf_phyAddr, unsigned int VbufSize,
 						 void *Clut_phyAddr, unsigned int ClutSize,
 						 int PlaneID, int ClutValid, VPP_SHM_ID ShmID)
 {
@@ -412,24 +415,36 @@ int VPP_CA_PassVbufInfo(void *Vbuf_phyAddr, unsigned int VbufSize,
 
 	TEEC_Result result;
 	TEEC_Operation operation;
-	TEEC_SharedMemory TzShmVbuf, TzShmClut;
+	TEEC_SharedMemory TzShmClut;
+	TEEC_SharedMemory TzShmVbuf;
+	TEEC_SharedMemory *pShm;
+
+	VBUF_INFO *pVppDesc = Vbuf_phyAddr;
+	VPP_VBUF *pVBufInfo;
+
+	pVBufInfo = is_vpp_ta ? pVppDesc->pVppVbufInfo_phy :
+					pVppDesc->pVppVbufInfo_virt;
 
 	index = VPP_CA_GetInstanceID();
 	pSession = &(TAVPPInstance[index].session);
+	mutex_lock(&(TAVPPInstance[index].shm_mutex));
 
 	VPP_CA_DBG_PRINT("%s:%d: vbuf_info:%p, VbufSize:%x, Clut:%p, ClutSize:%x, PlaneID:%d, ClutValid:%d\n",
 		__func__, __LINE__, Vbuf_phyAddr, VbufSize, Clut_phyAddr, ClutSize, PlaneID, ClutValid);
 
 	memset(&operation, 0, sizeof(TEEC_Operation));
-	/* register Vbuf info*/
-	memset(&TzShmVbuf, 0, sizeof(TEEC_SharedMemory));
-	//Need to pass the physical address instead of virtual address
-	TzShmVbuf.phyAddr = Vbuf_phyAddr;
-	TzShmVbuf.size = VbufSize;
-	TzShmVbuf.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
+	if (is_vpp_ta) {
+		/* register Vbuf info*/
+		memset(&TzShmVbuf, 0, sizeof(TEEC_SharedMemory));
+		//Need to pass the physical address instead of virtual address
+		TzShmVbuf.phyAddr = pVBufInfo;
+		TzShmVbuf.size = VbufSize;
+		TzShmVbuf.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
 
-	result = TEEC_RegisterSharedMemory(&g_vppCaContext.context, &TzShmVbuf);
-	VPP_CA_DBG_PRINT("%s:%d: result:%x\n", __func__, __LINE__, result);
+		result = TEEC_RegisterSharedMemory(&g_vppCaContext.context, &TzShmVbuf);
+		VPP_CA_DBG_PRINT("%s:%d: result:%x\n", __func__, __LINE__, result);
+	}
+
 	/* register Clut info*/
 	if (ClutValid) {
 		memset(&TzShmClut, 0, sizeof(TEEC_SharedMemory));
@@ -456,8 +471,20 @@ int VPP_CA_PassVbufInfo(void *Vbuf_phyAddr, unsigned int VbufSize,
 	}
 
 	operation.params[0].value.a = ShmID;
-	operation.params[1].memref.parent = &TzShmVbuf;
-	operation.params[1].memref.size = TzShmVbuf.size;
+	if (is_vpp_ta) {
+		operation.params[1].memref.parent = &TzShmVbuf;
+		operation.params[1].memref.size = TzShmVbuf.size;
+	} else {
+		pShm = &(TAVPPInstance[index].Shm);
+		if (pShm && pShm->size < VbufSize) {
+			pr_err("%s:%d: pShm->size %zu, sInBufferSize %d\n",
+				__func__, __LINE__, pShm->size, VbufSize);
+			return -EINVAL;
+		}
+		memcpy(pShm->buffer, pVBufInfo, VbufSize);
+		operation.params[1].memref.parent = pShm;
+		operation.params[1].memref.size = pShm->size;
+	}
 	operation.params[1].memref.offset = 0;
 	operation.params[3].value.a = PlaneID;
 
@@ -467,6 +494,7 @@ int VPP_CA_PassVbufInfo(void *Vbuf_phyAddr, unsigned int VbufSize,
 	operation.started = 1;
 	result = InvokeCommandHelper(index, pSession, VPP_PASSSHM, &operation, NULL);
 
+	mutex_unlock(&(TAVPPInstance[index].shm_mutex));
 	return operation.params[3].value.b;
 }
 

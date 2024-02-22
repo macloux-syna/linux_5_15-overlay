@@ -16,6 +16,10 @@
 #include <drm/drm_probe_helper.h>
 #include "drm_syna_drv.h"
 #include "syna_drm_priv.h"
+#include "drm_syna_hdmi.h"
+#include "vpp_cmd.h"
+#include "vpp_api.h"
+#include "syna_hdmi_config.h"
 
 #define MAX_EDID_BLOCKS 8 //Max EDID blocks supported by syna driver
 
@@ -59,6 +63,7 @@ static int syna_hdmi_get_edid (void *data, u8 *buf, unsigned int block, size_t l
 
 static int syna_hdmi_connector_helper_get_modes(struct drm_connector *connector)
 {
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
 	int len = strlen(preferred_mode_name);
 	struct edid *edid;
 	int num_modes;
@@ -71,10 +76,22 @@ static int syna_hdmi_connector_helper_get_modes(struct drm_connector *connector)
 
 	//Get raw edid from syna driver
 	edid = drm_do_get_edid(connector, syna_hdmi_get_edid, NULL);
-	DRM_DEBUG_DRIVER("Edid obtained and parsed \n");
-	drm_connector_update_edid_property(connector, edid);
-	num_modes = drm_add_edid_modes(connector, edid);
-	kfree(edid);
+	if ((edid == NULL) &&
+		!syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.hpdHandlingEnabled) {
+		/* load dummy edid as bootup without sink and no hpd handling enabled*/
+		num_modes = drm_add_modes_noedid(connector, 1920, 1080);
+		if (!len) {
+			strncpy(preferred_mode_name, "1920x1080", DRM_DISPLAY_MODE_LEN);
+			len = strlen(preferred_mode_name);
+		}
+	} else {
+		/* even if hpd handling is disabled, if read EDID can be parsed on
+		   startup, use the read edid instead of hardcoded */
+		DRM_DEBUG_DRIVER("Edid obtained and parsed \n");
+		drm_connector_update_edid_property(connector, edid);
+		num_modes = drm_add_edid_modes(connector, edid);
+		kfree(edid);
+	}
 
 	if (num_modes && len) {
 		struct drm_display_mode *pref_mode_user = NULL;
@@ -109,23 +126,40 @@ static int syna_hdmi_connector_helper_get_modes(struct drm_connector *connector)
 	return num_modes;
 }
 
+static int syna_check_mode_enabled(int res_id, struct syna_conn_hdmi *syna_hdmi)
+{
+	int i;
+	for (i = 1; i < syna_hdmi->count_format_supported; i++)
+		if (res_id == syna_hdmi->supported_formats[i])
+			return 0;
+
+	return -1;
+}
+
 static int syna_hdmi_connector_helper_mode_valid(struct drm_connector *connector,
 						struct drm_display_mode *mode)
 {
+	int res_id = MV_VPP_GetResIndex(mode->hdisplay, mode->vdisplay,
+			mode->flags & DRM_MODE_FLAG_INTERLACE, mode->clock,
+			drm_mode_vrefresh(mode));
+	if (res_id < 0)
+		return MODE_NOMODE;
+
 	/*Interlaced and Doublescan mode currently not supported by VPP*/
 	if (mode->flags & DRM_MODE_FLAG_INTERLACE)
 		return MODE_NO_INTERLACE;
 	else if (mode->flags & DRM_MODE_FLAG_DBLSCAN)
 		return MODE_NO_DBLESCAN;
 
-	if(mode->hdisplay > 3840 && mode->vdisplay > 2160)
-		return MODE_ERROR;
+	if (syna_check_mode_enabled(res_id, to_syna_conn_hdmi(connector)))
+		return MODE_NOMODE;
 
 	return MODE_OK;
 }
 
 static void syna_hdmi_connector_destroy(struct drm_connector *connector)
 {
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
 	struct syna_drm_private *dev_priv = connector->dev->dev_private;
 	ENUM_VOUT_CONNECTOR vout_id =
 		connector->connector_type == DRM_MODE_CONNECTOR_HDMIA ?
@@ -139,10 +173,14 @@ static void syna_hdmi_connector_destroy(struct drm_connector *connector)
 	DRM_DEBUG_DRIVER("[CONNECTOR:%d:%s]\n",
 			 connector->base.id, connector->name);
 
-	kthread_stop(dev_priv->hpd_monitor_task);
+	if (syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.hpdHandlingEnabled)
+		kthread_stop(syna_hdmi->hpd_monitor_task);
+
+	kfree(syna_hdmi->supported_formats);
+
 	drm_connector_cleanup(connector);
 
-	kfree(connector);
+	kfree(syna_hdmi);
 	dev_priv->connector[vout_id] = NULL;
 }
 
@@ -155,10 +193,17 @@ static enum drm_connector_status syna_hdmi_hotplug_detect(
                         bool force)
 {
 	unsigned char device_connected;
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
+
 	(void)force;
 	/* read the HPD status from vpp hal, which is updated
 	   based on HPD IRQ from dhub */
-	wrap_MV_VPPOBJ_GetHPDStatus(&device_connected, false);
+
+	if (syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.hpdHandlingEnabled)
+		wrap_MV_VPPOBJ_GetHPDStatus(&device_connected, false);
+	else
+		device_connected = true; /*assume sink is connected always*/
+
 	return (device_connected ? connector_status_connected :
 					connector_status_disconnected);
 }
@@ -210,13 +255,19 @@ static const struct drm_connector_funcs syna_hdmi_connector_funcs = {
 
 struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev)
 {
+	struct syna_conn_hdmi *syna_hdmi;
 	struct drm_connector *connector;
-	struct syna_drm_private *dev_priv = dev->dev_private;
+	int retVal;
 
-	connector = kzalloc(sizeof(*connector), GFP_KERNEL);
-	if (!connector)
+	syna_hdmi = kzalloc(sizeof(*syna_hdmi), GFP_KERNEL);
+	if (!syna_hdmi)
 		return ERR_PTR(-ENOMEM);
 
+	retVal = syna_hdmi_tx_read_config(syna_hdmi);
+	if (retVal)
+		return ERR_PTR(retVal);
+
+	connector = &syna_hdmi->base;
 	drm_connector_init(dev, connector, &syna_hdmi_connector_funcs,
 				DRM_MODE_CONNECTOR_HDMIA);
 	drm_connector_helper_add(connector, &syna_hdmi_connector_helper_funcs);
@@ -226,10 +277,15 @@ struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev)
 	connector->doublescan_allowed = false;
 	connector->display_info.subpixel_order = SubPixelHorizontalRGB;
 
-	dev_priv->hpd_monitor_task = kthread_run(syna_hdmi_hpd_monitor, connector, "HDMI HPD monitor thread");
-	if (!IS_ERR(dev_priv->hpd_monitor_task)) {
-		connector->polled = DRM_CONNECTOR_POLL_HPD;
-		DRM_DEBUG_DRIVER("syna_drm:enable HDMI HPD polling \n");
+	if (syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.hpdHandlingEnabled) {
+		syna_hdmi->hpd_monitor_task = kthread_run(syna_hdmi_hpd_monitor, connector, "HDMI HPD monitor thread");
+		if (!IS_ERR(syna_hdmi->hpd_monitor_task)) {
+			connector->polled = DRM_CONNECTOR_POLL_HPD;
+			DRM_DEBUG_DRIVER("syna_drm:enable HDMI HPD polling \n");
+		}
+	} else {
+		DRM_DEBUG_DRIVER("hpd handling not enabled. assume connected always\n");
+		connector->status = connector_status_connected;
 	}
 
 	DRM_DEBUG_DRIVER("[CONNECTOR:%d:%s]\n", connector->base.id,

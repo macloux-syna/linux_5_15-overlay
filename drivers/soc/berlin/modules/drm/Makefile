@@ -94,6 +94,7 @@ syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_hdmi.o
 syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_dsi.o
 syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_tmds.o
 syna_drm-y += $(SYNA_DRM_TYPE)/syna_drm_priv.o
+syna_drm-y += $(SYNA_DRM_TYPE)/syna_hdmi_config.o
 endif
 
 syna_drm-y += port/drm_syna_common.o

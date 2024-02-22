@@ -90,7 +90,7 @@ syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dphy_wrap.o
 syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_displays.o
 
 else ifeq ($(SYNA_DRM_TYPE), vsxxx)
-syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_dvi.o
+syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_hdmi.o
 syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_dsi.o
 syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_tmds.o
 syna_drm-y += $(SYNA_DRM_TYPE)/syna_drm_priv.o

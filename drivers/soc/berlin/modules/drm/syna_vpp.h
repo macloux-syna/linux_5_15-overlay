@@ -23,8 +23,8 @@
 extern long device_rotate;
 #endif
 
-#define SYNA_WIDTH_MAX  1920
-#define SYNA_HEIGHT_MAX 1920	/* modified for potrait types */
+#define SYNA_WIDTH_MAX  3840
+#define SYNA_HEIGHT_MAX 2160
 
 #define SYNA_WIDTH_MIN  50
 #define SYNA_HEIGHT_MIN 50

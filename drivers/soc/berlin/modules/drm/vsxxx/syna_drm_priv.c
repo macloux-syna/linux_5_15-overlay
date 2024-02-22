@@ -132,7 +132,7 @@ int syna_modeset_createEntries(struct syna_drm_private *dev_priv)
 					cpcb_id = FIRST_CPCB;
 
 		if (VOUT_CONNECTOR_HDMI == vout_id)
-			dev_priv->connector[vout_id] = syna_dvi_connector_create(dev);
+			dev_priv->connector[vout_id] = syna_hdmi_connector_create(dev);
 		else
 			dev_priv->connector[vout_id] = syna_dsi_connector_create(dev);
 

@@ -94,7 +94,7 @@ struct drm_crtc *syna_crtc_create(struct drm_device *dev, uint32_t number,
 void syna_crtc_set_vblank_enabled(struct drm_crtc *crtc, bool enable);
 void syna_crtc_irq_handler(struct drm_crtc *crtc);
 
-struct drm_connector *syna_dvi_connector_create(struct drm_device *dev);
+struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev);
 struct drm_connector *syna_dsi_connector_create(struct drm_device *dev);
 struct drm_connector *syna_lcdc_connector_create(struct drm_device *dev);
 

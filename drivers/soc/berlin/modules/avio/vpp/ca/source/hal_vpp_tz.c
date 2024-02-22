@@ -541,3 +541,8 @@ int TZ_MV_VPPOBJ_LoadMipiConfig(VPP_MIPI_LOAD_CONFIG *pConfigParams)
 {
 	return VPP_PassShm_InBuffer(pConfigParams, VPP_MIPI_CONFIG, sizeof(VPP_MIPI_LOAD_CONFIG));
 }
+
+int TZ_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus)
+{
+	return VPP_CA_GetHPDStatus(pHpdStatus);
+}

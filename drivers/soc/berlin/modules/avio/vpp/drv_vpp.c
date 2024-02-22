@@ -69,6 +69,10 @@ static HRESULT wait_vpp_primary_vsync(int Id) {
 	return hres;
 };
 
+static HRESULT wait_hdmi_hpd_change(void) {
+	return down_interruptible(&vpp_ctx.hpd_sem);
+};
+
 static void signal_vpp_primary_false_vsync(void) {
 	struct semaphore *pSem;
 
@@ -261,6 +265,8 @@ static void vpp_drv_record_intr(VPP_CTX *hVppCtx, int intr_type, int intr_num)
 #ifdef CONFIG_IRQ_LATENCY_PROFILE
 		pintr_curr = &hVppCtx->avio_irq_profiler.vppCPCB1_intr_curr;
 #endif
+	} else if (intr_type == VPP_INTR_TYPE_HPD) {
+		up(&hVppCtx->hpd_sem);
 	}
 
 	//counter & semaphore operation for only periodic CPCB/TG interrupts
@@ -421,6 +427,9 @@ static int drv_vpp_open(void *h_vpp_ctx)
 
 	//Register Callback to wait for VPP VSYNC
 	wrap_MV_VPP_RegisterWaitForVppVsyncCb(wait_vpp_primary_vsync);
+
+	//Register Callback to wait for HDMI connection change
+	wrap_MV_VPP_RegisterWaitForHdmiHpd(wait_hdmi_hpd_change);
 
 	//Register VPP interrupt with dhub module
 	for (i = 0; i < hVppCtx->vpp_interrupt_list_count; i++) {
@@ -1054,6 +1063,8 @@ int avio_module_drv_vpp_probe(struct platform_device *dev)
 	sema_init(&hVppCtx->vpp_sem, 0);
 	sema_init(&hVppCtx->vsync_sem, 0);
 	sema_init(&hVppCtx->vsync1_sem, 0);
+	sema_init(&hVppCtx->hpd_sem, 0);
+
 	spin_lock_init(&hVppCtx->vpp_msg_spinlock);
 	spin_lock_init(&hVppCtx->bcm_spinlock);
 

@@ -1415,3 +1415,35 @@ int VppAVIOReset(void)
 
 	return operation.params[0].value.a;
 }
+
+int VPP_CA_GetHPDStatus(unsigned char *pHpdStatus)
+{
+	TEEC_Result result;
+	TEEC_Operation operation;
+	int index;
+	TEEC_Session *pSession;
+
+	index = VPP_CA_GetInstanceID();
+	pSession = &(TAVPPInstance[index].session);
+
+	operation.paramTypes = TEEC_PARAM_TYPES(
+					TEEC_VALUE_OUTPUT,
+					TEEC_NONE,
+					TEEC_NONE,
+					TEEC_NONE);
+
+	/* clear result */
+	operation.params[0].value.a = 0xdeadbeef;
+	operation.params[0].value.b = 0xdeadbeef;
+
+	operation.started = 1;
+	result = InvokeCommandHelper(index,
+					pSession,
+					VPP_GETHPDSTATUS,
+					&operation,
+					NULL);
+	VPP_TEEC_LOGIFERROR(result);
+	*pHpdStatus = (operation.params[0].value.a & 0x01) ? true : false;
+
+	return operation.params[0].value.b;
+}

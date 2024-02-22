@@ -70,6 +70,7 @@ int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int 
 int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 				VPP_SHM_ID shmCmdId, UINT32 sInBufferSize, UINT32 sOutBufferSize);
 int VppAVIOReset(void);
+int VPP_CA_GetHPDStatus(unsigned char *pHpdStatus);
 #ifdef __cplusplus
 }
 #endif

@@ -16,12 +16,15 @@
 
 extern vpp_config_params vpp_config_param;
 
+#define HPD_CHECK_TIMEOUT  10*HZ
 static AMPMsgQ_t hVPPMsgQ;
 static struct semaphore vpp_sem;
 static struct task_struct *vpp_isr_task;
 
 static struct semaphore vpp_vsync_sem;
 static struct semaphore vpp_vsync1_sem;
+static struct semaphore vpp_hdmitx_hpd_sem;
+
 static HRESULT wait_vpp_primary_vsync(int Id) {
 	struct semaphore *pSem;
 	HRESULT hres;
@@ -31,6 +34,10 @@ static HRESULT wait_vpp_primary_vsync(int Id) {
 	hres = down_interruptible(pSem);
 
 	return hres;
+}
+
+static HRESULT wait_hdmi_hpd_change(void) {
+	return down_interruptible(&vpp_hdmitx_hpd_sem);
 }
 
 static int VPP_IRQ_Handler(unsigned int irq, void *dev_id)
@@ -45,6 +52,11 @@ static int VPP_IRQ_Handler(unsigned int irq, void *dev_id)
 				intr_num,
 				&vpp_vsync_sem,
 				&vpp_vsync1_sem);
+
+#if defined VPP_DHUB_HDMITX_HPD_INTR  //all chips doesn't have hdmi interface
+	if (VPP_DHUB_HDMITX_HPD_INTR == intr_num)
+		up(&vpp_hdmitx_hpd_sem);
+#endif
 
 	msg.m_MsgID = VPP_CC_MSG_TYPE_VPP;
 	msg.m_Param2 = 0;
@@ -84,6 +96,7 @@ void VPP_CreateISRTask(void)
 	sema_init(&vpp_sem, 0);
 	sema_init(&vpp_vsync_sem, 0);
 	sema_init(&vpp_vsync1_sem, 0);
+	sema_init(&vpp_hdmitx_hpd_sem, 0);
 
 	err = AMPMsgQ_Init(&hVPPMsgQ, VPP_ISR_MSGQ_SIZE);
 	if (unlikely(err != S_OK))
@@ -91,6 +104,9 @@ void VPP_CreateISRTask(void)
 
 	//Register Callback to wait for VPP VSYNC
 	wrap_MV_VPP_RegisterWaitForVppVsyncCb(wait_vpp_primary_vsync);
+
+	//Register callback to wait for HDMI connection change
+	wrap_MV_VPP_RegisterWaitForHdmiHpd(wait_hdmi_hpd_change);
 
 	vpp_isr_task = kthread_run(VPP_ISR_Task, NULL, "VPP ISR Thread");
 	if (IS_ERR(vpp_isr_task))

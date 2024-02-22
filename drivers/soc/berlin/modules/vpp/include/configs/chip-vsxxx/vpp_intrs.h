@@ -25,6 +25,7 @@ static unsigned int vpp_intrs [] = {
 
 #define VPP_DHUB_VOP1_INTR avioDhubSemMap_vpp128b_vpp_inr0
 #define VPP_DHUB_VOP2_INTR avioDhubSemMap_vpp128b_vpp_inr14
+#define VPP_DHUB_HDMITX_HPD_INTR avioDhubSemMap_vpp128b_vpp_inr2
 
 #define VPP_SIGNAL_VSYNC(MODE, INTRNO, VSYNC_SEM, VSYNC_SEM1)	\
 			do {\

@@ -16,8 +16,10 @@ extern "C" {
 #endif
 
 typedef int (*wait_for_vpp_vsync_cb_func)(int Id);
+typedef int (*wait_for_hdmi_hpd_cb_func)(void);
 
 void wrap_MV_VPP_RegisterWaitForVppVsyncCb(wait_for_vpp_vsync_cb_func cb_func);
+void wrap_MV_VPP_RegisterWaitForHdmiHpd(wait_for_hdmi_hpd_cb_func cb_func);
 
 int wrap_MV_VPP_InitVPPS(ENUM_TA_UUID_TYPE uuidType, unsigned int *vpp_init_parm);
 
@@ -65,6 +67,8 @@ int wrap_MV_VPP_LoadConfigTable(ENUM_VOUT_ID voutid, int Id, void *pConfig);
 int wrap_MV_VPP_iSTeeEnabled(void);
 int wrap_MV_VPPOBJ_SetDispOutParams(VPP_DISP_OUT_PARAMS *pDispParams, int cpcbID);
 int wrap_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid);
+int wrap_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus, unsigned char sync);
+int wrap_MV_VPP_WaitHdmiConnChange(unsigned char *pSinkConnected);
 #ifdef __cplusplus
 }
 #endif

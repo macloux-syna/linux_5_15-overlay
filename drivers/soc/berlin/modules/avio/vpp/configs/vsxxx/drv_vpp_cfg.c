@@ -97,7 +97,7 @@ void drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev)
 	drv_vpp_add_vpp_interrupt_num(hVppCtx, avioDhubSemMap_vpp128b_vpp_inr12, VPP_INTR_TYPE_OVP);
 
 	//HDMI_TX - Tx, hdcp22, trng, phy, eARC
-	drv_vpp_add_vpp_interrupt_num(hVppCtx, avioDhubSemMap_vpp128b_vpp_inr2, VPP_INTR_TYPE_HDMI_TX);
+	drv_vpp_add_vpp_interrupt_num(hVppCtx, avioDhubSemMap_vpp128b_vpp_inr2, VPP_INTR_TYPE_HPD);
 	drv_vpp_add_vpp_interrupt_num(hVppCtx, avioDhubSemMap_vpp128b_vpp_inr3, VPP_INTR_TYPE_HDMI_TX);
 	drv_vpp_add_vpp_interrupt_num(hVppCtx, avioDhubSemMap_vpp128b_vpp_inr4, VPP_INTR_TYPE_HDMI_TX);
 	drv_vpp_add_vpp_interrupt_num(hVppCtx, avioDhubSemMap_vpp128b_vpp_inr5, VPP_INTR_TYPE_HDMI_TX);

@@ -186,3 +186,7 @@ int __weak TZ_MV_VPPOBJ_SetDispOutParams(void *pdispParams, int size)
 	return 0;
 }
 
+int __weak TZ_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus)
+{
+	return 0;
+}

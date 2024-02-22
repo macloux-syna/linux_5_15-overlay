@@ -86,6 +86,7 @@ typedef struct _VPP_CONTEXT_ {
 	struct semaphore vpp_sem;
 	struct semaphore vsync_sem;
 	struct semaphore vsync1_sem;
+	struct semaphore hpd_sem;
 	atomic_t vsync_cnt;
 	atomic_t vsync1_cnt;
 	atomic_t vde_cnt;

@@ -13,12 +13,24 @@
 #include "drv_dhub.h"
 #include "drv_vpp.h"
 
+#define HDMITX_HPD_DEBOUNCE 60
+
+static int curr_sink_conn_state = -1;
+
 //Callback to wait for vpp vsync interrupt
 static wait_for_vpp_vsync_cb_func wait_for_vpp_vsync_cb;
+
+//Callback to wait for HDMI connection status change
+static wait_for_hdmi_hpd_cb_func wait_for_hdmi_hpd_cb;
 
 void wrap_MV_VPP_RegisterWaitForVppVsyncCb(wait_for_vpp_vsync_cb_func cb_func)
 {
 	wait_for_vpp_vsync_cb = cb_func;
+}
+
+void wrap_MV_VPP_RegisterWaitForHdmiHpd(wait_for_hdmi_hpd_cb_func cb_func)
+{
+	wait_for_hdmi_hpd_cb = cb_func;
 }
 
 int wrap_MV_VPP_InitVPPS(ENUM_TA_UUID_TYPE uuidType, unsigned int *vpp_init_parm)
@@ -464,6 +476,59 @@ int wrap_MV_VPPOBJ_SetDispOutParams(VPP_DISP_OUT_PARAMS *pDispParams, int cpcbID
 	return  Ret;
 }
 
+int wrap_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus, unsigned char sync)
+{
+	/* keep local copy synced after HPD to aviod unnecessary TA-CA context switch.
+	 * If explicitely requested using sync param, read/sync HPD status from TA
+	 * drm core have option to  use polling for HPD status.
+	 */
+	int retVal = 0;
+
+	if (curr_sink_conn_state < 0) {
+		/*force sync the status before first read*/
+		sync = 1;
+	}
+
+	if (sync) {
+		DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+		if (hDhubCtx->isTeeEnabled)
+			retVal = TZ_MV_VPPOBJ_GetHPDStatus(pHpdStatus);
+		avio_debug("setting hdmi connected to : %d\n", *pHpdStatus);
+		curr_sink_conn_state = *pHpdStatus;
+	} else {
+		/* wrap_MV_VPPOBJ_GetHPDStatus is called with sync after vpp init,
+		 * so by the time drm checks status, curr_sink_conn_state will be synced
+		 */
+		*pHpdStatus = curr_sink_conn_state ? true : false;
+	}
+	return retVal;
+}
+
+int wrap_MV_VPP_WaitHdmiConnChange(unsigned char *pSinkConnected)
+{
+	int retVal = -1;
+
+	if (wait_for_hdmi_hpd_cb)
+		retVal = wait_for_hdmi_hpd_cb();
+
+	if (!retVal) {
+		/* sync HPD status internally after allowing debouncing period.
+		 * in case drm reverts to polling for HPD status, this will help
+		 * to minimize ca-ta switch
+		 */
+		msleep(HDMITX_HPD_DEBOUNCE);
+		retVal = wrap_MV_VPPOBJ_GetHPDStatus(pSinkConnected, true);
+		if (retVal) {
+			avio_error("error getting HDMI device connection status, assume connected\n");
+			*pSinkConnected = true;
+			return -ECOMM;
+		}
+	}
+
+	/* return 0 if HPD state change happened */
+	return retVal;
+}
+
 EXPORT_SYMBOL(wrap_MV_VPP_InitVPPS);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetCPCBOutputResolution);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetResolutionDescription);
@@ -503,3 +568,6 @@ EXPORT_SYMBOL(wrap_MV_VPP_iSTeeEnabled);
 EXPORT_SYMBOL(wrap_MV_VPP_RegisterWaitForVppVsyncCb);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_SetDispOutParams);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetHDMIRawEdid);
+EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetHPDStatus);
+EXPORT_SYMBOL(wrap_MV_VPP_RegisterWaitForHdmiHpd);
+EXPORT_SYMBOL(wrap_MV_VPP_WaitHdmiConnChange);

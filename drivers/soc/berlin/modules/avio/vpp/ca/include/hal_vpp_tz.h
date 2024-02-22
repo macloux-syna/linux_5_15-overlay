@@ -57,6 +57,7 @@ int TZ_MV_VPPOBJ_GetDispOutParams(VPP_DISP_OUT_PARAMS *pdispParams, int size);
 int TZ_MV_VPPOBJ_LoadMipiConfig(VPP_MIPI_LOAD_CONFIG *pConfigParams);
 int TZ_MV_VPPOBJ_SetDispOutParams(void *pdispParams, int size);
 int TZ_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid);
+int TZ_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus);
 #ifdef __cplusplus
 }
 #endif

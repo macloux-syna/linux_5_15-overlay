@@ -66,6 +66,7 @@ int VPP_CA_SemOper(int cmd_id, int sem_id, int *pParam);
 int VPP_CA_EnableHdmiAudioFmt(int enable);
 int VppGetCPCBOutputPixelClock(int resID,  int *pixel_clock);
 int VPP_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInBufferSize);
+int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int sOutBufferSize);
 int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 				VPP_SHM_ID shmCmdId, UINT32 sInBufferSize, UINT32 sOutBufferSize);
 int VppAVIOReset(void);

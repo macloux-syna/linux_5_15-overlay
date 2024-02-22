@@ -367,6 +367,17 @@ int wrap_MV_VPPOBJ_EnableHdmiAudioFmt(int enable)
 	return retVal;
 }
 
+int wrap_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid)
+{
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+	int retVal = 0;
+
+	if (hDhubCtx->isTeeEnabled)
+		retVal = TZ_MV_VPPOBJ_GetHDMIRawEdid(pRawEdid);
+
+	return retVal;
+}
+
 int wrap_MV_VPPOBJ_InvokePassShm_Helper(void *pBuffer, unsigned int shmCmdId,
 		unsigned int sBufferSize)
 {
@@ -491,3 +502,4 @@ EXPORT_SYMBOL(wrap_MV_VPP_LoadConfigTable);
 EXPORT_SYMBOL(wrap_MV_VPP_iSTeeEnabled);
 EXPORT_SYMBOL(wrap_MV_VPP_RegisterWaitForVppVsyncCb);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_SetDispOutParams);
+EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetHDMIRawEdid);

@@ -167,6 +167,11 @@ int __weak TZ_MV_VPPOBJ_GetDispOutParams(VPP_DISP_OUT_PARAMS *pdispParams, int s
 	return 0;
 }
 
+int __weak TZ_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid)
+{
+	return 0;
+}
+
 void __weak drv_mipi_reset(void *h_vpp_ctx, int enable)
 {
 }

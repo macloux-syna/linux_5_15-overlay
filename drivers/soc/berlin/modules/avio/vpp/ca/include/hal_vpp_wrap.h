@@ -64,6 +64,7 @@ void wrap_MV_VPP_MIPI_Reset(int enable);
 int wrap_MV_VPP_LoadConfigTable(ENUM_VOUT_ID voutid, int Id, void *pConfig);
 int wrap_MV_VPP_iSTeeEnabled(void);
 int wrap_MV_VPPOBJ_SetDispOutParams(VPP_DISP_OUT_PARAMS *pDispParams, int cpcbID);
+int wrap_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid);
 #ifdef __cplusplus
 }
 #endif

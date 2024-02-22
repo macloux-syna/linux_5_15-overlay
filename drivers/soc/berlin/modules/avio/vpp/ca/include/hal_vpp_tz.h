@@ -56,6 +56,7 @@ int TZ_MV_VPPOBJ_GetCPCBOutputPixelClock(int resID, int *pixel_clock);
 int TZ_MV_VPPOBJ_GetDispOutParams(VPP_DISP_OUT_PARAMS *pdispParams, int size);
 int TZ_MV_VPPOBJ_LoadMipiConfig(VPP_MIPI_LOAD_CONFIG *pConfigParams);
 int TZ_MV_VPPOBJ_SetDispOutParams(void *pdispParams, int size);
+int TZ_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid);
 #ifdef __cplusplus
 }
 #endif

@@ -1300,6 +1300,24 @@ int VPP_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInB
 	return Ret;
 }
 
+int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int sOutBufferSize)
+{
+	int index;
+	int Ret;
+	TEEC_SharedMemory *pShm;
+
+	index = VPP_CA_GetInstanceID();
+
+	pShm = &(TAVPPInstance[index].Shm);
+
+	mutex_lock(&(TAVPPInstance[index].shm_mutex));
+	Ret = VppPassShm(pShm,shmCmdId, sOutBufferSize);
+	memcpy(pOutBuffer,pShm->buffer,sOutBufferSize);
+	mutex_unlock(&(TAVPPInstance[index].shm_mutex));
+
+	return Ret;
+}
+
 int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 				VPP_SHM_ID shmCmdId, UINT32 sInBufferSize, UINT32 sOutBufferSize)
 {

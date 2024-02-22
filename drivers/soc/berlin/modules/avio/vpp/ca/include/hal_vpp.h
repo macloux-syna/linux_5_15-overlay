@@ -165,6 +165,13 @@ typedef struct VPP_DISP_OUT_PARAMS_T {
 	UINT32 uiDisplayMode;
 } VPP_DISP_OUT_PARAMS;
 
+/*HDMI Data*/
+typedef struct VPP_HDMI_RAW_EDID_T{
+   UINT8    DataBuf[1024];
+   UINT8    IsValid;
+   UINT8    Extblks;
+}VPP_HDMI_RAW_EDID;
+
 #ifdef __cplusplus
 }
 #endif

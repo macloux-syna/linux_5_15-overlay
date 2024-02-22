@@ -433,6 +433,19 @@ int TZ_MV_VPPOBJ_SetHdmiTxControl(int enable)
 	return VPP_CA_SetHdmiTxControl(enable);
 }
 
+/***************************************************
+ * FUNCTION:Get Raw EDID
+ * PARAMS: pRawEdid - pointer to edid block
+ * RETURN: MV_VPP_OK - succeed
+ *         MV_VPP_ENODEV - no device
+ *         MV_EBADPARAM - invalid parameters
+ *         MV_EUNCONFIG - VPP not configured
+ ***********************************************/
+int TZ_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid)
+{
+	return VPP_PassShm_OutBuffer(pRawEdid, READ_HDMI_RAWEDID,
+				sizeof(VPP_HDMI_RAW_EDID));
+}
 /************************************************************************
  * FUNCTION: recycle plane frame descriptors
  * INPUT: planeID - id of the plane

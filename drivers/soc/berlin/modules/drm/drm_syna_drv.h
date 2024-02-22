@@ -40,6 +40,7 @@ struct syna_drm_private {
 	struct drm_panel *panel[MAX_CRTC];
 
 	bool display_enabled;
+	struct task_struct *hpd_monitor_task;
 	VPP_MEM_LIST *mem_list;
 	vpp_config_params vpp_config_param;
 };

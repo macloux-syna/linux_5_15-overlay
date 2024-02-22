@@ -139,6 +139,7 @@ static void syna_hdmi_connector_destroy(struct drm_connector *connector)
 	DRM_DEBUG_DRIVER("[CONNECTOR:%d:%s]\n",
 			 connector->base.id, connector->name);
 
+	kthread_stop(dev_priv->hpd_monitor_task);
 	drm_connector_cleanup(connector);
 
 	kfree(connector);
@@ -147,6 +148,48 @@ static void syna_hdmi_connector_destroy(struct drm_connector *connector)
 
 static void syna_hdmi_connector_force(struct drm_connector *connector)
 {
+}
+
+static enum drm_connector_status syna_hdmi_hotplug_detect(
+                        struct drm_connector *connector,
+                        bool force)
+{
+	unsigned char device_connected;
+	(void)force;
+	/* read the HPD status from vpp hal, which is updated
+	   based on HPD IRQ from dhub */
+	wrap_MV_VPPOBJ_GetHPDStatus(&device_connected, false);
+	return (device_connected ? connector_status_connected :
+					connector_status_disconnected);
+}
+
+static int syna_hdmi_hpd_monitor(void *param)
+{
+	struct drm_connector *connector = (struct drm_connector *)param;
+	struct drm_device *dev = connector->dev;
+	unsigned char activeHpdStatus;
+	unsigned char hpdStatus;
+	int retVal;
+
+	connector->status = syna_hdmi_hotplug_detect(connector, false);
+	activeHpdStatus = (connector->status == connector_status_connected) ? true : false;
+	DRM_DEBUG_DRIVER("startup HDMI connection state : %d\n", activeHpdStatus);
+
+	while (!kthread_should_stop()) {
+		retVal = wrap_MV_VPP_WaitHdmiConnChange(&hpdStatus);
+		if (retVal != 0)
+			continue;
+
+		if (hpdStatus != activeHpdStatus) {
+			DRM_DEBUG_DRIVER("HDMI connection state changed to : %d\n", hpdStatus);
+			activeHpdStatus = hpdStatus;
+			connector->status = hpdStatus ? connector_status_connected :
+							connector_status_disconnected;
+			drm_kms_helper_hotplug_event(dev);
+		}
+	}
+
+	return 0;
 }
 
 static struct drm_connector_helper_funcs syna_hdmi_connector_helper_funcs = {
@@ -162,11 +205,13 @@ static const struct drm_connector_funcs syna_hdmi_connector_funcs = {
 	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
 	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 	.dpms = drm_helper_connector_dpms,
+	.detect = syna_hdmi_hotplug_detect,
 };
 
 struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev)
 {
 	struct drm_connector *connector;
+	struct syna_drm_private *dev_priv = dev->dev_private;
 
 	connector = kzalloc(sizeof(*connector), GFP_KERNEL);
 	if (!connector)
@@ -180,6 +225,12 @@ struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev)
 	connector->interlace_allowed = false;
 	connector->doublescan_allowed = false;
 	connector->display_info.subpixel_order = SubPixelHorizontalRGB;
+
+	dev_priv->hpd_monitor_task = kthread_run(syna_hdmi_hpd_monitor, connector, "HDMI HPD monitor thread");
+	if (!IS_ERR(dev_priv->hpd_monitor_task)) {
+		connector->polled = DRM_CONNECTOR_POLL_HPD;
+		DRM_DEBUG_DRIVER("syna_drm:enable HDMI HPD polling \n");
+	}
 
 	DRM_DEBUG_DRIVER("[CONNECTOR:%d:%s]\n", connector->base.id,
 			 connector->name);

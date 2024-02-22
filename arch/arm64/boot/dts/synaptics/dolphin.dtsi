@@ -467,6 +467,11 @@
 				compatible = "syna,drm-dsi";
 				status = "disabled";
 			};
+
+			hdmi_tx {
+				compatible = "syna,drm-hdmi";
+				status= "disabled";
+			};
 		};
 
 		sdhci0: sdhci@f7aa0000 {

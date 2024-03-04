@@ -234,7 +234,7 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 
 	//Allocate memory for TA heap memory manager
 	shm_handle.size = SHM_SHARE_SZ;
-	res = VPP_MEM_AllocateMemory(vpp_shm_list, VPP_MEM_TYPE_NS_NC,
+	res = VPP_MEM_AllocateMemory(vpp_shm_list, VPP_MEM_TYPE_DMA,
 				&shm_handle, GFP_KERNEL | __GFP_NOWARN);
 	if (res != VPP_MEM_ERROR_TYPE_OK) {
 		pr_info("VPP internal memory allocation: Not enough memory!!!!!!!!\n");
@@ -389,7 +389,7 @@ EXIT_DESTROY:
 	wrap_MV_VPPOBJ_Destroy();
 EXIT:
 	wrap_MV_VPP_DeInit();
-	VPP_MEM_FreeMemory(vpp_shm_list, VPP_MEM_TYPE_NS_NC, &shm_handle);
+	VPP_MEM_FreeMemory(vpp_shm_list, VPP_MEM_TYPE_DMA, &shm_handle);
 
 	pr_err("MV_VPP_Init:Error: (libfastlogo.ta) - %d\n", res);
 

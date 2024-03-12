@@ -11,7 +11,6 @@ extern "C" {
 
 #include "avio_type.h"
 #include "avio_io.h"
-#include "tee_client_api.h"
 #include "vpp_vbuf.h"
 #include "tee_ca_common.h"
 #include "vpp_cmd.h"

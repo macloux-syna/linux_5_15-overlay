@@ -24,11 +24,15 @@ endif
 AVIO_FASTCALL_API_OBJS := fastcall/hal_dhub_fastcall_wrap.o
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/fastcall/include
 
+ifeq ($(CONFIG_OPTEE),y)
+AVIO_INC_PATH += -I$(srctree)/drivers/soc/berlin/modules/vpp/include
+else
 AVIO_INC_PATH += -I$(srctree)/drivers/soc/berlin/modules/tzd/tee/client_api \
 				 -I$(srctree)/drivers/soc/berlin/modules/tzd/tee/common \
 				 -I$(srctree)/drivers/soc/berlin/modules/tzd/tz/common \
 				 -I$(srctree)/drivers/soc/berlin/modules/tzd/include \
 				 -I$(srctree)/drivers/soc/berlin/modules/tzd
+endif
 
 ###############################################################################
 # AIO - aio kernel sub-module objects
@@ -101,7 +105,11 @@ endif
 ###############################################################################
 ifeq ($(USE_VPP_TA), 1)
 AVIO_VPP_API_OBJS := vpp/drv_vpp.o
+ifeq ($(CONFIG_OPTEE),y)
+AVIO_VPP_API_OBJS += vpp/ca/source/tee_ca_vpp_optee.o
+else
 AVIO_VPP_API_OBJS += vpp/ca/source/tee_ca_vpp.o
+endif
 AVIO_VPP_API_OBJS += vpp/ca/source/hal_vpp_tz.o
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/vpp/ca/include/vsxxx
 endif

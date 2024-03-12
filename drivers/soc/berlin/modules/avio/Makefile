@@ -144,7 +144,11 @@ AVIO_DHUB_API_OBJS := dhub/drv_dhub.o
 AVIO_DHUB_API_OBJS += dhub/avio_dhub_drv.o
 AVIO_DHUB_API_OBJS += dhub/hal/hal_dhub_wrap.o
 AVIO_DHUB_API_OBJS += dhub/hal/hal_dhub.o
+ifeq ($(CONFIG_OPTEE),y)
+AVIO_DHUB_API_OBJS += dhub/ca/tee_ca_dhub_optee.o
+else
 AVIO_DHUB_API_OBJS += dhub/ca/tee_ca_dhub.o
+endif
 
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/dhub
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/dhub/ca

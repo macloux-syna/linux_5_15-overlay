@@ -69,6 +69,7 @@ int wrap_MV_VPPOBJ_SetDispOutParams(VPP_DISP_OUT_PARAMS *pDispParams, int cpcbID
 int wrap_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid);
 int wrap_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus, unsigned char sync);
 int wrap_MV_VPP_WaitHdmiConnChange(unsigned char *pSinkConnected);
+int wrap_MV_VPPOBJ_GetHDMISinkCaps(VPP_HDMI_SINK_CAPS *pSinkCaps);
 #ifdef __cplusplus
 }
 #endif

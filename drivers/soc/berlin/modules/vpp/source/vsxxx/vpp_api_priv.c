@@ -241,6 +241,7 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 	VPP_DISP_OUT_PARAMS dispParams;
 	VPP_MEM shm_handle;
 	const int feature_cfg[MAX_NUM_FEATURE_CFG] = {VPP_FEATURE_HDMITX};
+	VPP_HDMI_SINK_CAPS sinkCaps;
 
 	//Allocate memory for TA heap memory manager
 	shm_handle.size = SHM_SHARE_SZ;
@@ -303,6 +304,18 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 		wrap_MV_VPP_LoadConfigTable(VOUT_DSI, 0, vpp_config_param.mipi_config_params);
 
 	wrap_MV_VPPOBJ_SetDispOutParams(&dispParams, CPCB_1);
+
+	/* temporary workaround till dynamic format setting is working,
+	   query to check if sink supports 4K, if it supports full-4K,
+	   configure bootup resolution to be 4K30, else 1080p
+	 */
+	res = wrap_MV_VPPOBJ_GetHDMISinkCaps(&sinkCaps);
+	if (res == MV_VPP_OK) {
+		if (sinkCaps & ( 1 << VPP_HDMI_SINKCAP_BITMASK_FULL4K)) {
+			pr_info("forcing 4K30 on bootup\n");
+			dispParams.uiResId = RES_4Kx2K30;
+		}
+	}
 
 	//Set the display resolution
 	res = MV_VPP_SetDisplayResolution(CPCB_1, dispParams, 1);

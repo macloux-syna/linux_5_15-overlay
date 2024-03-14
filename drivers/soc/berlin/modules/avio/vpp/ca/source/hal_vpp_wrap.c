@@ -504,6 +504,17 @@ int wrap_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus, unsigned char sync)
 	return retVal;
 }
 
+int wrap_MV_VPPOBJ_GetHDMISinkCaps(VPP_HDMI_SINK_CAPS *pSinkCaps)
+{
+	int retVal = 0;
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+
+	if (hDhubCtx->isTeeEnabled)
+		retVal = TZ_MV_VPPOBJ_GetHDMISinkCaps(pSinkCaps);
+
+	return retVal;
+}
+
 int wrap_MV_VPP_WaitHdmiConnChange(unsigned char *pSinkConnected)
 {
 	int retVal = -1;
@@ -569,5 +580,6 @@ EXPORT_SYMBOL(wrap_MV_VPP_RegisterWaitForVppVsyncCb);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_SetDispOutParams);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetHDMIRawEdid);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetHPDStatus);
+EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetHDMISinkCaps);
 EXPORT_SYMBOL(wrap_MV_VPP_RegisterWaitForHdmiHpd);
 EXPORT_SYMBOL(wrap_MV_VPP_WaitHdmiConnChange);

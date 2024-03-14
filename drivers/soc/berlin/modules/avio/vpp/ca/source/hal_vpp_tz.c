@@ -546,3 +546,8 @@ int TZ_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus)
 {
 	return VPP_CA_GetHPDStatus(pHpdStatus);
 }
+
+int TZ_MV_VPPOBJ_GetHDMISinkCaps(VPP_HDMI_SINK_CAPS *pSinkCaps)
+{
+	return VPP_PassShm_OutBuffer(pSinkCaps, GET_HDMI_SINKCAPS, sizeof(VPP_HDMI_SINK_CAPS));
+}

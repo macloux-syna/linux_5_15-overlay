@@ -172,6 +172,14 @@ typedef struct VPP_HDMI_RAW_EDID_T{
    UINT8    Extblks;
 }VPP_HDMI_RAW_EDID;
 
+/*move to full VPP_HDMI_SINK_CAPS in vpp if requirement arise*/
+typedef int VPP_HDMI_SINK_CAPS;
+typedef enum {
+	VPP_HDMI_SINKCAP_BITMASK_HDMIMODE,
+	VPP_HDMI_SINKCAP_BITMASK_FULL4K,
+} VPP_HDMI_SINKCAP_BITMASK;
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -190,3 +190,8 @@ int __weak TZ_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus)
 {
 	return 0;
 }
+
+int __weak TZ_MV_VPPOBJ_GetHDMISinkCaps(VPP_HDMI_SINK_CAPS *pSinkCaps)
+{
+	return 0;
+}

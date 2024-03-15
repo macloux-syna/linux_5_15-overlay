@@ -325,7 +325,7 @@ static void syna_vpp_init(struct drm_device *dev)
 			vbufinfo = &vpp_disp_desc_array[plane][i];
 			shm_handle = &vpp_disp_info_shm_handle[plane][i];
 
-			shm_handle->size = sizeof(VPP_VBUF);
+			shm_handle->size = VPP_SHM_4K_ALIGN_ROUNDUP(sizeof(VPP_VBUF));
 			ret = VPP_MEM_AllocateMemory(dev_priv->mem_list, VPP_MEM_TYPE_DMA,
 					shm_handle, 0);
 			if (ret != 0) {

@@ -11,6 +11,10 @@
 #include "vpp_vbuf.h"
 #include "hal_vpp.h"
 
+#define VPP_SHM_4K_ALIGN_SIZE 4096
+#define VPP_SHM_4K_ALIGN_ROUNDUP(size)  ((size + VPP_SHM_4K_ALIGN_SIZE - 1) & \
+						(~(VPP_SHM_4K_ALIGN_SIZE - 1)))
+
 #define VPP_SHM_STATIC		1
 #define VPP_SHM_VIDEO_FB	2
 

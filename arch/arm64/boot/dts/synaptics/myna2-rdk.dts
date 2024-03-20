@@ -595,6 +595,7 @@
 		pixclockKhz = <33300>;
 		bits_per_pixel = <24>;
 		busformat = <0>;
+		rgbswap = <1>;
 	};
 };
 

@@ -113,8 +113,14 @@
 		reg = <0x43>;
 		gpio-controller;
 		#gpio-cells = <2>;
+
+		dmic_hog {
+			gpio-hog;
+			gpios = <4 GPIO_ACTIVE_HIGH>;
+			output-high;
+		};
 	};
-	
+
 	regulator@49 {
 		compatible = "ti,tps62866";
 		reg = <0x49>;
@@ -289,6 +295,11 @@
 		function = "i2s3";
 	};
 
+	i2s2_pmux: i2s2-pmux {
+		groups = "I2S2_BCLK", "I2S2_LRCK", "I2S2_DO", "I2S2_DI";
+		function = "i2s2";
+	};
+
 	tlv_amp: tlv-amp-enable {
 		groups = "I2S2_DI";
 		function = "gpio";
@@ -316,7 +327,7 @@
 		function = "lcdgpio";
 	};
 
-	lcdc_bl_gpio_pmux: lcdc-bl-gpio-pmux {
+	audio_mute: audio-mute {
 		groups = "USB2_DRV_VBUS";
 		function = "gpio";
 	};
@@ -487,6 +498,14 @@
 	output-mclk;
 };
 
+&i2s2_dai {
+	status = "okay";
+	pinctrl-0 = <&i2s2_pmux>;
+	pinctrl-names = "default";
+	clk_src = "APLL";
+	clk_feed = "I2S3_DI";
+};
+
 &i2s3_dai {
 	status = "okay";
 	pinctrl-0 = <&i2s3_pmux>;
@@ -512,6 +531,17 @@
 		link-name = "asoc-i2s1";
 		format = "i2s";
 		cpu-node = <&i2s1_dai>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&myna2_pcm>;
+	};
+
+	asoc_i2s2: asoc-i2s2 {
+		status = "okay";
+		stream-name = "asoc-i2s2";
+		link-name = "asoc-i2s2";
+		format = "i2s";
+		cpu-node = <&i2s2_dai>;
 		codec-name = "snd-soc-dummy";
 		codec-dai-name = "snd-soc-dummy-dai";
 		platform-node = <&myna2_pcm>;
@@ -810,3 +840,14 @@
 	status = "okay";
 };
 
+&gpio1 {
+	pinctrl-0 = <&audio_mute>;
+	pinctrl-names = "default";
+	portb: gpio-port@1 {
+			   audio_mute {
+				   gpio-hog;
+				   gpios = <19 GPIO_ACTIVE_HIGH>;
+				   output-high;
+			   };
+		   };
+};

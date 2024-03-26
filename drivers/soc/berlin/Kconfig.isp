@@ -1,0 +1,22 @@
+#
+# ISP variants
+#
+
+if SYNA_ISP
+
+choice
+	prompt	"Synaptics ISP Variants"
+	default	ISP_NONE
+
+config ISP_NONE
+	bool	"Not select any ISP variant in default"
+
+config ISP_DOLPHIN
+	bool	"Synaptics DOLPHIN"
+
+config ISP_DOLPHIN_A0
+	bool	"Synaptics DOLPHIN A0"
+
+endchoice
+
+endif

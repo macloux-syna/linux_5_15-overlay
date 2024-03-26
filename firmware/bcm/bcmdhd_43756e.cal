@@ -1,0 +1,445 @@
+# syn43756 C0 WLBGA reference board, 5G/6GHz ePA version.
+# nvram copied and edited from BCM4361_B0 fcbga BU board
+# syn943756wlpagbae_p200_C0.txt
+# SSID generated using Alberto's boardssid.py script:
+# ********************SUMMARY********************
+# Board Name: syn943756wlpagbae
+#SSID: 0x086d
+#macmid: 0x02df
+# Successfully made SSID entry in sromdefs.tcl.
+# Successfully made macmid entry in sromdefs.tcl.
+# Successfully made SSID entry in tblssid.py.
+# *************************************************
+# $ Copyright Synaptics $
+#
+#
+# <<Synaptics-WL-IPTag/Proprietary:>>
+NVRAMRev=$Rev: 896078 $
+sromrev=11
+boardrev=0x1200
+boardtype=0x0a41
+boardflags=0x10401201
+boardflags2=0x00800000
+boardflags3=0x40002180
+#boardnum=57410
+macaddr=00:90:4c:12:d0:01
+jtag_irw=38
+
+#Regulatory specific
+ccode=0
+regrev=0
+
+# Ant related
+aa2g=3
+aa5g=3
+agbg0=2
+agbg1=2
+aga0=2
+aga1=2
+#ag6ga0=0
+#ag6ga1=0
+
+# Feature flags
+subband5gver=0x4
+subband6gver=0x1
+
+# Board specific
+vendid=0x14e4
+devid=0x44a0
+manfid=0x2d0
+antswitch=0
+pdgain5g=0
+pdgain2g=0
+
+# RX gain related
+rxgains2gelnagaina0=3
+rxgains2gtrisoa0=6
+rxgains2gtrelnabypa0=1
+rxgains5gelnagaina0=2
+rxgains5gtrisoa0=6
+rxgains5gtrelnabypa0=1
+rxgains5gmelnagaina0=2
+rxgains5gmtrisoa0=6
+rxgains5gmtrelnabypa0=1
+rxgains5ghelnagaina0=2
+rxgains5ghtrisoa0=7
+rxgains5ghtrelnabypa0=1
+rxgains2gelnagaina1=3
+rxgains2gtrisoa1=6
+rxgains2gtrelnabypa1=1
+rxgains5gelnagaina1=2
+rxgains5gtrisoa1=6
+rxgains5gtrelnabypa1=1
+rxgains5gmelnagaina1=2
+rxgains5gmtrisoa1=6
+rxgains5gmtrelnabypa1=1
+rxgains5ghelnagaina1=2
+rxgains5ghtrisoa1=7
+rxgains5ghtrelnabypa1=1
+
+#RSSI related
+rssicorrnorm_c0=4,4
+rssicorrnorm_c1=4,4
+rssicorrnorm5g_c0=3,2,2,3,3,2,2,2,2,3,2,3
+rssicorrnorm5g_c1=3,2,2,4,3,2,3,2,2,3,2,3
+
+# PA and TSSI related
+extpagain2g=2
+extpagain5g=0
+tssipos2g=1
+tssipos5g=1
+tworangetssi2g=0
+tworangetssi5g=0
+lowpowerrange2g=0
+lowpowerrange5g=0
+low_adc_rate_en=1
+paparambwver=3
+
+AvVmid_c0=2,127,1,153,1,153,1,154,1,152
+AvVmid_c1=2,127,1,153,2,131,2,153,2,156
+AvVmid_6g_c0=1,151,1,151,1,153,1,153,1,153,1,153
+AvVmid_6g_c1=1,152,2,127,2,128,1,147,1,152,2,151
+
+# PA parameters
+pa2gccka0=-96,8520,-969
+pa2gccka1=-112,8710,-1015
+pa2ga0=-72,7890,-843
+pa2ga1=-112,7339,-819
+pa5ga0=-30,10688,-1528,-50,10218,-1469,-58,10075,-1444,-93,9193,-1365
+pa5ga1=-33,10276,-1475,-69,8225,-1238,-40,8668,-1269,-5,8993,-1320
+pa6ga0=-35,10232,-1504,-33,10309,-1526,-27,10593,-1563,-3,11055,-1626,-6,11164,-1634,-43,10273,-1517
+pa6ga1=-31,10505,-1522,-49,8521,-1304,-17,8872,-1340,-27,10628,-1566,-27,10573,-1568,-19,8657,-1338
+
+# MISC Core related
+bandcap=7
+txchain=3
+rxchain=3
+nocrc=1
+otpimagesize=502
+xtalfreq=37400
+cckdigfilttype=2
+cck_onecore_tx=1
+ocl=1
+muxenab=0x3
+
+#FDSS Related
+#fdss_interp_en=1
+#fdss_level_2g=2,2
+#fdss_level_11ax_2g=2,2
+#fdss_level_5g=0,0
+#fdss_level_11ax_5g=0,0
+
+#Tempsense Related
+tempthresh=255
+tempoffset=40
+rawtempsense=0x1ff
+phycal_tempdelta=15
+temps_period=15
+temps_hysteresis=15
+
+# Max power and offsets
+maxp2ga0=72
+maxp2ga1=72
+maxp5ga0=76,76,76,76
+maxp5ga1=76,76,76,76
+maxp6ga0=76,76,76,76,76,76
+maxp6ga1=76,76,76,76,76,76
+cckpwroffset0=0
+cckpwroffset1=0
+powoffs2gtna0=-1,0,2,2,2,1,0,0,0,0,2,2,2,0
+powoffs2gtna1=-1,0,2,3,3,1,0,0,0,0,1,0,2,0
+pdoffset40ma0=0x2423
+pdoffset80ma0=0x0000
+pdoffset40ma1=0x2423
+pdoffset80ma1=0x0000
+pdoffset6g40ma0=0x000000
+pdoffset6g80ma0=0x000000
+pdoffset6g40ma1=0x000000
+pdoffset6g80ma1=0x000000
+
+
+# HWOLPC
+disable_olpc=0
+olpc_thresh2g=40
+olpc_anchor2g=44
+olpc_thresh5g=32
+olpc_anchor5g=32
+olpc_anchor6g=20
+olpc_thresh6g=20
+hwolpc_offset_c0=-2,2,2,2,2
+hwolpc_offset_c1=-2,2,2,2,2
+hwolpc_offset6g_c0=0,0,0,0,0,0
+hwolpc_offset6g_c1=0,0,0,0,0,0
+
+
+
+# 5G power offset per channel for band edge channel
+powoffs5g20mtna0=0,0,0,0,0,0,0
+powoffs5g20mtna1=0,0,0,0,0,0,0
+powoffs5g40mtna0=0,0,0,0,0
+powoffs5g40mtna1=0,0,0,0,0
+powoffs5g80mtna0=0,0,0,0,0
+powoffs5g80mtna1=0,0,0,0,0
+mcs11poexp=0
+
+# 2G/5G SU Power Per Rate
+cckbw202gpo=0
+cckbw20ul2gpo=0
+mcsbw202gpo=0x44000000
+mcsbw402gpo=0x44000000
+dot11agofdmhrbw202gpo=0x6666
+ofdmlrbw202gpo=0x0022
+mcsbw205glpo=0xCA660000
+mcsbw405glpo=0xCA660000
+mcsbw805glpo=0xCA660000
+mcsbw205gmpo=0xCA660000
+mcsbw405gmpo=0xCA660000
+mcsbw805gmpo=0xCA660000
+mcsbw205ghpo=0xCA660000
+mcsbw405ghpo=0xCA660000
+mcsbw805ghpo=0xCA660000
+mcs1024qam2gpo=0x8888
+mcs1024qam5glpo=0xFFFFFF
+mcs1024qam5gmpo=0xFFFFFF
+mcs1024qam5ghpo=0xFFFFFF
+mcs1024qam5gx1po=0xFFFFFF
+mcs1024qam5gx2po=0xFFFFFF
+mcs8poexp=0
+mcs9poexp=0
+mcs10poexp=0
+
+# 6G SU Power Per Rate
+mcsbw206gb1po=0xCA660000
+mcsbw406gb1po=0xCA660000
+mcsbw806gb1po=0xCA660000
+mcsbw206gb2po=0xCA660000
+mcsbw406gb2po=0xCA660000
+mcsbw806gb2po=0xCA660000
+mcsbw206gb3po=0xCA660000
+mcsbw406gb3po=0xCA660000
+mcsbw806gb3po=0xCA660000
+mcsbw206gb4po=0xCA660000
+mcsbw406gb4po=0xCA660000
+mcsbw806gb4po=0xCA660000
+mcsbw206gb5po=0xCA660000
+mcsbw406gb5po=0xCA660000
+mcsbw806gb5po=0xCA660000
+mcsbw206gb6po=0xCA660000
+mcsbw406gb6po=0xCA660000
+mcsbw806gb6po=0xCA660000
+mcs1024qam6gb1po=0xFFFFFF
+mcs1024qam6gb2po=0xFFFFFF
+mcs1024qam6gb3po=0xFFFFFF
+mcs1024qam6gb4po=0xFFFFFF
+mcs1024qam6gb5po=0xFFFFFF
+mcs1024qam6gb6po=0xFFFFFF
+
+#OOB params
+#device_wake_opt=1
+host_wake_opt=1
+wowl_gpio=0
+wowl_gpiopol=1
+
+# SWCTRL Related
+swctrlmap_2g=0x00000402,0x06030000,0x02010000,0x000000,0x3FF
+swctrlmapext_2g=0x00000000,0x00000000,0x00000000,0x000000,0x000
+swctrlmap_5g=0x0000A170,0x80400000,0x00000000,0x000000,0x3FF
+swctrlmapext_5g=0x00000000,0x00000000,0x00000000,0x000000,0x000
+swctrlmap_6g=0x0000A050,0x80400000,0x00000000,0x000000,0x3FF
+swctrlmapext_6g=0x00000000,0x00000000,0x00000000,0x000000,0x000
+
+clb2gslice0core0=0x00b
+clb2gslice1core0=0x000
+clb5gslice0core0=0x074
+clb5gslice1core0=0x000
+clb2gslice0core1=0x046
+clb2gslice1core1=0x000
+clb5gslice0core1=0x0b1
+clb5gslice1core1=0x000
+
+#BT Coex
+btc_mode=1
+btc_prisel_ant_mask=0x2
+clb_swctrl_smask_ant0=0x27f
+clb_swctrl_smask_ant1=0x2f7
+bt_coex_chdep_div=1
+
+#LTE Coex Related
+ltecxmux=0
+ltecxpadnum=0x0504
+ltecxfnsel=0x44
+ltecxgcigpio=0x04
+
+# --- PAPD Cal related params ----
+txwbpapden=0 # 0:NBPAPD 1:WBPAPD
+# NB PAPD Cal params
+nb_eps_offset=470,470
+nb_bbmult=66,66
+nb_papdcalidx=30,30,22,28,32,32
+nb_txattn=2,2
+nb_rxattn=1,1
+nb_eps_stopidx=63
+epsilonoff_2g20_c0=0
+epsilonoff_2g20_c1=0
+epsilonoff_2g40_c0=0
+epsilonoff_2g40_c1=0
+
+# Enable papd for cck when target pwr ge 16dBm
+cckpapd_pwrthresh=64
+
+# energy detect threshold
+ed_thresh2g=-67
+ed_thresh5g=-67
+ed_thresh6g=-67
+# energy detect threshold for EU
+eu_edthresh2g=-67
+eu_edthresh5g=-67
+eu_edthresh6g=-67
+
+## ULOFDMA Board limit PPRs for 2G20 ##
+ruppr2g20bpska0=0x0
+ruppr2g20bpska1=0x0
+ruppr2g20qpska0=0x0
+ruppr2g20qpska1=0x0
+ruppr2g20qam16a0=0x0
+ruppr2g20qam16a1=0x0
+ruppr2g20qam64a0=0x1
+ruppr2g20qam64a1=0x1
+ruppr2g20qam256a0=0x21084
+ruppr2g20qam256a1=0x21084
+ruppr2g20qam1024a0=0x50000
+ruppr2g20qam1024a1=0x50000
+## ULOFDMA Board limit PPRs for 2G40 ##
+ruppr2g40bpska0=0x200000
+ruppr2g40bpska1=0x200000
+ruppr2g40qpska0=0x200000
+ruppr2g40qpska1=0x200000
+ruppr2g40qam16a0=0x200000
+ruppr2g40qam16a1=0x200000
+ruppr2g40qam64a0=0x200001
+ruppr2g40qam64a1=0x200001
+ruppr2g40qam256a0=0x421084
+ruppr2g40qam256a1=0x421084
+ruppr2g40qam1024a0=0xA50000
+ruppr2g40qam1024a1=0xA50000
+## ULOFDMA Board limit PPRs for 5G20 ##
+ruppr5g20bpska0=0x00000000
+ruppr5g20bpska1=0x00000000
+ruppr5g20qpska0=0x00000000
+ruppr5g20qpska1=0x00000000
+ruppr5g20qam16a0=0x00000000
+ruppr5g20qam16a1=0x00000000
+ruppr5g20qam64a0=0x00021084
+ruppr5g20qam64a1=0x00021084
+ruppr5g20qam256a0=0x000318C6
+ruppr5g20qam256a1=0x000318C6
+ruppr5g20qam1024a0=0x00040000
+ruppr5g20qam1024a1=0x00040000
+## ULOFDMA Board limit PPRs for 5G40 ##
+ruppr5g40bpska0=0x00000000
+ruppr5g40bpska1=0x00000000
+ruppr5g40qpska0=0x00000000
+ruppr5g40qpska1=0x00000000
+ruppr5g40qam16a0=0x00000000
+ruppr5g40qam16a1=0x00000000
+ruppr5g40qam64a0=0x00421084
+ruppr5g40qam64a1=0x00421084
+ruppr5g40qam256a0=0x006318C6
+ruppr5g40qam256a1=0x006318C6
+ruppr5g40qam1024a0=0x00840000
+ruppr5g40qam1024a1=0x00840000
+## ULOFDMA Board limit PPRs for 5G80 ##
+ruppr5g80bpska0=0x00000000
+ruppr5g80bpska1=0x00000000
+ruppr5g80qpska0=0x00000000
+ruppr5g80qpska1=0x00000000
+ruppr5g80qam16a0=0x00000000
+ruppr5g80qam16a1=0x00000000
+ruppr5g80qam64a0=0x10421084
+ruppr5g80qam64a1=0x10421084
+ruppr5g80qam256a0=0x186318C6
+ruppr5g80qam256a1=0x186318C6
+ruppr5g80qam1024a0=0x20840000
+ruppr5g80qam1024a1=0x20840000
+
+### SAR HEAD params_MIMO
+## 2g normal:15dB airplane:15dB
+dynsar_2g=0xbcbc
+dynsar_2g_2=0xbcbc
+## 5g normal:14dB airplane:14dB
+dynsar_5g=0xb8b8
+dynsar_5g_2=0xb8b8
+### SAR GRIP params_MIMO
+## 2g normal:16dB airplane:15dB
+grip_dynsar_2g=0xc0c0
+grip_dynsar_2g_2=0xbcbc
+## 5g normal:14dB airplane:13dB
+grip_dynsar_5g=0xb8b8
+grip_dynsar_5g_2=0xb4b4
+### RU SAR HEAD params_MIMO
+## 2g normal:16,16,16dB airplane:16,16,16dB
+dynsar_2g_ru=0xc0c0,0xc0c0,0xc0c0
+dynsar_2g_2_ru=0xc0c0,0xc0c0,0xc0c0
+## 5g normal:13,13,13dB airplane:13,13,13dB
+dynsar_5g_ru=0xb4b4,0xb4b4,0xb4b4
+dynsar_5g_2_ru=0xb4b4,0xb4b4,0xb4b4
+### RU SAR GRIP params_MIMO
+## 2g normal:16,8,1dB airplane:20,12,4dB
+grip_dynsar_2g_ru=0xc0c0,0xa0a0,0x8484
+grip_dynsar_2g_2_ru=0xd0d0,0xb0b0,0x9090
+## 5g normal:16,8,1dB airplane:20,12,4dB
+grip_dynsar_5g_ru=0xc0c0,0xa0a0,0x8484
+grip_dynsar_5g_2_ru=0xd0d0,0xb0b0,0x9090
+## NR SAR back off - 2G/5G MIMO : 1dB
+nr_mw_dynsar_2g=0x0404
+nr_mw_dynsar_5g=0x0404
+## NR SAR only mode - 2G : 14dBm, 5G : 13dBm
+nr_mw_dynsar_2g_cap=0xb8b8
+nr_mw_dynsar_5g_cap=0xb4b4
+## NR SAR back off - 2G/5G MIMO : 3dB
+nr_sub6_dynsar_2g=0x0c0c
+nr_sub6_dynsar_5g=0x0c0c
+## NR SAR only mode - 2G : 12dBm, 5G : 10dBm
+nr_sub6_dynsar_2g_cap=0xb0b0
+nr_sub6_dynsar_5g_cap=0xa8a8
+
+#### For 6G
+## ULOFDMA Board limit PPRs for 6G20 ##
+#ruppr6g20bpska0=0x00000000
+#ruppr6g20bpska1=0x00000000
+#ruppr6g20qpska0=0x00000000
+#ruppr6g20qpska1=0x00000000
+#ruppr6g20qam16a0=0x00000000
+#ruppr6g20qam16a1=0x00000000
+#ruppr6g20qam64a0=0x00021084
+#ruppr6g20qam64a1=0x00021084
+#ruppr6g20qam256a0=0x000318C6
+#ruppr6g20qam256a1=0x000318C6
+#ruppr6g20qam1024a0=0x00040000
+#ruppr6g20qam1024a1=0x00040000
+## ULOFDMA Board limit PPRs for 6G40 ##
+#ruppr6g40bpska0=0x00000000
+#ruppr6g40bpska1=0x00000000
+#ruppr6g40qpska0=0x00000000
+#ruppr6g40qpska1=0x00000000
+#ruppr6g40qam16a0=0x00000000
+#ruppr6g40qam16a1=0x00000000
+#ruppr6g40qam64a0=0x00421084
+#ruppr6g40qam64a1=0x00421084
+#ruppr6g40qam256a0=0x006318C6
+#ruppr6g40qam256a1=0x006318C6
+#ruppr6g40qam1024a0=0x00840000
+#ruppr6g40qam1024a1=0x00840000
+## ULOFDMA Board limit PPRs for 6G80 ##
+#ruppr6g80bpska0=0x00000000
+#ruppr6g80bpska1=0x00000000
+#ruppr6g80qpska0=0x00000000
+#ruppr6g80qpska1=0x00000000
+#ruppr6g80qam16a0=0x00000000
+#ruppr6g80qam16a1=0x00000000
+#ruppr6g80qam64a0=0x10421084
+#ruppr6g80qam64a1=0x10421084
+#ruppr6g80qam256a0=0x186318C6
+#ruppr6g80qam256a1=0x186318C6
+#ruppr6g80qam1024a0=0x20840000
+#ruppr6g80qam1024a1=0x20840000

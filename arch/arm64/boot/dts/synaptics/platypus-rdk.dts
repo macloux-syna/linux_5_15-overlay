@@ -1,0 +1,623 @@
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/*
+ * Copyright (C) 2024 Synaptics Incorporated
+ *
+ * Author: Kaicheng Xie <Kaicheng.xie@synaptics.com>
+ */
+
+/dts-v1/;
+
+/memreserve/ 0x7f000000 0x01000000;
+
+#include <dt-bindings/gpio/gpio.h>
+
+#include "platypus.dtsi"
+
+/ {
+	model = "Synaptics Platypus RDK";
+	compatible = "syna,platypus-rdk", "syna,platypus";
+
+	cpus {
+		cpu@0 {
+			cpu0-supply = <&vcpu>;
+		};
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0 0x01000000 0 0x7f000000>;
+	};
+
+	dmabuf_heap {
+		compatible = "syna,berlin-heaps";
+		pool-num = <2>;
+		reg-names = "NonSecure-NC", "Secure";
+		reg = <0 0x7f000000 0 0x00800000>,
+		      <0 0x7f800000 0 0x00800000>;
+		attributes-num-per-pool = <2>;
+		pool-attributes = <0x00000105 0x00000F3A 0x00000102 0x00000F3D>;
+	};
+
+	regulators {
+		compatible = "simple-bus";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		vmmc_sdhci1: vmmc_sdhci1 {
+			compatible = "regulator-fixed";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-name = "vmmc_sdio";
+			enable-active-high;
+			regulator-boot-on;
+			gpio = <&portb 16 GPIO_ACTIVE_HIGH>;
+		};
+
+		vqmmc_sdhci1: vqmmc_sdhci1 {
+			compatible = "regulator-gpio";
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-name = "vqmmc_sdio";
+			regulator-type = "voltage";
+			enable-active-high;
+			gpios = <&porta 17 GPIO_ACTIVE_HIGH>;
+			states = <3300000 0x0
+				  1800000 0x1>;
+		};
+
+		reg_usb0_vbus: usb0_vbus {
+			compatible = "regulator-fixed";
+			regulator-name = "usb0_vbus";
+			regulator-min-microvolt = <5000000>;
+			regulator-max-microvolt = <5000000>;
+			gpio = <&expander0 5 GPIO_ACTIVE_HIGH>;
+			enable-active-high;
+		};
+	};
+
+	bt_reg_on: bt_reg_on {
+		compatible = "syna,rfkill";
+		bt-power-gpio = <&expander1 5 GPIO_ACTIVE_HIGH>;
+	};
+
+	bluesleep: bluesleep {
+		compatible = "syna,bluesleep";
+		bt-dev-wake-gpio = <&expander1 3 GPIO_ACTIVE_HIGH>;
+	};
+
+};
+
+&pinctrl {
+	i2c0_pmux: i2c0-pmux {
+		groups = "TW0_SCL", "TW0_SDA";
+		function = "tw0";
+		drive-strength = <7>;
+	};
+
+	i2c1_pmux: i2c1-pmux {
+		groups = "SDIO0_CDn", "SDIO0_WP";
+		function = "tw1a";
+		drive-strength = <7>;
+	};
+
+	hdmi_pwr_pmux: hdmi_pwr-pmux {
+		groups = "GPIO_A0";
+		function = "gpio";
+	};
+
+	sdhci1_cd_pmux: sdhci1-cd-pmux {
+		groups = "SDIO0_CDn";
+		function = "sdio";
+		drive-strength = <7>;
+	};
+
+	sdhci1_gpio_pmux: sdhci1-gpio-pmux {
+		groups = "SDIO0_WP";
+		function = "gpio";
+	};
+
+	uart2_pmux: uart2-pmux {
+		groups = "STS0_CLK", "STS0_SOP", "STS0_SD", "STS0_VALD";
+		function = "uart2b";
+		drive-strength = <3>;
+	};
+
+};
+
+&sm_pinctrl {
+	i2c2_pmux: i2c2-pmux {
+		groups = "SM_TW2_SCL", "SM_TW2_SDA";
+		function = "tw2";
+		drive-strength = <7>;
+	};
+
+	i2c3_pmux: i2c3-pmux {
+		groups = "SM_TW3_SCL", "SM_TW3_SDA";
+		function = "tw3";
+		drive-strength = <7>;
+	};
+
+	pdm_gpio_pmux: pdm-gpio-pmux {
+		groups = "SM_SPI2_SCLK", "SM_SPI2_SS1n", "SM_SPI2_SS0n";
+		function = "gpio";
+	};
+};
+
+&avio_pinctrl {
+	i2s1_pmux: i2s1-pmux {
+		groups = "I2S1_BCLKIO", "I2S1_LRCKIO", "I2S1_DO0", "I2S1_MCLK";
+		function = "i2s1";
+	};
+
+	falcon_gpio_pmux: falcon_gpio-pmux {
+		groups = "I2S1_DO1";
+		function = "gpio";
+	};
+
+	i2s2_pmux: i2s2-pmux {
+		groups = "I2S2_BCLKIO", "I2S2_LRCKIO", "I2S2_DI0";
+		function = "i2s2";
+	};
+
+	i2s3_pmux: i2s3-pmux {
+		groups = "I2S3_LRCKIO", "I2S3_BCLKIO", "I2S3_DI", "I2S3_DO";
+		function = "i2s3";
+	};
+
+	spdifo_pmux: spdifo-pmux {
+		groups = "SPDIFO";
+		function = "spdifo";
+	};
+
+	pdm_pmux: pdm-pmux {
+		groups = "I2S2_MCLK", "I2S2_DI3", "I2S2_DI2";
+		function = "pdm";
+	};
+
+	pwm2_pmux: pwm2-pmux {
+		groups = "I2S1_DO2";
+		function = "pwm";
+	};
+
+	sdhci1_pmux: sdhci1-pmux {
+		groups = "I2S1_DO1";
+		function = "gpio";
+	};
+};
+
+&sdhci0 {
+	status = "okay";
+	sdclkdl-dc = /bits/ 8 <26>;
+	mmc-ddr-1_8v;
+	mmc-hs200-1_8v;
+	mmc-hs400-1_8v;
+	dll-calibration;
+	dll-delay-offset = <300>;
+};
+
+&sdhci1 {
+	status = "okay";
+	pinctrl-0 = <&sdhci1_pmux>, <&sdhci1_gpio_pmux>, <&sdhci1_cd_pmux>;
+	pinctrl-names = "default";
+	bus-width = <4>;
+	no-sdio;
+	no-mmc;
+	disable-wp;
+	sdclkdl-dc = /bits/ 8 <75>;
+	pad-sp = /bits/ 8 <12>;
+	pad-sn = /bits/ 8 <12>;
+	vmmc-supply = <&vmmc_sdhci1>;
+	vqmmc-supply = <&vqmmc_sdhci1>;
+};
+
+&pcie_phy0 {
+	status = "okay";
+};
+
+&pcie0 {
+	status = "okay";
+	reset-gpios = <&expander1 1 GPIO_ACTIVE_LOW>;
+};
+
+&uart0 {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pmux>;
+
+	falcon: cx9000@33 {
+		compatible = "cnxt,cx9000";
+		pinctrl-names = "default";
+		pinctrl-0 = <&falcon_gpio_pmux>;
+
+		#sound-dai-cells = <0>;
+		reg = <0x33>;
+		enable-gpios = <&porta 17 GPIO_ACTIVE_HIGH>;
+		status = "okay";
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_pmux>;
+
+	vcpu: regulator@40 {
+		compatible = "ti,tps62870";
+		reg = <0x40>;
+		status = "okay";
+		regulator-boot-on;
+		regulator-always-on;
+		regulator-active-discharge = <0>;
+		regulator-name = "vcpu";
+		regulator-min-microvolt = <700000>;
+		regulator-max-microvolt = <987500>;
+	};
+
+};
+
+&i2c2 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c2_pmux>;
+
+	vcore: regulator@40 {
+		compatible = "ti,tps62870";
+		reg = <0x40>;
+		status = "okay";
+		regulator-boot-on;
+		regulator-always-on;
+		regulator-active-discharge = <0>;
+		regulator-name = "vcore";
+		regulator-min-microvolt = <700000>;
+		regulator-max-microvolt = <987500>;
+	};
+};
+
+&i2c3 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c3_pmux>;
+	no-irq-suspend;
+
+	expander0: gpio@43 {
+		compatible = "fcs,fxl6408";
+		reg = <0x43>;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+
+	expander1: gpio@44 {
+		compatible = "fcs,fxl6408";
+		reg = <0x44>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		shutdown-mask = /bits/ 8 <0x1>;
+		shutdown-val = /bits/ 8 <0x0>;
+
+		soc_global_rstn {
+			gpio-hog;
+			gpios = <0 GPIO_ACTIVE_HIGH>;
+			output-high;
+		};
+	};
+
+	rtc0: rtc@68 {
+		compatible = "dallas,ds1339";
+		wakeup-source;
+		reg = <0x68>;
+	};
+};
+
+&ephy {
+	status = "okay";
+};
+
+&mdio0 {
+	phy0: ethernet-phy@0 {
+		reg = <0>;
+		interrupt-parent = <&sic>;
+		interrupts = <30>;
+		ephy = <&ephy>;
+		eee-broken-100tx;
+	};
+};
+
+&gmac0 {
+	status = "okay";
+	phy-handle = <&phy0>;
+	phy-mode = "mii";
+};
+
+&usb0 {
+	vbus-supply = <&reg_usb0_vbus>;
+	status = "okay";
+};
+
+&usb_phy0 {
+	status = "okay";
+};
+
+&xhci0 {
+	status = "okay";
+};
+
+&usb_phy1{
+	status = "okay";
+};
+
+&h1 {
+	status = "okay";
+};
+
+&vxg {
+	status = "okay";
+};
+
+&shm {
+	status = "okay";
+};
+
+&drm {
+	status = "okay";
+};
+
+&bm {
+	status = "okay";
+};
+
+&tsp {
+	status = "okay";
+};
+
+&sm {
+	status = "okay";
+};
+
+&ir {
+	status = "okay";
+};
+
+&npu {
+	status = "okay";
+};
+
+&avio {
+	status = "okay";
+	vpp {
+		pinctrl-0 = <&hdmi_pwr_pmux>;
+		pinctrl-names = "default";
+		hdtx5v-gpio = <&portb 3 GPIO_ACTIVE_HIGH>; /* SOC GPIO 35 */
+	};
+};
+
+&gpu {
+	status = "okay";
+};
+
+&aout {
+	status = "okay";
+	pinctrl-0 = <&i2s1_pmux>, <&spdifo_pmux>;
+	pinctrl-names = "default";
+};
+
+&nsk {
+	status = "okay";
+};
+
+&ovp {
+	status = "okay";
+};
+
+&vpp {
+	status = "okay";
+};
+
+&fb {
+	status = "okay";
+};
+
+&cec {
+	status = "okay";
+};
+
+&dsp0 {
+	status = "okay";
+};
+
+&dsp1 {
+	status = "okay";
+};
+
+&ifcp {
+	status = "okay";
+};
+
+&hdmi_out {
+	status = "okay";
+};
+
+&i2s_mic1 {
+	status = "okay";
+	pinctrl-0 = <&i2s2_pmux>;
+	pinctrl-names = "default";
+	intlmode;
+};
+
+&dmic {
+	status = "okay";
+	pinctrl-0 = <&pdm_pmux>, <&pdm_gpio_pmux>;
+	pinctrl-names = "default";
+	pdm-type = <1>;
+	pdm-clk-sel = <2>;
+};
+
+&i2s_pri_lpbk {
+	status = "okay";
+};
+
+&i2s_hdmi_lpbk {
+	status = "okay";
+};
+
+&platypus_pcm {
+	status = "okay";
+};
+
+&i2s_pri {
+	status = "okay";
+	pinctrl-0 = <&i2s1_pmux>;
+	pinctrl-names = "default";
+};
+
+&spdif_out {
+	status = "okay";
+	pinctrl-0 = <&spdifo_pmux>;
+	pinctrl-names = "default";
+};
+
+&i2s_mic2 {
+	status = "okay";
+	duplex;
+	disablemicmute;
+};
+
+&i2s_sec {
+	status = "okay";
+	pinctrl-0 = <&i2s3_pmux>;
+	pinctrl-names = "default";
+	duplex;
+	sample-period = <32>;
+};
+
+&platypus_asoc {
+	status = "okay";
+
+	soc_i2so1: soc-i2so1 {
+		status = "okay";
+		stream-name = "soc-i2so1";
+		link-name = "soc-i2so1";
+		format = "i2s";
+		continuous-clock;
+		bitclock-inversion;
+		frame-inversion;
+		cpu-node = <&i2s_pri>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+
+	soc_i2so3: soc-i2so3 {
+		status = "okay";
+		stream-name = "soc-i2so3";
+		link-name = "soc-i2so3";
+		format = "dsp_b";
+		cpu-node = <&i2s_sec>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+
+	soc_spdifo: soc-spdifo {
+		status = "okay";
+		stream-name = "soc-spdifo";
+		link-name = "soc-spdifo";
+		cpu-node = <&spdif_out>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+
+	soc_dmic: soc-dmic {
+		status = "okay";
+		stream-name = "soc-dmic";
+		link-name = "soc-dmic";
+		cpu-node = <&dmic>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+
+	soc_i2si2: soc-i2si2 {
+		status = "okay";
+		stream-name = "soc-i2si2";
+		link-name = "soc-i2si2";
+		format = "i2s";
+		bitclock-inversion;
+		frame-inversion;
+		bitclock-master;
+		frame-master;
+		cpu-node = <&i2s_mic1>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+
+	soc_i2s_pri_lpbk: soc-i2s-pri-lpbk {
+		status = "okay";
+		stream-name = "soc-i2s-pri-lpbk";
+		link-name = "soc-i2s-pri-lpbk";
+		format = "i2s";
+		cpu-node = <&i2s_pri_lpbk>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+
+	soc_i2s_hdmi_lpbk: soc-i2s-hdmi-lpbk {
+		status = "okay";
+		stream-name = "soc-i2s-hdmi-lpbk";
+		link-name = "soc-i2s-hdmi-lpbk";
+		format = "i2s";
+		cpu-node = <&i2s_hdmi_lpbk>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+
+	soc_i2si3: soc-i2si3 {
+		status = "okay";
+		stream-name = "btsco-in";
+		link-name = "btsco-in";
+		format = "dsp_b";
+		continuous-clock;
+		cpu-node = <&i2s_mic2>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+
+	soc_hdmio: soc-hdmio {
+		status = "okay";
+		stream-name = "soc-hdmio";
+		link-name = "soc-hdmio";
+		format = "i2s";
+		cpu-node = <&hdmi_out>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&platypus_pcm>;
+	};
+};
+
+&uart2 {
+	pinctrl-0 = <&uart2_pmux>;
+	pinctrl-names = "default";
+	status = "okay";
+};
+
+&axi_meter {
+	status = "okay";
+};
+
+&pwm0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pwm2_pmux>;
+	status = "okay";
+};

@@ -1,0 +1,279 @@
+// SPDX-License-Identifier: GPL-2.0
+/* Copyright (C) 2020 Synaptics Incorporated */
+
+#include "vpp_api.h"
+#include "vpp_isr.h"
+#include "hal_dhub_wrap.h"
+#include "hal_vpp_wrap.h"
+#include "avio_sub_module.h"
+
+static mrvl_frame_size curr_input_frame_size[MAX_NUM_PLANES];
+static VPP_DISP_OUT_PARAMS curr_disp_res_params[MAX_NUM_CPCBS];
+
+int MV_VPP_make_frame_data(unsigned int iVideo, unsigned int *pStartAddr,
+			  unsigned int uiPicH, unsigned int uiLineV, unsigned int uiWidth,
+			  unsigned int uiHeight, unsigned int uiPicA, unsigned int uiPicB)
+{
+	unsigned int *Ptr;
+	unsigned int VLines, VRep, HS, HRep, PixVal, VBlock, HBlock, PixelPerWord;
+	int Ret = 0;
+
+	if (!pStartAddr) {
+		pr_err("invalid input parameters\n");
+		return -1;
+	}
+
+	/**
+	 * make the whole frame data
+	 */
+	Ptr = pStartAddr;
+
+	if (iVideo)
+		PixelPerWord = 2;
+	else
+		PixelPerWord = 1;
+
+	VBlock = uiLineV;
+
+	for (VLines = 0; VLines < uiHeight; VLines += VBlock) {
+		if ((uiHeight - VLines) < VBlock)
+			VBlock = uiHeight - VLines;
+
+		for (VRep = 0; VRep < VBlock; VRep++) {
+			HBlock = uiPicH * PixelPerWord;
+
+			for (HS = 0; HS < uiWidth; HS += HBlock) {
+				if ((VLines / uiLineV +
+						HS/(uiPicH * PixelPerWord))
+						& 0x1)
+					PixVal = uiPicB;
+				else
+					PixVal = uiPicA;
+
+				if ((uiWidth - HS) < HBlock)
+					HBlock = uiWidth - HS;
+
+				for (HRep = 0; HRep < HBlock/PixelPerWord;
+						HRep++)
+					*Ptr++ = PixVal;
+			}
+		}
+	}
+	return Ret;
+}
+
+static void MV_VPP_GetFrameSize(ENUM_PLANE_ID plane_id, int *pWidth, int *pHeight)
+{
+	*pWidth = curr_input_frame_size[plane_id].width;
+	*pHeight = curr_input_frame_size[plane_id].height;
+}
+
+void MV_VPP_GetOutResolutionSize(ENUM_CPCB_ID cpcbID, int *p_width, int *p_height)
+{
+	VPP_RESOLUTION_DESCRIPTION  ResDesc;
+	int res;
+
+	res = wrap_MV_VPPOBJ_GetResolutionDescription(curr_disp_res_params[cpcbID].uiResId, &ResDesc);
+	if (!res) {
+		*p_width = ResDesc.uiActiveWidth;
+		*p_height = ResDesc.uiActiveHeight;
+	} else {
+		/* Default values to FB size in case of failure */
+        MV_VPP_GetFrameSize(PLANE_GFX1, p_width, p_height);
+	}
+}
+
+void MV_VPP_GetInputFrameSize(ENUM_PLANE_ID plane_id, int *width, int *height)
+{
+	int res_width, res_height;
+
+	MV_VPP_GetFrameSize(plane_id, width, height);
+	MV_VPP_GetOutResolutionSize(CPCB_1, &res_width, &res_height);
+	if (res_width < res_height)
+		swap(*width, *height);
+}
+
+void MV_VPP_SetInputFrameSize(ENUM_PLANE_ID plane_id, int width, int height)
+{
+	VPP_WIN fb_win;
+
+	if (curr_input_frame_size[plane_id].width != width ||
+	        curr_input_frame_size[plane_id].height != height) {
+		curr_input_frame_size[plane_id].width = width;
+		curr_input_frame_size[plane_id].height = height;
+
+		//Apply the change in frame size to reference window
+		fb_win.x = 0;
+		fb_win.y = 0;
+		fb_win.width  = width;
+		fb_win.height = height;
+		wrap_MV_VPPOBJ_SetRefWindow(plane_id, &fb_win);
+	}
+}
+
+int MV_VPP_SetDisplayResolution(ENUM_CPCB_ID cpcbID,
+		VPP_DISP_OUT_PARAMS dispParams, int bApply)
+{
+	int res = MV_VPP_OK;
+	if (curr_disp_res_params[cpcbID].uiResId != dispParams.uiResId ||
+			curr_disp_res_params[cpcbID].uiDisplayMode != dispParams.uiDisplayMode ||
+			curr_disp_res_params[cpcbID].uiBitDepth != dispParams.uiBitDepth ||
+			curr_disp_res_params[cpcbID].uiColorFmt != dispParams.uiColorFmt) {
+
+		memcpy(&curr_disp_res_params[cpcbID], &dispParams, sizeof(VPP_DISP_OUT_PARAMS));
+
+		if (bApply) {
+			res = wrap_MV_VPPOBJ_SetFormat(cpcbID, &dispParams);
+			if (res != MV_VPP_OK) {
+				pr_err("%s:%d: wrap_MV_VPPOBJ_SetFormat FAILED, error: 0x%x\n", __func__, __LINE__, res);
+			} else {
+				//SetDisplayWindow applied to all planes by SetFormat
+			}
+		}
+	}
+
+	return res;
+}
+
+void MV_VPP_DisplayFrame(int uiPlaneId, int isVideoFormat, VPP_VBUF *pVppBuf_phy)
+{
+	if (!VPP_Is_Recovery_Mode()) {
+		if (isVideoFormat)
+			wrap_MV_VPPOBJ_DisplayFrame(uiPlaneId, pVppBuf_phy);
+        else
+			wrap_MV_VPPOBJ_SetStillPicture(uiPlaneId, pVppBuf_phy);
+	} else {
+	#ifndef VPP_ENABLE_USE_SET_STILL_PICTURE
+		wrap_MV_VPPOBJ_DisplayFrame(uiPlaneId, pVppBuf_phy);
+	#else
+		wrap_MV_VPPOBJ_SetStillPicture(uiPlaneId, pVppBuf_phy);
+	#endif
+	}
+}
+
+int MV_VPP_SetHdmiTxControl(int enable)
+{
+	return wrap_MV_VPPOBJ_SetHdmiTxControl(enable);
+}
+
+static int VPP_Init_Normal_vpp_ta(vpp_config_params vpp_config_param)
+{
+	VPP_DISP_OUT_PARAMS pdispParams[MAX_NUM_CPCBS];
+	unsigned int vppInitParam[2];
+	int ret = MV_VPP_OK, i;
+
+	if (!VPP_Is_Recovery_Mode()) {
+		vppInitParam[0] = VPP_CA_INIT_MAGIC_NUM;
+		vppInitParam[1] = 0;
+
+		ret = wrap_MV_VPP_InitVPPS(TA_UUID_VPP, vppInitParam);
+
+		if (ret) {
+			pr_err("%s:%d InitVPPS FAILED, error: 0x%x\n", __func__, __LINE__, ret);
+			return -ENODEV;
+		}
+
+		// Retrieve following details from VPP TA and initialize disp params
+		ret = wrap_MV_VPPOBJ_GetDispOutParams(pdispParams, MAX_NUM_CPCBS * sizeof(VPP_DISP_OUT_PARAMS));
+		if (!ret) {
+			for (i = CPCB_1; i < MAX_NUM_CPCBS; i++) {
+				MV_VPP_SetDisplayResolution(i, pdispParams[i], 0);
+			}
+		}
+	}
+
+	return ret;
+}
+
+int __weak wrap_VPP_Init_Recovery(VPP_MEM_LIST *vpp_shm_list,
+			int is_ampless_boot, vpp_config_params vpp_config_param)
+{
+	return 0;
+}
+
+int MV_VPP_Init(VPP_MEM_LIST *shm_list, vpp_config_params vpp_config_param)
+{
+	int res = 0;
+
+	if (VPP_Is_Recovery_Mode()) {
+		pr_info("MV_VPP_Init - Normal/Recovery - libfastlogo.ta \n");
+		res = avio_sub_module_dhub_init();
+		if (res) {
+			pr_info("%s: dhub open failed: %x\n", __func__, res);
+			return res;
+		}
+		VPP_EnableDhubInterrupt(true);
+
+		res = wrap_VPP_Init_Recovery(shm_list, is_ampless_boot(), vpp_config_param);
+
+		if (!res)
+			VPP_CreateISRTask();
+	} else {
+		pr_info("MV_VPP_Init - Normal - libvpp.ta\n");
+		res = VPP_Init_Normal_vpp_ta(vpp_config_param);
+	}
+
+	return res;
+}
+
+void MV_VPP_Deinit(void)
+{
+	if (VPP_Is_Recovery_Mode())
+		VPP_EnableDhubInterrupt(false);
+	wrap_MV_VPPOBJ_Destroy();
+	if (VPP_Is_Recovery_Mode())
+		VPP_StopISRTask();
+	wrap_MV_VPP_DeInit();
+}
+
+int MV_VPP_Config(ENUM_CPCB_ID cpcbID, ENUM_PLANE_ID plane_id, bool isVideo) {
+	int ret;
+	VPP_WIN fb_win;
+	VPP_WIN disp_win;
+	VPP_WIN_ATTR attr;
+
+	fb_win.x = 0;
+	fb_win.y = 0;
+
+	if (isVideo) {
+		attr.alpha = 0xfff;
+		attr.bgcolor = 0x0;
+		attr.globalAlphaFlag = 0x0;
+	} else {
+		attr.alpha = 0x800;
+		attr.bgcolor = 0xe00080;
+		attr.globalAlphaFlag = 0x0;
+	}
+
+	MV_VPP_GetInputFrameSize(plane_id, &fb_win.width, &fb_win.height);
+
+	disp_win.x = 0;
+	disp_win.y = 0;
+	MV_VPP_GetOutResolutionSize(CPCB_1, &disp_win.width, &disp_win.height);
+
+	ret = wrap_MV_VPPOBJ_SetRefWindow(plane_id, &fb_win);
+	if (ret) {
+		pr_err("%s:%d: SetRefWindow FAILED, error: 0x%x\n", __func__, __LINE__, ret);
+		return -ECOMM;
+	}
+
+	ret = wrap_MV_VPPOBJ_ChangeDispWindow(plane_id, &disp_win, &attr);
+	if (ret) {
+		pr_err("%s:%d ChangeDispWindow FAILED, error: 0x%x\n", __func__, __LINE__, ret);
+		return -ECOMM;
+	}
+
+	pr_debug("%s:%d (exit)\n", __func__, __LINE__);
+
+	return 0;
+}
+
+EXPORT_SYMBOL(MV_VPP_Init);
+EXPORT_SYMBOL(MV_VPP_Config);
+EXPORT_SYMBOL(MV_VPP_DisplayFrame);
+EXPORT_SYMBOL(MV_VPP_make_frame_data);
+EXPORT_SYMBOL(MV_VPP_GetInputFrameSize);
+EXPORT_SYMBOL(MV_VPP_SetInputFrameSize);
+EXPORT_SYMBOL(MV_VPP_GetOutResolutionSize);
+EXPORT_SYMBOL(MV_VPP_SetDisplayResolution);
+EXPORT_SYMBOL(MV_VPP_SetHdmiTxControl);

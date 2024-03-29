@@ -285,6 +285,11 @@
 		function = "pwm";
 	};
 
+	uart1_pmux: uart1-pmux {
+		groups = "TW3_SCL", "TW3_SDA", "URT1_RXD", "URT1_TXD";
+		function = "urt1a";
+	};
+
 	i2s1_pmux: i2s1-pmux {
 		groups = "I2S1_BCLK", "I2S1_LRCK", "I2S1_DO", "I2S1_DI", "I2S1_MCLK";
 		function = "i2s1";
@@ -467,6 +472,7 @@
 };
 
 &uart1 {
+	pinctrl-0 = <&uart1_pmux>;
 	pinctrl-names = "default";
 	status = "okay";
 };

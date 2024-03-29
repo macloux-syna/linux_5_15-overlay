@@ -573,7 +573,7 @@
 &drm {
 	status = "okay";
 
-	pinctrl-0 = <&lcdc_pmux>, <&lcdc_pmux1>, <&lcdc_gpio_pmux>, <&lcdc_bl_gpio_pmux>;
+	pinctrl-0 = <&lcdc_pmux>, <&lcdc_pmux1>, <&lcdc_gpio_pmux>;
 	pinctrl-names = "default", "default", "default", "default";
 
 	lcdc_panel {

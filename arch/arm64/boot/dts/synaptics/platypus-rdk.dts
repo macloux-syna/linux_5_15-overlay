@@ -65,8 +65,8 @@
 			regulator-type = "voltage";
 			enable-active-high;
 			gpios = <&porta 17 GPIO_ACTIVE_HIGH>;
-			states = <3300000 0x0
-				  1800000 0x1>;
+			states = <1800000 0x0
+				  3300000 0x1>;
 		};
 
 		reg_usb0_vbus: usb0_vbus {

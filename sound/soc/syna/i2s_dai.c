@@ -296,7 +296,7 @@ static void i2s_soc_dai_shutdown(struct snd_pcm_substream *substream,
 	snd_printd("chid %d shutdown...\n", i2s_ctrl->i2s_chid);
 	aio_set_extPortCfg(soc_dai->aio_handle, i2s_ctrl->i2s_chid,
 						AIO_I2S_APRKT_OFF, soc_dai->bUsePauseResume);
-
+    aio_i2s_clk_sync_reset(soc_dai->aio_handle, i2s_ctrl->i2s_chid);
 }
 
 static int i2s_soc_dai_setfmt(struct snd_soc_dai *dai, unsigned int fmt)

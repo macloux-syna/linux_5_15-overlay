@@ -81,14 +81,6 @@ syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_lcdc.o
 syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_encoder.o
 syna_drm-y += $(SYNA_DRM_TYPE)/syna_drm_priv.o
 syna_drm-y += $(SYNA_DRM_TYPE)/panel/panel_lcdc.o
-
-syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_api.o
-syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_core.o
-syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_dphy.o
-syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_hal.o
-syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dphy_wrap.o
-syna_drm-y += $(SYNA_DRM_TYPE)/dsi/dsih_displays.o
-
 else ifeq ($(SYNA_DRM_TYPE), vsxxx)
 syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_hdmi.o
 syna_drm-y += $(SYNA_DRM_TYPE)/drm_syna_dsi.o

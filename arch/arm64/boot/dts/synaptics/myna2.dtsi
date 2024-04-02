@@ -289,11 +289,6 @@
 				compatible = "syna,drm-lcdc";
 				status= "disabled";
 			};
-
-			dsi_panel {
-				compatible = "syna,drm-dsi";
-				status= "disabled";
-			};
 		};
 
 		gpu: gpu@0xf7980000 {

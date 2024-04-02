@@ -99,8 +99,8 @@
 	};
 
 	i2c1_pmux: i2c1-pmux {
-		groups = "SDIO0_CDn", "SDIO0_WP";
-		function = "tw1a";
+		groups = "SPI1_SS2n", "SPI1_SS3n";
+		function = "tw1b";
 		drive-strength = <7>;
 	};
 

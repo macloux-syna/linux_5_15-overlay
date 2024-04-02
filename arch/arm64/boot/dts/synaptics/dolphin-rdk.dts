@@ -428,6 +428,10 @@
 	dev-addr = <112>;
 };
 
+&isp_scaler {
+	status = "okay";
+};
+
 &vpp {
         status = "okay";
 };

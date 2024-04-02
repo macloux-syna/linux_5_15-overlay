@@ -1019,6 +1019,11 @@
 					  "isp_tsb_dhub";
 		};
 
+		isp_scaler: isp_scaler {
+			status = "disabled";
+			compatible = "syna,dolphin-isp-scaler";
+		};
+
 		cec: cec@f7fe1000 {
 			compatible = "syna,berlin-cec";
 			interrupt-parent = <&sic>;

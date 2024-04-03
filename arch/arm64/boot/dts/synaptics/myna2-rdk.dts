@@ -31,7 +31,7 @@
 
 	panel0-backlight {
 		compatible = "pwm-backlight";
-		pwms = <&pwm0 0 1000000 0>;
+		pwms = <&pwm0 3 1000000 0>;
 		brightness-levels = <0 36 72 108 144 180 212 255>;
 		default-brightness-level = <7>;
 		enable-gpio = <&expander0 1 GPIO_ACTIVE_HIGH>;
@@ -600,15 +600,15 @@
 	dsi_panel {
 		status= "okay";
 
-		hact = <800>;
-		hfp = <60>;
-		hsa = <32>;
-		hbp = <60>;
-		vact = <1280>;
-		vfp = <16>;
-		vsa = <2>;
-		vbp = <14>;
-		pixclockKhz = <75000>;
+		ACTIVE_WIDTH = <800>;
+		HFP = <60>;
+		HSYNCWIDTH = <32>;
+		HBP = <60>;
+		ACTIVE_HEIGHT = <1280>;
+		VFP = <16>;
+		VSYNCWIDTH = <2>;
+		VBP = <14>;
+		FREQ = <75000>;
 		bits_per_pixel = <24>;
 		busformat = <0>;
 

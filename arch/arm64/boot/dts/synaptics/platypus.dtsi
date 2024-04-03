@@ -354,7 +354,13 @@
 		drm: drm {
 			compatible = "syna,berlin-drm";
 			status = "disabled";
+
+			dsi_panel {
+				compatible = "syna,drm-dsi";
+				status = "disabled";
+			};
 		};
+
 
 		bm: bm {
 			compatible = "syna,berlin-bm";
@@ -996,10 +1002,11 @@
 
 		fb: fb {
 			compatible = "marvell,berlin-fb";
-			frame-size-ndx = <1>;
-			disp-res-ndx = <1>;
-			frame-rate = <60>;
 			status = "disabled";
+			frame-size-ndx = <1>;
+			disp-mode = <0>;
+			disp1-res-id = <24>;
+			disp1-type = <0>;
 		};
 	};
 };

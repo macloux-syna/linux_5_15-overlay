@@ -14,6 +14,8 @@
 
 #define VPP_ISR_MSGQ_SIZE 64
 
+extern vpp_config_params vpp_config_param;
+
 static AMPMsgQ_t hVPPMsgQ;
 static struct semaphore vpp_sem;
 static struct task_struct *vpp_isr_task;
@@ -39,10 +41,10 @@ static int VPP_IRQ_Handler(unsigned int irq, void *dev_id)
 
 	intr_num = ffs(irq) - 1;
 
-	if (VPP_DHUB_VOP1_INTR == intr_num)
-		up(&vpp_vsync_sem);
-	else if (VPP_DHUB_VOP2_INTR == intr_num)
-		up(&vpp_vsync1_sem);
+	VPP_SIGNAL_VSYNC(vpp_config_param.display_mode,
+				intr_num,
+				&vpp_vsync_sem,
+				&vpp_vsync1_sem);
 
 	msg.m_MsgID = VPP_CC_MSG_TYPE_VPP;
 	msg.m_Param2 = 0;

@@ -25,4 +25,18 @@ static unsigned int vpp_intrs [] = {
 
 #define VPP_DHUB_VOP1_INTR avioDhubSemMap_vpp128b_vpp_inr0
 #define VPP_DHUB_VOP2_INTR avioDhubSemMap_vpp128b_vpp_inr14
+
+#define VPP_SIGNAL_VSYNC(MODE, INTRNO, VSYNC_SEM, VSYNC_SEM1)	\
+			do {\
+				if (VPP_DHUB_VOP1_INTR == INTRNO)\
+					up(VSYNC_SEM);\
+				else if (VPP_DHUB_VOP2_INTR == INTRNO)\
+				{\
+					if (MODE == VPP_VOUT_DUAL_MODE_PIP)\
+						up(VSYNC_SEM1);\
+					else\
+						up(VSYNC_SEM);\
+				}\
+			} while(0);
+
 #endif //_VPP_INTRS_H_

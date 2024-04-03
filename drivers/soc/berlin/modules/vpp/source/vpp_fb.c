@@ -5,10 +5,10 @@
 #include "vpp_fb.h"
 #include "vpp_api.h"
 
-static vpp_config_params vpp_config_param = { 0 };
 static VBUF_INFO **gDescArray;
 static int gDescIndex;
 static VPP_MEM_LIST *vpp_shm_list;
+extern vpp_config_params vpp_config_param;
 
 static void MV_VPP_DsiCopyFrameBuffer(VBUF_INFO *vbufinfo, VPP_MEM *shm_handle, int y,
 			int width, int height, int stride, int bpp)

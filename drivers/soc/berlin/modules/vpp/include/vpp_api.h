@@ -5,6 +5,7 @@
 #define _VPP_API_H_
 
 #include "vpp_mem.h"
+#include "vpp_config.h"
 #include "vpp_fb.h"
 #include "vpp_defines.h"
 #include "vpp_vbuf.h"

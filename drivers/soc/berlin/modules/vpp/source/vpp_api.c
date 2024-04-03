@@ -9,6 +9,7 @@
 
 static mrvl_frame_size curr_input_frame_size[MAX_NUM_PLANES];
 static VPP_DISP_OUT_PARAMS curr_disp_res_params[MAX_NUM_CPCBS];
+vpp_config_params vpp_config_param = { 0 };
 
 int MV_VPP_make_frame_data(unsigned int iVideo, unsigned int *pStartAddr,
 			  unsigned int uiPicH, unsigned int uiLineV, unsigned int uiWidth,
@@ -115,6 +116,8 @@ int MV_VPP_SetDisplayResolution(ENUM_CPCB_ID cpcbID,
 		VPP_DISP_OUT_PARAMS dispParams, int bApply)
 {
 	int res = MV_VPP_OK;
+	int pixel_clock;
+
 	if (curr_disp_res_params[cpcbID].uiResId != dispParams.uiResId ||
 			curr_disp_res_params[cpcbID].uiDisplayMode != dispParams.uiDisplayMode ||
 			curr_disp_res_params[cpcbID].uiBitDepth != dispParams.uiBitDepth ||
@@ -123,11 +126,24 @@ int MV_VPP_SetDisplayResolution(ENUM_CPCB_ID cpcbID,
 		memcpy(&curr_disp_res_params[cpcbID], &dispParams, sizeof(VPP_DISP_OUT_PARAMS));
 
 		if (bApply) {
+			//SetDisplayWindow applied to all planes by SetFormat
+			wrap_MV_VPPOBJ_GetCPCBOutputPixelClock(dispParams.uiResId, &pixel_clock);
+
+			if ((MAX_NUM_CPCBS == 1) || \
+				((cpcbID == CPCB_1) &&\
+				(!IS_MIPI_ONLY_MODE(dispParams.uiDisplayMode))))
+					res = VPP_Clock_Set_Rate(pixel_clock*1000);
+			else
+				res = VPP_Clock_Set_Rate_Ext(pixel_clock*1000);
+
 			res = wrap_MV_VPPOBJ_SetFormat(cpcbID, &dispParams);
 			if (res != MV_VPP_OK) {
-				pr_err("%s:%d: wrap_MV_VPPOBJ_SetFormat FAILED, error: 0x%x\n", __func__, __LINE__, res);
+				pr_err("%s:%d: wrap_MV_VPPOBJ_SetFormat FAILED, error: 0x%x\n",
+					__func__, __LINE__, res);
 			} else {
-				//SetDisplayWindow applied to all planes by SetFormat
+				pr_info("%s %d> resiD %d cpcbID %d pixel clock %d\n",
+					__FUNCTION__, __LINE__, dispParams.uiResId,
+					cpcbID, pixel_clock);
 			}
 		}
 	}
@@ -156,12 +172,13 @@ int MV_VPP_SetHdmiTxControl(int enable)
 	return wrap_MV_VPPOBJ_SetHdmiTxControl(enable);
 }
 
-static int VPP_Init_Normal_vpp_ta(vpp_config_params vpp_config_param)
+static int VPP_Init_Normal_vpp_ta(vpp_config_params vpp_config_params)
 {
 	VPP_DISP_OUT_PARAMS pdispParams[MAX_NUM_CPCBS];
 	unsigned int vppInitParam[2];
 	int ret = MV_VPP_OK, i;
 
+	memcpy(&vpp_config_param, &vpp_config_params, sizeof(vpp_config_params));
 	if (!VPP_Is_Recovery_Mode()) {
 		vppInitParam[0] = VPP_CA_INIT_MAGIC_NUM;
 		vppInitParam[1] = 0;

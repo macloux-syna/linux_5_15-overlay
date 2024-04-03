@@ -13,7 +13,6 @@
 #include "hal_vpp_wrap.h"
 #include "avio_sub_module.h"
 
-
 const int m_vinport_config[] = {
 	/* PLANE_MAIN   */ CHAN_MAIN,
 	/* PLANE_PIP	*/ CHAN_PIP,
@@ -36,7 +35,6 @@ int m_dv_config[] = {
 	/* CHAN_VMX     */ CPCB_1,
 };
 
-//#define VPP_ENABLE_GFX_ON_TOP
 int m_zorder_config[] = {
 #ifdef VPP_ENABLE_GFX_ON_TOP
 	/* CHAN_MAIN    */ CPCB_ZORDER_1,
@@ -44,8 +42,8 @@ int m_zorder_config[] = {
 	/* CHAN_GFX1    */ CPCB_ZORDER_3,
 #else
 	/* CHAN_MAIN    */ CPCB_ZORDER_3,
-	/* CHAN_PIP     */ CPCB_ZORDER_1,
-	/* CHAN_GFX1    */ CPCB_ZORDER_2,
+	/* CHAN_PIP     */ CPCB_ZORDER_2,
+	/* CHAN_GFX1    */ CPCB_ZORDER_1,
 #endif
 	/* CHAN_GFX2    */ CPCB_ZORDER_INVALID,
 	/* CHAN_AUX     */ CPCB_ZORDER_INVALID,
@@ -60,25 +58,6 @@ int m_voutport_config[] = {
 	/* VOUT_SD    */ CPCB_1,
 	/* VOUT_DSI   */ CPCB_INVALID,
 };
-
-static int VPP_Clock_Init(int vpp_clk_rate)
-{
-	int res = -1;
-
-	res = VPP_Clock_Set_Rate(vpp_clk_rate);
-	if (res < 0) {
-		pr_err("Failed to set VPP clock\n");
-		return res;
-	}
-
-	res = VPP_Clock_Set_Rate_Ext(vpp_clk_rate);
-	if (res < 0) {
-		pr_err("Failed to set VPP dpi clock\n");
-		return res;
-	}
-
-	return res;
-}
 
 static int VPP_Init_Recovery_fastlogo_ta(VPP_MEM_LIST *vpp_shm_list,
 					vpp_config_params vpp_config_param)
@@ -122,6 +101,10 @@ static int VPP_Init_Recovery_fastlogo_ta(VPP_MEM_LIST *vpp_shm_list,
 		pr_err("wrap_MV_VPP_Init FAILED E[%d]\n", res);
 		goto EXIT;
 	}
+
+	if (vpp_config_param.mipi_config_params)
+		wrap_MV_VPP_LoadConfigTable(VOUT_DSI, 0, vpp_config_param.mipi_config_params);
+
 	/* Retrieve following details from bootloader
 	 * 1. dispout param - resid, display id/mode, TGID
 	 * 2. Clock - Get pixel clock for resid got from BL.
@@ -134,35 +117,28 @@ static int VPP_Init_Recovery_fastlogo_ta(VPP_MEM_LIST *vpp_shm_list,
 	wrap_MV_VPPOBJ_GetDispOutParams(pdispParams, MAX_NUM_CPCBS * sizeof(VPP_DISP_OUT_PARAMS));
 
 	/* Override the params from DTS if available */
-	if (vpp_config_param.disp_res_id  == -1) {
+	if (vpp_config_param.disp1_res_id  == -1) {
 		dispParams.uiDispId = pdispParams[CPCB_1].uiDispId;
 		dispParams.uiDisplayMode = pdispParams[CPCB_1].uiDisplayMode;
 		dispParams.uiResId = IS_MIPI_ONLY_MODE(pdispParams[CPCB_1].uiDisplayMode) ?\
 								pdispParams[CPCB_1].uiResId :\
 								DEFAULT_CPCB_1_RESOLUTION_ID;
 	} else {
-		dispParams.uiDispId = vpp_config_param.disp_out_type;
-		dispParams.uiDisplayMode = (vpp_config_param.disp_out_type == 0) ? VOUT_HDMI :\
+		dispParams.uiDispId = (vpp_config_param.disp1_out_type == 0) ? VOUT_HDMI :\
 									VOUT_DSI;
-		dispParams.uiResId = vpp_config_param.disp_res_id;
+		dispParams.uiDisplayMode = vpp_config_param.display_mode;
+		dispParams.uiResId = vpp_config_param.disp1_res_id;
 	}
 
 	if (dispParams.uiDispId == VOUT_DSI)
 		wrap_MV_VPP_MIPI_Reset(0);
 
-	vpp_config_param.disp_res_id  = dispParams.uiResId;
-	dispParams.uiBitDepth = OUTPUT_BIT_DEPTH_8BIT;
-	dispParams.uiColorFmt = OUTPUT_COLOR_FMT_RGB888;
+	vpp_config_param.disp1_res_id  = dispParams.uiResId;
+	dispParams.uiBitDepth = vpp_config_param.disp1_bit_depth;
+	dispParams.uiColorFmt = vpp_config_param.disp1_colorformat;
 	dispParams.iPixelRepeat = 1;
 
-	/* Get and Configure clock here */
-	res = wrap_MV_VPPOBJ_GetCPCBOutputPixelClock(vpp_config_param.disp_res_id, &pixel_clock);
-	pr_debug("\nresID[%d]clock[%d]\n", vpp_config_param.disp_res_id, pixel_clock);
-
-	/* Convert to Hz */
-	pixel_clock *= 1000;
-
-	res = wrap_MV_VPPOBJ_GetResolutionDescription(vpp_config_param.disp_res_id, &ResDesc);
+	res = wrap_MV_VPPOBJ_GetResolutionDescription(vpp_config_param.disp1_res_id, &ResDesc);
 	if (res != MV_VPP_OK) {
 		pr_err("wrap_MV_VPPOBJ_GetResolutionDescription FAILED, error: 0x%x\n", res);
 		res = MV_DISP_E_CFG;
@@ -175,12 +151,6 @@ static int VPP_Init_Recovery_fastlogo_ta(VPP_MEM_LIST *vpp_shm_list,
 	 * recovery mode: should be done here
 	 * normal mode: Done by ampcore, alllowing bootlogo shown for longer time */
 	wrap_DhubEnableAutoPush(false, true, vpp_config_param.frame_rate);
-
-	res = VPP_Clock_Init(pixel_clock);
-	if (res) {
-		pr_err("VPP %s:%d Failed to set clock\n", __func__, __LINE__);
-		return res;
-	}
 
 	res = wrap_MV_VPPOBJ_Reset();
 	if (res != MV_VPP_OK) {
@@ -268,7 +238,6 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 	int disp_height;
 	int res = 0;
 	int planeID = PLANE_GFX1;
-	int pixel_clock;
 	VPP_DISP_OUT_PARAMS dispParams;
 	VPP_MEM shm_handle;
 	const int feature_cfg[MAX_NUM_FEATURE_CFG] = {VPP_FEATURE_HDMITX};
@@ -289,13 +258,12 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 	vpp_init_parm.uiShmSize = SHM_SHARE_SZ;
 	vpp_init_parm.uiShmPA = (uintptr_t)shm_handle.p_addr;
 
-	dispParams.uiDispId = vpp_config_param.disp_out_type;
-	dispParams.uiDisplayMode = (vpp_config_param.disp_out_type == 0) ? VOUT_HDMI :\
-									VOUT_DSI;
-	dispParams.uiResId = (vpp_config_param.disp_res_id == -1 ?
-			DEFAULT_CPCB_1_RESOLUTION_ID : vpp_config_param.disp_res_id);
-	dispParams.uiBitDepth = OUTPUT_BIT_DEPTH_8BIT;
-	dispParams.uiColorFmt = OUTPUT_COLOR_FMT_RGB888;
+	dispParams.uiResId = (vpp_config_param.disp1_res_id == -1 ?
+						 DEFAULT_CPCB_1_RESOLUTION_ID : vpp_config_param.disp1_res_id);
+	dispParams.uiDispId = vpp_config_param.disp1_out_type;
+	dispParams.uiDisplayMode = vpp_config_param.display_mode;
+	dispParams.uiBitDepth = vpp_config_param.disp1_bit_depth;
+	dispParams.uiColorFmt = vpp_config_param.disp1_colorformat;
 	dispParams.iPixelRepeat = 1;
 
 	res = wrap_MV_VPP_Init(&vpp_init_parm);
@@ -311,30 +279,17 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 		goto EXIT;
 	}
 
-	/* Get and Configure clock here */
-	res = wrap_MV_VPPOBJ_GetCPCBOutputPixelClock(dispParams.uiResId, &pixel_clock);
-	if (res != MV_VPP_OK) {
-		pr_err("wrap_MV_VPPOBJ_GetCPCBOutputPixelClock FAILED E[%d]\n", res);
-		res = MV_DISP_E_CREATE;
-		goto EXIT;
-	}
-	pr_info("resID[%d]clock[%d]\n", dispParams.uiResId, pixel_clock);
-
-	/* Convert to Hz */
-	pixel_clock *= 1000;
-
-	res = VPP_Clock_Init(pixel_clock);
-	if (res) {
-		pr_err("VPP %s:%d Failed to set clock\n", __func__, __LINE__);
-		return res;
-	}
-
 	res = wrap_MV_VPPOBJ_Reset();
 	if (res != MV_VPP_OK) {
 		pr_err("wrap_MV_VPPOBJ_Reset FAILED, error: 0x%x\n", res);
 		res = MV_DISP_E_RST;
 		goto EXIT_DESTROY;
 	}
+
+#ifdef USE_DOLPHIN
+	if (dispParams.uiDisplayMode == VPP_VOUT_DUAL_MODE_PIP)
+		m_dv_config[CHAN_PIP] = CPCB_2;
+#endif
 
 	res = wrap_MV_VPPOBJ_Config(m_vinport_config, m_dv_config, m_zorder_config,
 						m_voutport_config, feature_cfg);
@@ -344,6 +299,11 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 		goto EXIT_DESTROY;
 	}
 
+	if (vpp_config_param.mipi_config_params)
+		wrap_MV_VPP_LoadConfigTable(VOUT_DSI, 0, vpp_config_param.mipi_config_params);
+
+	wrap_MV_VPPOBJ_SetDispOutParams(&dispParams, CPCB_1);
+
 	//Set the display resolution
 	res = MV_VPP_SetDisplayResolution(CPCB_1, dispParams, 1);
 	if (res != MV_VPP_OK) {
@@ -352,16 +312,33 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 		goto EXIT_DESTROY;
 	}
 
-	MV_VPP_GetOutResolutionSize(CPCB_1, &disp_width, &disp_height);
-	disp_win.x = 0;
-	disp_win.y = 0;
-	disp_win.width  = disp_width;
-	disp_win.height = disp_height;
-
+#ifdef USE_DOLPHIN
+	if (vpp_config_param.display_mode == VPP_VOUT_DUAL_MODE_PIP) {
+		dispParams.uiResId = vpp_config_param.disp2_res_id;
+		dispParams.uiDispId = vpp_config_param.disp2_out_type;
+		dispParams.uiDisplayMode = vpp_config_param.display_mode;
+		dispParams.uiBitDepth = OUTPUT_BIT_DEPTH_8BIT;
+		dispParams.uiColorFmt = OUTPUT_COLOR_FMT_RGB888;
+		dispParams.iPixelRepeat = 1;
+		wrap_MV_VPPOBJ_SetDispOutParams(&dispParams, CPCB_2);
+		res = MV_VPP_SetDisplayResolution(CPCB_2, dispParams, 1);
+		if (res != MV_VPP_OK) {
+			pr_err("%s:%d: MV_VPP_SetDisplayResolution FAILED, error: 0x%x\n",
+					__func__, __LINE__, res);
+			goto EXIT_DESTROY;
+		}
+	}
+#endif
 
 	for (planeID = FIRST_PLANE; planeID < MAX_NUM_PLANES; planeID++) {
 		if (!((1 << planeID) & vpp_config_param.active_planes))
 			continue;
+
+		MV_VPP_GetOutResolutionSize(m_dv_config[planeID], &disp_width, &disp_height);
+		disp_win.x = 0;
+		disp_win.y = 0;
+		disp_win.width  = disp_width;
+		disp_win.height = disp_height;
 
 		//Get the width and height of FB
 		MV_VPP_GetInputFrameSize(planeID, &width, &height);

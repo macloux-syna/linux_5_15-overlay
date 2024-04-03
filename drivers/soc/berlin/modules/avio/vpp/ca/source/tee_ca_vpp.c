@@ -1367,3 +1367,33 @@ int VppGetCPCBOutputPixelClock(int resID,  int *pixel_clock)
 
 	return operation.params[1].value.b;
 }
+
+int VppAVIOReset(void)
+{
+	int index;
+	TEEC_Session *pSession;
+	TEEC_Result result;
+	TEEC_Operation operation;
+
+	index = VPP_CA_GetInstanceID();
+	pSession = &(TAVPPInstance[index].session);
+
+	operation.paramTypes = TEEC_PARAM_TYPES(
+			TEEC_VALUE_OUTPUT,
+			TEEC_NONE,
+			TEEC_NONE,
+			TEEC_NONE);
+
+	/* clear result */
+	operation.params[0].value.a = 0xdeadbeef;
+
+	operation.started = 1;
+	result = InvokeCommandHelper(index,
+			pSession,
+			VPP_AVIORESET,
+			&operation,
+			NULL);
+	VPP_TEEC_LOGIFERROR(result);
+
+	return operation.params[0].value.a;
+}

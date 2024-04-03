@@ -33,14 +33,14 @@ typedef enum {
 	PLANE_MAIN   = 0,
 	PLANE_PIP    = 1,
 	PLANE_GFX1   = 2,
-#ifndef USE_DOLPHIN
-	//USE_PLATYPUS
+#ifndef USE_VS680
+	//USE_VS640
 	PLANE_OVP_EL = 3,
 #else
 	PLANE_GFX2   = 3,
 #endif
 #ifdef VPP_ALLOW_ALL_PLANES
-#ifndef USE_DOLPHIN
+#ifndef USE_VS680
 	PLANE_VMX     = PLANE_OVP_EL,
 #else
 	PLANE_AUX     = 4,

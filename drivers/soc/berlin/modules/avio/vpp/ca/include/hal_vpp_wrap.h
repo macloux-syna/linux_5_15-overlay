@@ -63,6 +63,7 @@ int wrap_MV_VPPOBJ_GetDispOutParams(VPP_DISP_OUT_PARAMS *pdispParams, int size);
 void wrap_MV_VPP_MIPI_Reset(int enable);
 int wrap_MV_VPP_LoadConfigTable(ENUM_VOUT_ID voutid, int Id, void *pConfig);
 int wrap_MV_VPP_iSTeeEnabled(void);
+int wrap_MV_VPPOBJ_SetDispOutParams(VPP_DISP_OUT_PARAMS *pDispParams, int cpcbID);
 #ifdef __cplusplus
 }
 #endif

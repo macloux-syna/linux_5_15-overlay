@@ -68,6 +68,7 @@ int VppGetCPCBOutputPixelClock(int resID,  int *pixel_clock);
 int VPP_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInBufferSize);
 int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 				VPP_SHM_ID shmCmdId, UINT32 sInBufferSize, UINT32 sOutBufferSize);
+int VppAVIOReset(void);
 #ifdef __cplusplus
 }
 #endif

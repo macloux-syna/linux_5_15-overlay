@@ -47,7 +47,7 @@ static void drv_vpp_get_hdmi_5V(VPP_CTX *hVppCtx, struct device_node *np)
 static void drv_vpp_get_mipi_rst(VPP_CTX *hVppCtx, struct device_node *np)
 {
 	hVppCtx->gpio_mipirst = devm_fwnode_get_index_gpiod_from_child(hVppCtx->dev, "mipirst", 0,
-										&np->fwnode, GPIOD_OUT_HIGH, "mipi");
+										&np->fwnode, GPIOD_OUT_LOW, "mipi");
 
 	if (IS_ERR_OR_NULL(hVppCtx->gpio_mipirst)) {
 		avio_trace("%s:%d Gpio desc Fail ERR[%ld]\n", __func__,

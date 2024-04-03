@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
-/* Copyright (C) 2020 Synaptics Incorporated
+/* Copyright (C) 2023 Synaptics Incorporated
  *
- * Copyright (C) 2017 Marvell Technology Group Ltd.
- *        http://www.marvell.com
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 
@@ -18,6 +12,7 @@
 #include "avio_type.h"
 #include "vpp_vbuf.h"
 #include "vpp_priv.h"
+#include "hal_vpp_mipi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -169,25 +164,6 @@ typedef struct VPP_DISP_OUT_PARAMS_T {
 	INT32 iPixelRepeat;
 	UINT32 uiDisplayMode;
 } VPP_DISP_OUT_PARAMS;
-
-typedef struct RESOLUTION_INFO_T {
-    int active_width;    /* active width of channel in pixel */
-    int active_height;   /* active height of channel in pixel */
-    int width;  /* width of channel in pixel */
-    int height; /* height of channel in pixel */
-    int hfrontporch; /* front porch of hsync */
-    int hsyncwidth; /* hsync width */
-    int hbackporch; /* back porch of hsync */
-    int vfrontporch; /* front porch of vsync */
-    int vsyncwidth; /* vsync width */
-    int vbackporch; /* back porch of vsync */
-    int type;   /* resolution type: HD or SD */
-    int scan;   /* scan mode: progressive or interlaced */
-    int frame_rate;   /* frame rate */
-    int flag_3d;   /* 1 for 3D, 0 for 2D */
-    int freq;   /* pixel frequency */
-    int pts_per_cnt_4;   /* time interval in term of PTS for every 4 frames */
-} RESOLUTION_INFO;
 
 #ifdef __cplusplus
 }

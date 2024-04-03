@@ -108,7 +108,7 @@ int wrap_MV_VPP_Init(VPP_INIT_PARM *vpp_init_parm)
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (vpp_init_parm != NULL)
-		retVal = TZ_MV_VPP_Init(TA_UUID_FASTLOGO, vpp_init_parm);
+			retVal = TZ_MV_VPP_Init(TA_UUID_FASTLOGO, vpp_init_parm);
 	} else {
 		retVal = NTZ_MV_VPP_Init();
 	}
@@ -425,6 +425,8 @@ int wrap_MV_VPP_LoadConfigTable(ENUM_VOUT_ID voutid, int Id, void *pConfig)
 
 	if (!hDhubCtx->isTeeEnabled)
 		NTZ_MV_VPP_LoadConfigTable(voutid, Id, pConfig);
+	else
+		TZ_MV_VPPOBJ_LoadMipiConfig(pConfig);
 
 	return MV_VPP_OK;
 }
@@ -434,6 +436,21 @@ int wrap_MV_VPP_iSTeeEnabled(void)
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
 
 	return hDhubCtx->isTeeEnabled;
+}
+
+int wrap_MV_VPPOBJ_SetDispOutParams(VPP_DISP_OUT_PARAMS *pDispParams, int cpcbID)
+{
+	HRESULT Ret = MV_VPP_OK;
+	UINT32 aDispParamsData[VPP_SETFORMAT_SIZE];
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+
+	memcpy(&aDispParamsData[0], &cpcbID, sizeof(INT));
+	memcpy(&aDispParamsData[1], pDispParams, sizeof(VPP_DISP_OUT_PARAMS));
+
+	if (hDhubCtx->isTeeEnabled)
+		Ret = TZ_MV_VPPOBJ_SetDispOutParams(aDispParamsData, VPP_SETFORMAT_SIZE);
+
+	return  Ret;
 }
 
 EXPORT_SYMBOL(wrap_MV_VPP_InitVPPS);
@@ -473,3 +490,4 @@ EXPORT_SYMBOL(wrap_MV_VPP_MIPI_Reset);
 EXPORT_SYMBOL(wrap_MV_VPP_LoadConfigTable);
 EXPORT_SYMBOL(wrap_MV_VPP_iSTeeEnabled);
 EXPORT_SYMBOL(wrap_MV_VPP_RegisterWaitForVppVsyncCb);
+EXPORT_SYMBOL(wrap_MV_VPPOBJ_SetDispOutParams);

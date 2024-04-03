@@ -103,6 +103,8 @@ int TZ_MV_VPP_Init(ENUM_TA_UUID_TYPE uuidType, VPP_INIT_PARM *vpp_init_parm)
 
 	VPP_CA_Initialize(uuidType, vpp_init_parm->dev);
 
+	VppAVIOReset();
+
 	VPP_CA_Init(vpp_init_parm);
 
 	return MV_VPP_OK;
@@ -517,3 +519,12 @@ int TZ_MV_VPPOBJ_GetDispOutParams(VPP_DISP_OUT_PARAMS *pdispParams, int size)
 	return  VPP_PassShm_InOutBuffer(pdispParams, pdispParams, VPP_GET_DISP_VOUTPARAMS, size, size);
 }
 
+int TZ_MV_VPPOBJ_SetDispOutParams(void *pdispParams, int size)
+{
+	return  VPP_PassShm_InBuffer(pdispParams, VPP_SET_DISP_VOUTPARAMS, size);
+}
+
+int TZ_MV_VPPOBJ_LoadMipiConfig(VPP_MIPI_LOAD_CONFIG *pConfigParams)
+{
+	return VPP_PassShm_InBuffer(pConfigParams, VPP_MIPI_CONFIG, sizeof(VPP_MIPI_LOAD_CONFIG));
+}

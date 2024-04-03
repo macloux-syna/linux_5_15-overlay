@@ -62,6 +62,8 @@
 			enable-method = "psci";
 			next-level-cache = <&L2_0>;
 			cpu-idle-states = <&CPU_SLEEP_0>;
+			clocks = <&cpupll 1>;
+			operating-points-v2 = <&cpu_opp_table>;
 			L2_0: l2-cache {
 				compatible = "cache";
 				next-level-cache = <&L3>;
@@ -75,6 +77,8 @@
 			enable-method = "psci";
 			next-level-cache = <&L2_1>;
 			cpu-idle-states = <&CPU_SLEEP_0>;
+			clocks = <&cpupll 1>;
+			operating-points-v2 = <&cpu_opp_table>;
 			L2_1: l2-cache {
 				compatible = "cache";
 				next-level-cache = <&L3>;
@@ -88,6 +92,8 @@
 			enable-method = "psci";
 			next-level-cache = <&L2_2>;
 			cpu-idle-states = <&CPU_SLEEP_0>;
+			clocks = <&cpupll 1>;
+			operating-points-v2 = <&cpu_opp_table>;
 			L2_2: l2-cache {
 				compatible = "cache";
 				next-level-cache = <&L3>;
@@ -101,6 +107,8 @@
 			enable-method = "psci";
 			next-level-cache = <&L2_3>;
 			cpu-idle-states = <&CPU_SLEEP_0>;
+			clocks = <&cpupll 1>;
+			operating-points-v2 = <&cpu_opp_table>;
 			L2_3: l2-cache {
 				compatible = "cache";
 				next-level-cache = <&L3>;
@@ -120,6 +128,30 @@
 				entry-latency-us = <75>;
 				exit-latency-us = <155>;
 				min-residency-us = <50000>;
+			};
+		};
+
+		cpu_opp_table: opp_table0 {
+			compatible = "operating-points-v2";
+			opp-shared;
+
+			opp@1400000000 {
+				opp-hz = /bits/ 64 <1400000000>;
+				opp-microvolt = <800000 800000 900000>;
+				clock-latency-ns = <12600000>;
+			};
+
+			opp@1700000000 {
+				opp-hz = /bits/ 64 <1700000000>;
+				opp-microvolt = <800000 800000 900000>;
+				clock-latency-ns = <12600000>;
+				opp-suspend;
+			};
+
+			opp@1900000000 {
+				opp-hz = /bits/ 64 <1900000000>;
+				opp-microvolt = <900000 900000 900000>;
+				clock-latency-ns = <12600000>;
 			};
 		};
 	};

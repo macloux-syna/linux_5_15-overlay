@@ -34,6 +34,12 @@
 	model = "Synaptics Myna2 RDK";
 	compatible = "syna,myna2-rdk", "syna,myna2";
 
+	cpus {
+		cpu@0 {
+			cpu0-supply = <&vcore>;
+		};
+	};
+
 	chosen {
 		bootargs = "cma=0x4000000@0x38800000 earlycon=uart8250,mmio32,0xF7E81400";
 		stdout-path = "serial0:115200n8";
@@ -118,10 +124,6 @@
 		wl_reg_on = <&expander1 2 GPIO_ACTIVE_LOW>;
 	};
 
-	dummy_label {
-		dummy1 = <&vcore1>;
-	};
-
 };
 
 &i2c0 {
@@ -141,36 +143,6 @@
 			gpios = <4 GPIO_ACTIVE_HIGH>;
 			output-high;
 		};
-	};
-
-	regulator@49 {
-		compatible = "ti,tps62866";
-		reg = <0x49>;
-		regulators {
-			vcore: SW {
-				regulator-boot-on;
-				regulator-always-on;
-				regulator-active-discharge = <0>;
-				regulator-name = "vcore";
-				regulator-min-microvolt = <700000>;
-				regulator-max-microvolt = <987500>;
-				regulator-initial-mode = <0>;
-			};
-		};
-	};
-
-	vcore1: regulator@61 {
-		compatible = "halo,hl7593";
-		regulator-name = "vcore";
-		regulator-min-microvolt = <700000>;
-		regulator-max-microvolt = <937500>;
-		regulator-always-on;
-		regulator-boot-on;
-		regulator-active-discharge = <0>;
-		halo,vsel-state-high;
-		halo,vsel-step = <1>;
-		reg = <0x61>;
-		status = "disabled";
 	};
 };
 
@@ -215,6 +187,21 @@
 	no-irq-suspend;
 	clock-frequency = <100000>;
 
+	regulator@49 {
+		compatible = "ti,tps62866";
+		reg = <0x49>;
+		regulators {
+			vcore: SW {
+				regulator-boot-on;
+				regulator-always-on;
+				regulator-active-discharge = <0>;
+				regulator-name = "vcore";
+				regulator-min-microvolt = <700000>;
+				regulator-max-microvolt = <987500>;
+				regulator-initial-mode = <0>;
+			};
+		};
+	};
 
 	ina220_0: ina220-0@40 {
 		compatible = "ti,ina220";

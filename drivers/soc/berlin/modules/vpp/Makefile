@@ -24,6 +24,7 @@ vpp-objs += source/vpp.o       \
 
 ifeq ($(SYNA_VPP_TYPE), vsxxx)
 vpp-objs += source/$(SYNA_VPP_TYPE)/vpp_api_priv.o
+vpp-objs += source/$(SYNA_VPP_TYPE)/vpp_res_info.o
 endif
 
 ifeq ($(CONFIG_ION), y)

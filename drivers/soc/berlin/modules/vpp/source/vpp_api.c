@@ -6,6 +6,7 @@
 #include "hal_dhub_wrap.h"
 #include "hal_vpp_wrap.h"
 #include "avio_sub_module.h"
+#include "vpp_res_info.h"
 
 static mrvl_frame_size curr_input_frame_size[MAX_NUM_PLANES];
 static VPP_DISP_OUT_PARAMS curr_disp_res_params[MAX_NUM_CPCBS];
@@ -285,6 +286,16 @@ int MV_VPP_Config(ENUM_CPCB_ID cpcbID, ENUM_PLANE_ID plane_id, bool isVideo) {
 	return 0;
 }
 
+int __weak syna_get_res_index(int active_width, int active_height, int scan, int freq, int fps)
+{
+	return -1;
+}
+
+int MV_VPP_GetResIndex(int active_width, int active_height, int scan, int freq, int fps)
+{
+	return syna_get_res_index(active_width, active_height, scan, freq, fps);
+}
+
 EXPORT_SYMBOL(MV_VPP_Init);
 EXPORT_SYMBOL(MV_VPP_Config);
 EXPORT_SYMBOL(MV_VPP_DisplayFrame);
@@ -294,3 +305,4 @@ EXPORT_SYMBOL(MV_VPP_SetInputFrameSize);
 EXPORT_SYMBOL(MV_VPP_GetOutResolutionSize);
 EXPORT_SYMBOL(MV_VPP_SetDisplayResolution);
 EXPORT_SYMBOL(MV_VPP_SetHdmiTxControl);
+EXPORT_SYMBOL(MV_VPP_GetResIndex);

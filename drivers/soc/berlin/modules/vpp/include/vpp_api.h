@@ -48,6 +48,7 @@ int MV_VPP_SetDisplayResolution(ENUM_CPCB_ID cpcbID,
 void MV_VPP_GetOutResolutionSize(ENUM_CPCB_ID cpcbID, int *p_width, int *p_height);
 int MV_VPP_SetHdmiTxControl(int enable);
 int MV_VPP_Config(ENUM_CPCB_ID cpcbID, ENUM_PLANE_ID plane_id, bool isVideo);
+int MV_VPP_GetResIndex(int active_width, int active_height, int scan, int freq, int fps);
 int is_vpp_driver_initialized(void);
 int VPP_Clock_Set_Rate(unsigned int clk_rate);
 int VPP_Clock_Set_Rate_Ext(unsigned int clk_rate);

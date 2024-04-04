@@ -142,13 +142,11 @@ config BERLIN_VSYNC
 	help
 	  Enable Berlin Vsync
 
-config BERLIN_HRX
-	tristate "Support BERLIN HRX"
+config BERLIN_IFCP
+	tristate "Support Irdeto IFCP"
 	default n
-	select BERLIN_DHUB_IRQ
-	depends on BERLIN_MSGQ && BERLIN_SHM && BERLIN_AVIO
 	help
-	  HRX support
+	  Enable support for Irdeto IFCP
 
 config BERLIN_BM
 	tristate "Support BERLIN BM"

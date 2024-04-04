@@ -223,11 +223,6 @@
 		drive-strength = <7>;
 	};
 
-	hrx5v_pmux: hrx5v-pmux {
-		groups = "SM_HDMIRX_PWR5V";
-		function = "gpio";
-		drive-strength = <7>;
-	};
 	gmac_gpio_pmux: gmac_gpio_pmux {
 		groups = "SM_TDO";
 		function = "gpio";
@@ -773,14 +768,6 @@
 
 &aout {
 	status = "okay";
-};
-
-&hrx {
-	status = "disabled";
-	pinctrl-0 = <&hrx5v_pmux>;
-	pinctrl-names = "default";
-	hrxhpd-gpio = <&expander1 4 GPIO_ACTIVE_HIGH>;
-	hrx5v-gpio = <&portd 21 GPIO_ACTIVE_HIGH>;
 };
 
 &i2s_pri {

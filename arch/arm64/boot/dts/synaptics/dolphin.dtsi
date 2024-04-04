@@ -359,16 +359,6 @@
 			status = "disabled";
 		};
 
-		hrx: hrx@f74a0000 {
-			compatible = "syna,berlin-hrx";
-			interrupt-parent = <&dhubctr_a>;
-			interrupts = <9>, <23>, <24>, <25>, <26>, <27>;
-			interrupt-names = "mic3", "otg", "hdmirx", "ytg", "uvtg", "itg";
-			reg = <0xf74a0000 0x8000>, <0xf7fe2400 0x404>;
-			reg-names = "hrx_base", "edid_base";
-			status = "disabled";
-		};
-
 		vxg: vxg@f7600000 {
 			compatible = "syna,berlin-vxg";
 			reg = <0xf7600000 0x200000>;

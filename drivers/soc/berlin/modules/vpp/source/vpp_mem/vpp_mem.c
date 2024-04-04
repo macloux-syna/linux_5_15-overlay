@@ -128,7 +128,7 @@ int VPP_MEM_MapMemory(VPP_MEM *shm_handle, struct vm_area_struct *vma)
 }
 EXPORT_SYMBOL(VPP_MEM_MapMemory);
 
-void * VPP_MEM_PhysToVirt(VPP_MEM_LIST *shm_list, void *pa)
+void * VPP_MEM_PhysToVirt(VPP_MEM_LIST *shm_list, phys_addr_t pa)
 {
 	void *va = NULL;
 	VPP_MEM_TYPE shm_type;

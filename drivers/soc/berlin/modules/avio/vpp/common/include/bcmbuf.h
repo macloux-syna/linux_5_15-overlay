@@ -25,7 +25,7 @@ typedef struct DHUB_CFGQ_T {
 	int shm_offset;
 	int *addr;
 	int len;
-	unsigned int *phy_addr;
+	phys_addr_t phy_addr;
 } DHUB_CFGQ;
 
 /* Buffer descriptor contains pointers of:
@@ -40,7 +40,7 @@ typedef struct BCMBUF_T {
 	unsigned int *writer;     // write pointer of queue, update with shadow_tail with commit
 	int size;                 // size of total BCM buffer
 	int subID;                // sub-buffer ID currently in use
-	int *phy_addr;
+	phys_addr_t phy_addr;
 	VPP_MEM      vpp_bcmbuf_mem_handle;
 } BCMBUF;
 
@@ -142,7 +142,7 @@ int bcmbuf_DHUB_AutoPush(unsigned int sched_qid, int intrType, int enable);
 void bcmbuf_raw_hardwaretrans(HDL_dhub2d *pDhubHandle,
 							int dhubID,
 							unsigned int QID,
-							void *start,
+							phys_addr_t start,
 							size_t size,
 							int block);
 #endif

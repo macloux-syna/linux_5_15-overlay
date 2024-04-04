@@ -111,7 +111,7 @@ typedef struct VPP_MIPI_INIT_PARAMS_T {
 
 typedef struct VPP_MIPI_CMD_PARAMS_T {
 	UINT16 bufsize;
-	UINT32 pcmd;
+	ARCH_PTR_TYPE pcmd;
 }VPP_MIPI_CMD_PARAMS;
 
 typedef struct VPP_MIPI_CONFIG_PARAM_T
@@ -124,6 +124,6 @@ typedef struct VPP_MIPI_CONFIG_PARAM_T
 typedef struct VPP_MIPI_LOAD_CONFIG_T
 {
 	UINT32           noOfresID;     /* ENUM_CPCB_TG_RES */
-	UINT32           vppMipiCfgPA;  /* Address of the panel configuration */
+	ARCH_PTR_TYPE    vppMipiCfgPA;  /* Address of the panel configuration */
 }VPP_MIPI_LOAD_CONFIG;
 #endif

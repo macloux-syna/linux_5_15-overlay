@@ -376,7 +376,7 @@ int VPP_CA_PassVbufInfo_Phy(int is_vpp_ta, void *Vbuf, unsigned int VbufSize,
 	TEEC_Result result;
 	TEEC_Operation operation;
 	VBUF_INFO *pVppDesc = Vbuf;
-	VPP_VBUF *pVBufInfo = pVppDesc->pVppVbufInfo_phy;
+	VPP_VBUF *pVBufInfo = (VPP_VBUF*)pVppDesc->pVppVbufInfo_phy;
 
 	index = VPP_CA_GetInstanceID();
 	pSession = &(TAVPPInstance[index].session);
@@ -422,7 +422,7 @@ int VPP_CA_PassVbufInfo(int is_vpp_ta, void *Vbuf_phyAddr, unsigned int VbufSize
 	VBUF_INFO *pVppDesc = Vbuf_phyAddr;
 	VPP_VBUF *pVBufInfo;
 
-	pVBufInfo = is_vpp_ta ? pVppDesc->pVppVbufInfo_phy :
+	pVBufInfo = is_vpp_ta ? (VPP_VBUF*)pVppDesc->pVppVbufInfo_phy :
 					pVppDesc->pVppVbufInfo_virt;
 
 	index = VPP_CA_GetInstanceID();

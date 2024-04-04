@@ -160,7 +160,7 @@ static VOID convert_mtr_info(MTR_BUFF_DESC *mtr_desc, UINT32 *mtr_cfg)
 
 static VOID convert_frame_info(VPP_VBUF *pVppBuf, UINT32 srcfmt, INT32 x,
 				   INT32 y, INT32 width, INT32 height,
-				   UINT32 m_pbuf_start, UINT32 m_pbuf_start_uv)
+				   ARCH_PTR_TYPE m_pbuf_start, UINT32 m_pbuf_start_uv)
 {
 	pVppBuf->m_srcfmt = srcfmt;
 	pVppBuf->m_buf_pbuf_start_UV = 0;
@@ -196,7 +196,7 @@ static VOID convert_frame_info(VPP_VBUF *pVppBuf, UINT32 srcfmt, INT32 x,
 		pVppBuf->m_bits_per_pixel = pVppBuf->m_bytes_per_pixel * 8;
 	}
 
-	pVppBuf->m_pbuf_start = (UINT32) m_pbuf_start;
+	pVppBuf->m_pbuf_start = (ARCH_PTR_TYPE) m_pbuf_start;
 	pVppBuf->m_content_offset = 0;
 	pVppBuf->m_content_width = width;
 	pVppBuf->m_content_height = height;
@@ -335,7 +335,7 @@ static void syna_vpp_init(struct drm_device *dev)
 
 			vbufinfo->hShm_vbuf = shm_handle;
 			vbufinfo->pVppVbufInfo_virt = shm_handle->k_addr;
-			vbufinfo->pVppVbufInfo_phy = (void *)shm_handle->p_addr;
+			vbufinfo->pVppVbufInfo_phy = (phys_addr_t)shm_handle->p_addr;
 
 			DRM_DEBUG_DRIVER("Init vpp_disp_info_phys_addr[%d][%d]=%lx\n",
 					 plane, i, (phys_addr_t)shm_handle->p_addr);
@@ -759,7 +759,7 @@ void syna_vpp_set_surface(struct drm_device *dev, void __iomem *syna_reg,
 #ifdef SYNA_VPP_FORCE_PIP_FORMAT_ORDER
 	if (plane == PLANE_PIP) {
 		convert_frame_info(curr_vpp_vbuf, SRCFMT_ARGB32,
-				   0, 0, width, height, disp_phyaddr, disp_phyaddr_uv);
+				   0, 0, width, height, (ARCH_PTR_TYPE)disp_phyaddr, disp_phyaddr_uv);
 		curr_vpp_vbuf->m_order = ORDER_ARGB;
 		DRM_DEBUG_DRIVER
 			("Hack for PIP: Always use SRCFMT_ARGB32+ORDER_ARGB\n");
@@ -767,7 +767,7 @@ void syna_vpp_set_surface(struct drm_device *dev, void __iomem *syna_reg,
 #endif
 	{
 		convert_frame_info(curr_vpp_vbuf, VPP_Format, 0, 0,
-				   width, height, disp_phyaddr, disp_phyaddr_uv);
+				   width, height, (ARCH_PTR_TYPE)disp_phyaddr, disp_phyaddr_uv);
 		curr_vpp_vbuf->m_order = order;
 		if (VPP_mmu_enabled) {
 			if (bm_meta_y || bm_meta_uv) {
@@ -838,7 +838,7 @@ void syna_vpp_push_buildin_null_frame(u32 plane)
 	curr_vpp_vbuf = curr_disp_desc->pVppVbufInfo_virt;
 	convert_frame_info(curr_vpp_vbuf,
 				   bframe_info->format_type, 0, 0,
-				   width, height, disp_phyaddr, (phys_addr_t)0);
+				   width, height, (ARCH_PTR_TYPE)disp_phyaddr, (phys_addr_t)0);
 
 	MV_VPP_DisplayFrame(plane, VPP_video_format, (void *)curr_disp_desc);
 
@@ -862,7 +862,7 @@ void syna_vpp_push_buildin_frame(u32 plane)
 	curr_vpp_vbuf = curr_disp_desc->pVppVbufInfo_virt;
 	convert_frame_info(curr_vpp_vbuf,
 				   bframe_info->format_type, 0, 0,
-				   width, height, disp_phyaddr, (phys_addr_t)0);
+				   width, height, (ARCH_PTR_TYPE)disp_phyaddr, (phys_addr_t)0);
 
 	MV_VPP_SetInputFrameSize(plane, width, height);
 

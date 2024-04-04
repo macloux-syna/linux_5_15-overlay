@@ -125,14 +125,13 @@ void bcmbuf_hardwaretrans(HDL_dhub2d *pDhubHandle,
 						  BCMBUF *pbcmbuf,
 						  int block)
 {
-	unsigned int *start;
+	phys_addr_t start;
 	int size;
 	int shm_offset;
 
-	start = pbcmbuf->head;
 	shm_offset = 0;
 
-	size = (long long)pbcmbuf->writer - (long long)start;
+	size = (long long)pbcmbuf->writer - (long long)pbcmbuf->head;
 
 	if (size <= 0)
 		return;
@@ -164,15 +163,14 @@ int bcmbuf_to_CFGQ(HDL_dhub2d *pDhubHandle,
 				   BCMBUF *pbcmbuf,
 				   DHUB_CFGQ *cfgQ)
 {
-	unsigned int *start, *phy_start;
+	phys_addr_t phy_start;
 	int size, shm_offset;
 	unsigned int bcm_sched_cmd[2];
 
-	start = pbcmbuf->head;
 	shm_offset = 0;
 	phy_start = pbcmbuf->phy_addr;
 
-	size = (int)(long long)pbcmbuf->writer-(int)(long long)start;
+	size = (int)(long long)pbcmbuf->writer-(int)(long long)pbcmbuf->head;
 	if (size <= 0)
 		return BCMBUF_EBADPARAM;
 	shm_offset = shm_offset * 4;
@@ -274,7 +272,7 @@ int bcmbuf_DHUB_AutoPush(unsigned int sched_qid, int intrType, int enable)
 void bcmbuf_raw_hardwaretrans(HDL_dhub2d *pDhubHandle,
 							int dhubID,
 							unsigned int QID,
-							void *start,
+							phys_addr_t start,
 							size_t size,
 							int block)
 {

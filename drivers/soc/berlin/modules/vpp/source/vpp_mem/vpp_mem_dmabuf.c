@@ -72,7 +72,7 @@ static int Dmabuf_AllocateMemory(struct dma_heap *heap, VPP_MEM *heap_shm, struc
 #else
 	heap_shm->k_addr = dma_buf_kmap(heap_shm->handle, 0);
 #endif
-	heap_shm->p_addr = (void *)sg_dma_address(heap_shm->table->sgl);
+	heap_shm->p_addr = (phys_addr_t)sg_dma_address(heap_shm->table->sgl);
 	heap_shm->u_addr = (void *)NULL;
 
 	if (heap_shm->k_addr == NULL) {

@@ -55,7 +55,7 @@ typedef struct __VPP_MEM__ {
 	void *handle;       /*Handle to memory allocated*/
 	void *k_addr;       /*kernel space address, by AllocateMemory*/
 	void *u_addr;       /*user space address, by mmap()*/
-	void *p_addr;       /*physical address, by AllocateMemory*/
+	phys_addr_t p_addr;       /*physical address, by AllocateMemory*/
 	size_t size;        /*size of the memory allocated*/
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0))
@@ -88,6 +88,6 @@ int VPP_MEM_FreeMemory(VPP_MEM_LIST *shm_list, VPP_MEM_TYPE shm_type,
 void VPP_MEM_FlushCache(VPP_MEM_LIST *shm_list, VPP_MEM *shm_handle,
 				unsigned int size);
 int VPP_MEM_MapMemory(VPP_MEM *shm_handle, struct vm_area_struct *vma);
-void *VPP_MEM_PhysToVirt(VPP_MEM_LIST *shm_list, void *pa);
+void *VPP_MEM_PhysToVirt(VPP_MEM_LIST *shm_list, phys_addr_t pa);
 
 #endif //__VPP_MEM_H__

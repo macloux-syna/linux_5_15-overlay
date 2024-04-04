@@ -23,10 +23,10 @@ typedef struct vbuf_info_t {
 	int m_disp_offset;
 	unsigned int m_buf_stride;
 	void *m_bufferID;
-	void *m_pbuf_start;
+	ARCH_PTR_TYPE m_pbuf_start;
 	void *hShm_fb;                  //frame-buffer
 	void *hShm_vbuf;                //VBUF_INFO
 	VPP_VBUF *pVppVbufInfo_virt;
-	VPP_VBUF *pVppVbufInfo_phy;
+	phys_addr_t pVppVbufInfo_phy;
 } VBUF_INFO;
 #endif //_VBUF_H_

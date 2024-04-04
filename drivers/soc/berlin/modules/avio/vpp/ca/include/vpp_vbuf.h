@@ -12,6 +12,12 @@
 #define VPP_TZ_ENABLE
 #endif //VPP_TZ_ENABLE
 
+#if !IS_ENABLED(CONFIG_OPTEE)
+typedef UINT32 ARCH_PTR_TYPE;
+#else
+typedef void * ARCH_PTR_TYPE;
+#endif
+
 typedef struct xvYCC_data_t {
 	UINT16 m_format; /* 0: for black/red/green/blue vertice; 1: for red/green/blue range */
 	UINT16 m_precision; /* see GBD Color Precision */
@@ -32,16 +38,16 @@ typedef struct xvYCC_data_t {
 
 
 typedef struct vpp_vbuf_dv_meta_t {
-		/* pointer to  rpu_ext_config_fixpt_main_t  structure for composer config.
-		 * The pointer shall be Virtual address for Clear World or physical for TZ
-		 */
-	UINT32 m_dv_com_cfg;
-		/*pointer to dm_metadata_t structure for display manager config
-		 * The pointer shall be Virtual address for Clear World or physical for TZ
-		 */
-	UINT32 m_dv_dm_seq;
+	/* pointer to  rpu_ext_config_fixpt_main_t  structure for composer config.
+	 * The pointer shall be Virtual address for Clear World or physical for TZ
+	 */
+	ARCH_PTR_TYPE m_dv_com_cfg;
+	/*pointer to dm_metadata_t structure for display manager config
+	 * The pointer shall be Virtual address for Clear World or physical for TZ
+	 */
+	ARCH_PTR_TYPE m_dv_dm_seq;
 	/* pointer to HDMI VSIF/DRM/SDP/VSEM metadata - 128bytes*/
-	UINT32 m_dv_control_data;
+	ARCH_PTR_TYPE m_dv_control_data;
 } DV_META_INFO;
 
 	/** Technicolor configure definition for m_thdr_present_mode other bits are reserved*/
@@ -49,8 +55,8 @@ typedef struct vpp_vbuf_dv_meta_t {
 #define AMP_THDR_METADATA   (1 << 1)
 
 typedef struct vbuf_info_thdr_meta_t {
-		/* pointer to tHDR metadatastructure. */
-	UINT32  m_sl_hdr1_metadata;
+	/* pointer to tHDR metadatastructure. */
+	ARCH_PTR_TYPE m_sl_hdr1_metadata;
 } THDR_META_INFO;
 
 typedef struct MTR_BUFF_DESC_t {
@@ -101,7 +107,7 @@ typedef struct vpp_vbuf_t {
 	//INT32 m_strmID;			   // stream ID assigned for the buffer
 	INT32   m_bufferID;			 // buffer Id in buffer pool
 	UINT32  m_grp_alloc_flag;	   // is the discript in group alloc. bit 0: info grp alloc, bit 1: Descriptor grp alloc.
-	UINT32 m_pbuf_start;		   // base address of buffer;
+	ARCH_PTR_TYPE m_pbuf_start;		   // base address of buffer;
 	UINT32  m_buf_size;			 // size in bytes;
 	UINT32  m_allocate_type;		// 0, unallocated, 1, grp_alloc, 2: self-alloc
 	UINT32  m_buf_type;			 // 0, unknown 1: disp buffer, 2 reference
@@ -147,35 +153,35 @@ typedef struct vpp_vbuf_t {
 	UINT32   m_chroma_left_ofst;			// MTR mode, chroma left cropping offset
 	UINT32   m_chroma_top_ofst;		 //MTR mode, chroma top cropping offset
 
-	UINT32 m_user_data_block[MAX_USER_DATA_TYPE];
+	ARCH_PTR_TYPE m_user_data_block[MAX_USER_DATA_TYPE];
 
 	// m_clut_... for color look-up table
-	UINT32 m_clut_ptr;		 // color lookup table for CI8 (valid when element m_bytes_per_pixel==1)
+	ARCH_PTR_TYPE m_clut_ptr;		 // color lookup table for CI8 (valid when element m_bytes_per_pixel==1)
 	//UINT32	m_clut_order;   // use m_order and m_srcfmt elements to decide the type of the clut
 	UINT32  m_clut_start_index; // start index in IO map to copy the clut
 	UINT32  m_clut_num_items;   // length of the clut (number of clut entries)
 
 	UINT32 m_is_right_eye_view_valid;		 // indicate whether right eye view content valid.
-	UINT32 m_right_eye_view_buf_start;	   // the buffer start address for right view content.
-	UINT32 m_right_eye_view_descriptor;	 // the descriptor of right eye view buffer,
+	ARCH_PTR_TYPE m_right_eye_view_buf_start;	   // the buffer start address for right view content.
+	ARCH_PTR_TYPE m_right_eye_view_descriptor;	 // the descriptor of right eye view buffer,
 	UINT32 m_number_of_offset_sequences;	  // present how many offset data is valid.
 	UINT8  m_offset_meta_data[32];			// the offset meta data.
 
 	UINT32 m_is_virtual_frame;			   // indicate whether this is a virtual frame
-	UINT32 m_sec_field_start;			   // the buffer start address for the second field.
-	UINT32 m_first_org_descriptor;		  // the original frame discriptor of first field
-	UINT32 m_second_org_descriptor;		 // the second frame discritor of second field.
+	ARCH_PTR_TYPE m_sec_field_start;			   // the buffer start address for the second field.
+	ARCH_PTR_TYPE m_first_org_descriptor;		  // the original frame discriptor of first field
+	ARCH_PTR_TYPE m_second_org_descriptor;		 // the second frame discritor of second field.
 	UINT32  usage_count;					 // field used count for return the buffer.
 
-	UINT32 m_surface[2];
+	ARCH_PTR_TYPE m_surface[2];
 
 
 	UINT32		m_is_xvYCC_valid;
 	xvYCC_DATA	m_xvYCC_data;
 
 	UINT32		m_is_UHD_frame;
-	UINT32 m_cmpr_psample;
-	UINT32 m_decmpr_psample;
+	ARCH_PTR_TYPE m_cmpr_psample;
+	ARCH_PTR_TYPE m_decmpr_psample;
 	UINT32  m_is_preroll_frame;				//preroll frame will not be displayed. 1: prerool frame;  0:normal frame
 	UINT32  m_display_stc_high;				//high 32-bit of STC clock when the frame is displayed currently not used
 	UINT32  m_display_stc_low;				 //low 32-bit of STC clock when the frame is displayed
@@ -211,7 +217,7 @@ typedef struct vpp_vbuf_t {
 	UINT32 m_is_compressed;
 
 	//Tile&420SP Auto Mode support
-	UINT32 m_pbuf_start_1;			 //Start Address of Y data in 420SP format
+	ARCH_PTR_TYPE m_pbuf_start_1;			 //Start Address of Y data in 420SP format
 	UINT32 m_buf_stride_1;			  //Stride of Y data in 420SP format
 	UINT32 m_buf_pbuf_start_UV_1;	   //Start Address of UV data in 420SP format
 	UINT32 m_buf_stride_UV_1;		   //Stride of UV data in 420SP format
@@ -281,7 +287,7 @@ typedef struct vpp_vbuf_t {
 	UINT32 m_dv_present_mode;
 
 	/** The pointer to the enhance layer VPP_VBUF descriptor. if zero, means match failed and not present. **/
-	UINT32 m_dv_el_descriptor;
+	ARCH_PTR_TYPE m_dv_el_descriptor;
 
 	/**
 	 * Exceptions flag bits for dolby vision only BL descriptor was used.
@@ -295,7 +301,7 @@ typedef struct vpp_vbuf_t {
 	UINT32 m_sar_width;
 	UINT32 m_sar_height;
 
-	UINT32 m_OvpSclFrameDesc;
+	ARCH_PTR_TYPE m_OvpSclFrameDesc;
 	/** MTR INFO of Y and UV. **/
 	MTR_BUFF_DESC m_mtr_buf_desc_Y;
 	MTR_BUFF_DESC m_mtr_buf_desc_UV;
@@ -307,8 +313,13 @@ typedef struct vpp_vbuf_t {
 	UINT32  m_buf_allocated_size;   // allocated size of buffer in bytes;
 
 	/** member to store the SHM handle to this VBUF_INFO object & its members */
-	UINT32 vBufInfoCaShm;
-	UINT32 clutCaShm;
+	ARCH_PTR_TYPE vBufInfoCaShm;
+	ARCH_PTR_TYPE clutCaShm;
+
+	unsigned int	md_addr;			  //!< Base address of the DV metadata buffer. (Physical address)
+	ARCH_PTR_TYPE   md_addr_virtual;	  //!< Base address of the DV metadata buffer. (Virtual Address)
+	unsigned int	md_id;
+	unsigned int	md_length;
 
 } VPP_VBUF;
 

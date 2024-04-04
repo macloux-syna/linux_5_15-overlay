@@ -140,7 +140,7 @@ static int create_new_frame(int width, int height, int progressive,
 		}
 
 		vbufinfo->hShm_fb = shm_handle_fb;
-		vbufinfo->m_pbuf_start = shm_handle_fb->p_addr;
+		vbufinfo->m_pbuf_start = (ARCH_PTR_TYPE)shm_handle_fb->p_addr;
 		vbufinfo->m_bufferID = shm_handle_fb->k_addr;
 	}
 
@@ -160,7 +160,7 @@ static int create_new_frame(int width, int height, int progressive,
 
 	vbufinfo->hShm_vbuf = shm_handle_vbuf;
 	vbufinfo->pVppVbufInfo_virt = shm_handle_vbuf->k_addr;
-	vbufinfo->pVppVbufInfo_phy = (void *)shm_handle_vbuf->p_addr;
+	vbufinfo->pVppVbufInfo_phy = shm_handle_vbuf->p_addr;
 
 	*frame = vbufinfo;
 	return MV_VPP_OK;
@@ -189,7 +189,7 @@ static void *MV_VPP_FB_GetFrame(VPP_MEM *shm_handle, int x,
 		if (vpp_config_param.enable_frame_buf_copy) {
 			MV_VPP_CopyFrameBuffer(vbufinfo, shm_handle, y, w, h, stride, vbufinfo->m_bytes_per_pixel, disp_width, disp_height);
 		} else {
-			vbufinfo->m_pbuf_start =  shm_handle->p_addr;
+			vbufinfo->m_pbuf_start =  (ARCH_PTR_TYPE)shm_handle->p_addr;
 		}
 
 		VPP_MEM_FlushCache(vpp_shm_list, shm_handle, h*stride);
@@ -202,7 +202,7 @@ static void *MV_VPP_FB_GetFrame(VPP_MEM *shm_handle, int x,
 
 static void convert_frame_info(VBUF_INFO *pVbufInfo, VPP_VBUF *pVppBuf)
 {
-	pVppBuf->m_pbuf_start = (uintptr_t)pVbufInfo->m_pbuf_start;
+	pVppBuf->m_pbuf_start = (ARCH_PTR_TYPE)pVbufInfo->m_pbuf_start;
 	pVppBuf->m_srcfmt = pVbufInfo->m_srcfmt;
 	pVppBuf->m_order = pVbufInfo->m_order;
 	pVppBuf->m_bytes_per_pixel = pVbufInfo->m_bytes_per_pixel;
@@ -347,14 +347,14 @@ void MV_VPP_FB_DisplayFrame(VPP_MEM *shm_handle, int x,
 		int uiPlaneId = PLANE_GFX1;
 
 		VPP_VBUF *pVppBuf_virt = pVbufInfo->pVppVbufInfo_virt;
-		VPP_VBUF *pVppBuf_phy = pVbufInfo->pVppVbufInfo_phy;
+		phys_addr_t pVppBuf_phy = pVbufInfo->pVppVbufInfo_phy;
 
-		pr_debug("%s:%d: pVppBuf_virt:%p, pVppBuf_phy:%p, x=%x, y=%x\n",
-				__func__, __LINE__, pVppBuf_virt, pVppBuf_phy, x, y);
+		pr_debug("%s:%d: pVppBuf_virt:%p, pVppBuf_phy:%x, x=%x, y=%x\n",
+				__func__, __LINE__, pVppBuf_virt, (UINT32)(phys_addr_t)pVppBuf_phy, x, y);
 		convert_frame_info(pVbufInfo, pVppBuf_virt);
-		pr_debug("%s:%d: pVppBuf_virt:%p, pVppBuf_phy:%p, x=%x, y=%x, "
+		pr_debug("%s:%d: pVppBuf_virt:%p, pVppBuf_phy:%x, x=%x, y=%x, "
 				"src_fmt:%d, src_order:%d\n", __func__, __LINE__,
-				pVppBuf_virt, pVppBuf_phy, x, y,
+				pVppBuf_virt, (UINT32)(phys_addr_t)pVppBuf_phy, x, y,
 				pVppBuf_virt->m_srcfmt, pVppBuf_virt->m_order);
 
 		VPP_MEM_FlushCache(vpp_shm_list, pVbufInfo->hShm_vbuf, sizeof(VPP_VBUF));

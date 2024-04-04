@@ -55,7 +55,7 @@ int syna_encoder_parse_dsi_dt(struct syna_drm_private *dev_priv, vpp_config_para
 
 	pResCfg = pMipiConfig->vpp_resinfo_shm_handle.k_addr;
 	pLoadcfg = pMipiConfig->vpp_dsi_info_shm_handle.k_addr;
-	pLoadcfg->vppMipiCfgPA = (int)(long)pMipiConfig->vpp_resinfo_shm_handle.p_addr;
+	pLoadcfg->vppMipiCfgPA = (ARCH_PTR_TYPE)pMipiConfig->vpp_resinfo_shm_handle.p_addr;
 
 	of_property_read_u32(dsi_node, "NO_OF_RESID",  &pLoadcfg->noOfresID);
 	of_property_read_u32(dsi_node, "DSI_RES", (UINT32*) &pResCfg->initparams.resId);
@@ -134,7 +134,7 @@ int syna_encoder_parse_dsi_dt(struct syna_drm_private *dev_priv, vpp_config_para
 		pHeader->cmd_size = pResCfg->vppMipiCmd.bufsize;
 
 		/* Update the PA for the driver*/
-		pResCfg->vppMipiCmd.pcmd = (int)(long)pMipiConfig->vpp_cmdinfo_shm_handle.p_addr;
+		pResCfg->vppMipiCmd.pcmd = (ARCH_PTR_TYPE)pMipiConfig->vpp_cmdinfo_shm_handle.p_addr;
 	}
 
 	pMipiConfig->mipi_config_params =  (void *) pMipiConfig->vpp_dsi_info_shm_handle.k_addr;

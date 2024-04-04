@@ -36,10 +36,10 @@ else ifeq ($(SYNA_DRM_TYPE), asxxx)
 HEADER_PATH += -I$(srctree)/drivers/soc/berlin/modules/avio/fw_inc/myna2
 ccflags-y += -DUSE_AS470=1
 ccflags-y += -DGEN_3
-# MYNA2: Rotation can be supported from GPU
-# Avoid memory allocation as memory is less in this chips
-ccflags-y += -DCONFIG_SYNA_DRM_DISABLE_ROTATION
 endif
+
+# Rotation can be supported from GPU
+ccflags-y += -DCONFIG_SYNA_DRM_DISABLE_ROTATION
 
 COMP_K_VER := 5
 COMP_K_PLVL := 10

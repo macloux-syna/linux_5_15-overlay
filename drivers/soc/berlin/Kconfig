@@ -107,12 +107,6 @@ config POWERVR_ROGUE_WS
 	help
 	  Imagination gpu driver for Linux window system
 
-config BERLIN_NSK
-	tristate "Support BERLIN NSK"
-	default n
-	help
-	  NSK support
-
 config BERLIN_OVP
 	tristate "Support OVP"
 	default n

@@ -684,10 +684,6 @@
 	pinctrl-names = "default";
 };
 
-&nsk {
-	status = "okay";
-};
-
 &ovp {
 	status = "okay";
 };

@@ -518,13 +518,6 @@
 			status = "disabled";
 		};
 
-		nsk: nsk@f7cd0000 {
-			status = "disabled";
-			compatible = "syna,platypus-nsk";
-			reg = <0xf7cd0000 0x11000>;
-			interrupts = <GIC_SPI 123 IRQ_TYPE_LEVEL_HIGH>;
-		};
-
 		xhci0: xhci@f7d00000 {
 			compatible = "syna,dolphin-dwusb3";
 			clocks = <&clk CLK_USB3CORE>;

@@ -280,7 +280,6 @@ CONFIG_BERLIN_VPP=y
 # CONFIG_BERLIN_SCRD is not set
 # CONFIG_BERLIN_CEC is not set
 # CONFIG_BERLIN_VSYNC is not set
-# CONFIG_BERLIN_IFCP is not set
 CONFIG_SYNA_DRM=m
 # CONFIG_SYNA_MC_DFC is not set
 # end of Berlin SoC drivers

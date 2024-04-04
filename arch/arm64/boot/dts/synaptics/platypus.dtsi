@@ -525,12 +525,6 @@
 			interrupts = <GIC_SPI 123 IRQ_TYPE_LEVEL_HIGH>;
 		};
 
-		ifcp: ifcp@f7ce1000 {
-			status = "disabled";
-			compatible = "syna,berlin-ifcp";
-			reg = <0xf7ce1000 0x20>;
-		};
-
 		xhci0: xhci@f7d00000 {
 			compatible = "syna,dolphin-dwusb3";
 			clocks = <&clk CLK_USB3CORE>;

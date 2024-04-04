@@ -712,10 +712,6 @@
 	status = "okay";
 };
 
-&ifcp {
-	status = "okay";
-};
-
 &hdmi_out {
 	status = "okay";
 };

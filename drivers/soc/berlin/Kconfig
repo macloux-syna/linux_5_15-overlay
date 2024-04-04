@@ -156,12 +156,6 @@ config BERLIN_HRX
 	help
 	  HRX support
 
-config BERLIN_IFCP
-	tristate "Support Irdeto IFCP"
-	default n
-	help
-	  Enable support for Irdeto IFCP
-
 config BERLIN_BM
 	tristate "Support BERLIN BM"
 	default n

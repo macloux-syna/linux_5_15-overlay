@@ -57,6 +57,5 @@
 #define NSK_SOC_INTCLEAR	24
 #define DSP0_INTR_STATUS	25
 #define DSP1_INTR_STATUS	26
-#define IFCP_I2H_CTRL_STATUS	27
 
 #endif /* __BERLIN_SIP_H */

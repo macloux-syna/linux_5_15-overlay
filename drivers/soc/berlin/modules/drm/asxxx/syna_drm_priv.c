@@ -12,11 +12,6 @@
 #include <drm/drm_atomic_helper.h>
 #include "syna_vpp.h"
 
-#include "dsih_displays.h"
-#include "dsih_core.h"
-#include "dsih_api.h"
-#include "includes.h"
-
 static const ENUM_PLANE_ID syna_primary_plane_id[MAX_CRTC] = {
 	PLANE_GFX0,
 	PLANE_GFX1,
@@ -111,5 +106,5 @@ int syna_vpp_get_bm_details(struct dma_buf *dma_buf,
 
 int syna_dsi_panel_send_cmd (unsigned int cmdsize, unsigned char *pcmd)
 {
-	return dsi_panel_send_cmd(cmdsize, pcmd);
+	return 0;
 }

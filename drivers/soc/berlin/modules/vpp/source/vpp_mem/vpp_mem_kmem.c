@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) 2023 Synaptics Incorporated
  *
- * Author: Shanmugam Ramachandran<Shanmugam.Ramachandran@synaptics.com>
- *
  */
 
 #include "vpp_mem.h"

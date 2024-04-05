@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Shanmugam Ramachandran <Shanmugam.Ramachandran@synaptics.com>
- *
  */
 
 #include <linux/module.h>

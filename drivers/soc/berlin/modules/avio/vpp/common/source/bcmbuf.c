@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2024 Synaptics Incorporated
  *
- *
- * Author: Prem Anand N <prem.anand@synaptics.com>
- *
  */
 #include "linux/slab.h"
 #include "asm/io.h"

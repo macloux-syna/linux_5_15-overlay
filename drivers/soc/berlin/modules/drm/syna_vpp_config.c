@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Prem Anand <pranan@synaptics.com>
- *
  */
 
 #include <linux/module.h>

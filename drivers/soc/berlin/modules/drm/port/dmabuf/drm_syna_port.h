@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Shanmugam Ramachandran <Shanmugam.Ramachandran@synaptics.com>
- *
  */
 #if !defined(__DRM_SYNA_PORT_H__)
 #define __DRM_SYNA_PORT_H__

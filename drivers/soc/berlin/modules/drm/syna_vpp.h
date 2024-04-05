@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2021Synaptics Incorporated
  *
- *
- * Author: Lijun Fan <Lijun.Fan@synaptics.com>
- *
  */
 #if !defined(__SYNA_VPP_H__)
 #define __SYNA_VPP_H__

@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2021 Synaptics Incorporated
  *
- *
- * Author: Lijun Fan <Lijun.Fan@synaptics.com>
- *
  */
 #if !defined(__SYNA_DRM_H__)
 #define __SYNA_DRM_H__

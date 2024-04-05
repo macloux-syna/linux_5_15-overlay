@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Prem Anand N <prem.anand@synaptics.com>
- *
  */
 #ifndef __VPP_PRIV_AS470
 #define  __VPP_PRIV_AS470

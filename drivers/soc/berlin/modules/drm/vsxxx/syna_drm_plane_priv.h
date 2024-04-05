@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Prem Anand N <prem.anand@synaptics.com>
- *
  */
 
 #define SYNA_FORMAT_TYPE_PIP    2

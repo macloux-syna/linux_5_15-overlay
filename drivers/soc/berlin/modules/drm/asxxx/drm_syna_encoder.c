@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Prem Anand N <pranan@synaptics.com>
- *
  */
 
 #include <drm/drmP.h>

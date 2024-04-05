@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Prem Anand N <prem.anand@synaptics.com>
- *
  */
 #if !defined(__SYNA_DRM_PRIV_H__)
 #define __SYNA_DRM_PRIV_H__

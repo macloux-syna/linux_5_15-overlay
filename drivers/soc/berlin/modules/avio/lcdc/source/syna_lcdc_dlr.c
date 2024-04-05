@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: GPL-2.0
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Prem Anand N <prem.anand@synaptics.com>
- *
  */
 #include "lcdc.h"
 #include "syna_lcdc_dev.h"

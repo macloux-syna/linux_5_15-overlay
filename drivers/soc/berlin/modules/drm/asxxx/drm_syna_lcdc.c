@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2023 Synaptics Incorporated
  *
- *
- * Author: Prem Anand <prem.anand@synaptics.com>
- *
  */
 
 #include <linux/moduleparam.h>

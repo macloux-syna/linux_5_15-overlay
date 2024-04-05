@@ -2,9 +2,6 @@
 /*
  * Copyright (C) 2021 Synaptics Incorporated
  *
- *
- * Author: Lijun Fan <Lijun.Fan@synaptics.com>
- *
  */
 #include <drm/drmP.h>
 #include <drm/drm_plane_helper.h>

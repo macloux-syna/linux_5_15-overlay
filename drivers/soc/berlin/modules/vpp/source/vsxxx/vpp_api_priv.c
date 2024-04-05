@@ -311,11 +311,14 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 	 */
 	res = wrap_MV_VPPOBJ_GetHDMISinkCaps(&sinkCaps);
 	if (res == MV_VPP_OK) {
-		if (sinkCaps & ( 1 << VPP_HDMI_SINKCAP_BITMASK_FULL4K)) {
-			pr_info("forcing 4K30 on bootup\n");
+		if (sinkCaps &
+		    ((1<<VPP_HDMI_SINKCAP_BITMASK_FULL4K)|(1<<VPP_HDMI_SINKCAP_BITMASK_4K30))) {
 			dispParams.uiResId = RES_4Kx2K30;
 		}
 	}
+	pr_info("hdmi bootup to resId:%d colorfmt:%d bidepth:%d sinkcaps:%d\n",
+		dispParams.uiResId,dispParams.uiColorFmt,dispParams.uiBitDepth,
+		(res)?-1:sinkCaps);
 
 	//Set the display resolution
 	res = MV_VPP_SetDisplayResolution(CPCB_1, dispParams, 1);

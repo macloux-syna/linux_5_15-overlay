@@ -179,7 +179,6 @@ static int VPP_Init_Normal_vpp_ta(vpp_config_params vpp_config_params)
 	unsigned int vppInitParam[2];
 	int ret = MV_VPP_OK, i;
 
-	memcpy(&vpp_config_param, &vpp_config_params, sizeof(vpp_config_params));
 	if (!VPP_Is_Recovery_Mode()) {
 		vppInitParam[0] = VPP_CA_INIT_MAGIC_NUM;
 		vppInitParam[1] = 0;
@@ -209,10 +208,11 @@ int __weak wrap_VPP_Init_Recovery(VPP_MEM_LIST *vpp_shm_list,
 	return 0;
 }
 
-int MV_VPP_Init(VPP_MEM_LIST *shm_list, vpp_config_params vpp_config_param)
+int MV_VPP_Init(VPP_MEM_LIST *shm_list, vpp_config_params vpp_config_params)
 {
 	int res = 0;
 
+	memcpy(&vpp_config_param, &vpp_config_params, sizeof(vpp_config_params));
 	if (VPP_Is_Recovery_Mode()) {
 		pr_info("MV_VPP_Init - Normal/Recovery - libfastlogo.ta \n");
 		res = avio_sub_module_dhub_init();
@@ -222,13 +222,13 @@ int MV_VPP_Init(VPP_MEM_LIST *shm_list, vpp_config_params vpp_config_param)
 		}
 		VPP_EnableDhubInterrupt(true);
 
-		res = wrap_VPP_Init_Recovery(shm_list, is_ampless_boot(), vpp_config_param);
+		res = wrap_VPP_Init_Recovery(shm_list, is_ampless_boot(), vpp_config_params);
 
 		if (!res)
 			VPP_CreateISRTask();
 	} else {
 		pr_info("MV_VPP_Init - Normal - libvpp.ta\n");
-		res = VPP_Init_Normal_vpp_ta(vpp_config_param);
+		res = VPP_Init_Normal_vpp_ta(vpp_config_params);
 	}
 
 	return res;

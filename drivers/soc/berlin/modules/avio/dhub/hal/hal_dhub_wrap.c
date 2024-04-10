@@ -35,7 +35,7 @@ void wrap_DhubInitialization(DHUB_ID dHubId, DHUB_TYPE dHubType, SIGN32 cpuId,
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (dHubBaseAddr == hDhubCtx->vpp_dhub_base)
-			tz_DhubInitialization(cpuId, dHubBaseAddr, hboSramAddr, 0, 0,
+			DHUB_CA_Initialization(cpuId, dHubBaseAddr, hboSramAddr, 0, 0,
 						  numOfChans);
 		else
 			DhubInitialization(dHubId, dHubType, cpuId, dHubBaseAddr, hboSramAddr,
@@ -54,7 +54,7 @@ void wrap_DhubChannelClear(void *hdl, SIGN32 id, T64b cfgQ[])
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(hdl))
-			tz_DhubChannelClear(hdl, id, cfgQ);
+			DHUB_CA_ChannelClear(hdl, id, cfgQ);
 		else
 			DhubChannelClear(hdl, id, cfgQ);
 	} else {
@@ -84,7 +84,7 @@ UNSG32 wrap_dhub_channel_write_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(hdl))
-			return tz_dhub_channel_write_cmd(hdl, id, addr, size, semOnMTU,
+			return DHUB_CA_channel_write_cmd(hdl, id, addr, size, semOnMTU,
 							 chkSemId, updSemId, interrupt,
 							 cfgQ, ptr);
 		else
@@ -111,7 +111,7 @@ void wrap_dhub_channel_generate_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(hdl))
-			tz_dhub_channel_generate_cmd(hdl, id, addr, size, semOnMTU,
+			DHUB_CA_channel_generate_cmd(hdl, id, addr, size, semOnMTU,
 							 chkSemId, updSemId, interrupt,
 							 pData);
 		else
@@ -147,7 +147,7 @@ void wrap_semaphore_pop(void *hdl,	/*  Handle to HDL_semaphore */
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(hdl))
-			tz_semaphore_pop(hdl, id, delta);
+			DHUB_CA_semaphore_pop(hdl, id, delta);
 		else
 			semaphore_pop(hdl, id, delta);
 	} else {
@@ -163,7 +163,7 @@ void wrap_semaphore_clr_full(void *hdl,	/*  Handle to HDL_semaphore */
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(hdl))
-			tz_semaphore_clr_full(hdl, id);
+			DHUB_CA_semaphore_clr_full(hdl, id);
 		else
 			semaphore_clr_full(hdl, id);
 	} else {
@@ -181,7 +181,7 @@ UNSG32 wrap_semaphore_chk_full(void *hdl,	/*Handle to HDL_semaphore */
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(hdl))
-			return tz_semaphore_chk_full(hdl, id);
+			return DHUB_CA_semaphore_chk_full(hdl, id);
 		else
 			return semaphore_chk_full(hdl, id);
 	} else {
@@ -202,7 +202,7 @@ void wrap_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
 
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(hdl))
-			tz_semaphore_intr_enable(hdl, id, empty, full, almostEmpty,
+			DHUB_CA_semaphore_intr_enable(hdl, id, empty, full, almostEmpty,
 						 almostFull, cpu);
 		else
 			semaphore_intr_enable(hdl, id, empty, full, almostEmpty,
@@ -221,7 +221,7 @@ void wrap_DhubEnableAutoPush(bool enable,    /* enable/disable autopush command 
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
 
 	if (hDhubCtx->isTeeEnabled)
-		DhubEnableAutoPush(enable, useFastlogoTa);
+		DHUB_CA_EnableAutoPush(enable, useFastlogoTa);
 	else
 		AVIO_REG_WORD32_WRITE(hDhubCtx->vpp_bcm_base + RA_AVIO_BCM_AUTOPUSH, enable); //disable h/w autopush on suspend
 
@@ -235,7 +235,7 @@ void wrap_dhub2nd_channel_start_seq(void *hdl, SIGN32 id)
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(&(((struct HDL_dhub2d *)hdl)->dhub))) {
-			tz_dhub2nd_channel_start_seq(hdl, id);
+			DHUB_CA_dhub2nd_channel_start_seq(hdl, id);
 		}
 	}
 }
@@ -245,7 +245,7 @@ void wrap_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id)
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
 	if (hDhubCtx->isTeeEnabled) {
 		if (Dhub_is_VPP_dhubHandle(&(((struct HDL_dhub2d *)hdl)->dhub))) {
-			tz_dhub2nd_channel_clear_seq(hdl, id);
+			DHUB_CA_dhub2nd_channel_clear_seq(hdl, id);
 		}
 	}
 }
@@ -254,7 +254,7 @@ int wrap_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ) {
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
 	if ((hDhubCtx->isTeeEnabled) &&
 		(!cfgQ)) {
-		return tz_BCM_SCHED_PushCmd(QID, pCmd, cfgQ);
+		return DHUB_CA_BCM_SCHED_PushCmd(QID, pCmd, cfgQ);
 	}
 	return BCM_SCHED_PushCmd(QID, pCmd, cfgQ);
 }
@@ -262,7 +262,7 @@ int wrap_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ) {
 void wrap_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent) {
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
 	if (hDhubCtx->isTeeEnabled) {
-		tz_BCM_SCHED_SetMux(QID, TrigEvent);
+		DHUB_CA_BCM_SCHED_SetMux(QID, TrigEvent);
 	} else {
 		BCM_SCHED_SetMux(QID, TrigEvent);
 	}
@@ -271,7 +271,7 @@ void wrap_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent) {
 void wrap_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts) {
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
 	if (hDhubCtx->isTeeEnabled) {
-		tz_BCM_SCHED_GetEmptySts(QID, EmptySts);
+		DHUB_CA_BCM_SCHED_GetEmptySts(QID, EmptySts);
 	} else {
 		BCM_SCHED_GetEmptySts(QID, EmptySts);
 	}

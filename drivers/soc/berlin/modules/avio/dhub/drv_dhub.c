@@ -57,7 +57,6 @@ static void drv_dhub_read_dhub_cfg(DHUB_CTX *hDhubCtx, void *dev)
 		avio_trace("%s:%d: Node not found %s!\n",
 			__func__, __LINE__, dhub_node_name);
 	}
-
 }
 
 static int drv_dhub_get_dhub_cfg(DHUB_CTX *hDhubCtx, void *dev)
@@ -88,8 +87,6 @@ static int drv_dhub_get_dhub_cfg(DHUB_CTX *hDhubCtx, void *dev)
 static void drv_dhub_config(void *h_dhub_ctx, void *dev)
 {
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *)h_dhub_ctx;
-
-	memset(hDhubCtx, 0, sizeof(DHUB_CTX));
 
 	drv_dhub_get_dhub_cfg(hDhubCtx, dev);
 }
@@ -348,6 +345,7 @@ int avio_module_drv_dhub_probe(struct platform_device *pdev)
 	if (!hDhubCtx)
 		return -ENOMEM;
 
+	hDhubCtx->dev = &pdev->dev;
 	spin_lock_init(&hDhubCtx->dhub_cfg_spinlock);
 
 	avio_sub_module_register(AVIO_MODULE_TYPE_DHUB,

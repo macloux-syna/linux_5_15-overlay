@@ -15,6 +15,7 @@
 #include <linux/types.h>
 #include <linux/mutex.h>
 #include <linux/proc_fs.h>
+#include <linux/firmware.h>
 
 #include "tee_client_api.h"
 #include "tee_ca_dhub.h"
@@ -22,12 +23,63 @@
 #include "vpp_cmd.h"
 
 #define bTST(x, b)      (((x) >> (b)) & 1)
+#define TA_IMG_PATH_DHUB      "ta/libdhub.ta"
 
 static int initialized;
 static TEEC_Context context;
 static TEEC_Session session;
 
-int DhubInitialize(void)
+static int DHUB_CA_load_ta(struct device *dev)
+{
+	TEEC_Context *tee_ctx = &context;
+	const char *ta_img_path = TA_IMG_PATH_DHUB;
+	const struct firmware *fw = NULL;
+	TEEC_SharedMemory fw_shm = { 0, };
+	TEEC_Parameter tee_param = { 0, };
+	int ret;
+
+	if(!dev) {
+		pr_err("%s: dev is null\n", __func__);
+		return -1;
+	}
+
+	ret = request_firmware(&fw, ta_img_path, dev);
+	if (ret) {
+		pr_err("failed req fw 0x%x %s\n", ret, ta_img_path);
+		return ret;
+	}
+
+	fw_shm.size = ALIGN(fw->size, PAGE_SIZE);
+	fw_shm.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
+	ret = TEEC_AllocateSharedMemory(tee_ctx, &fw_shm);
+	if (ret || !fw_shm.buffer) {
+		pr_err("can't allocate memory(%zu) for firmware loading: 0x%x\n",
+			fw_shm.size, ret);
+		ret = -ENOMEM;
+		goto free_fw;
+	}
+	memcpy(fw_shm.buffer, fw->data, fw->size);
+
+	tee_param.memref.parent = &fw_shm;
+	tee_param.memref.size = fw_shm.size;
+	ret = TEEC_RegisterTA(tee_ctx, &tee_param, TEEC_MEMREF_PARTIAL_INPUT);
+	if (TEEC_ERROR_ACCESS_CONFLICT == ret) {
+		pr_warn("%s TA has been loaded\n", ta_img_path);
+		ret = 0;
+	} else if (ret) {
+		pr_err("can't register %s TA: 0x%08x\n", ta_img_path, ret);
+	} else {
+		pr_info("TA loaded sucessfully - %s\n", ta_img_path);
+	}
+
+	TEEC_ReleaseSharedMemory(&fw_shm);
+free_fw:
+	release_firmware(fw);
+	return ret;
+}
+
+
+int DHUB_CA_Initialize(struct device *dev)
 {
 	TEEC_Result result;
 	const TEEC_UUID TADhub_UUID = TA_DHUB_UUID;
@@ -48,9 +100,11 @@ int DhubInitialize(void)
 	}
 
 	/* ========================================================================
-	 *  [2] Allocate DHUB SHM
+	 *  [2] Load TA
 	 * ========================================================================
 	 */
+	DHUB_CA_load_ta(dev);
+
 	/* ========================================================================
 	 *  [3] Open session with TEE application
 	 * ========================================================================
@@ -131,7 +185,7 @@ cleanup1:
 	return result;
 }
 
-void DhubEnableAutoPush(bool enable, bool useFastLogoTa)
+void DHUB_CA_EnableAutoPush(bool enable, bool useFastLogoTa)
 {
 	TEEC_Result result;
 	TEEC_Operation operation;
@@ -158,7 +212,7 @@ void DhubEnableAutoPush(bool enable, bool useFastLogoTa)
 	result = TEEC_InvokeCommand(&session, DHUB_AUTOPUSH_EN, &operation, NULL);
 }
 
-void DhubFinalize(void)
+void DHUB_CA_Finalize(void)
 {
 	if (!initialized)
 		return;
@@ -168,7 +222,7 @@ void DhubFinalize(void)
 	TEEC_FinalizeContext(&context);
 }
 
-void tz_DhubInitialization(SIGN32 cpuId, UNSG32 dHubBaseAddr,
+void DHUB_CA_Initialization(SIGN32 cpuId, UNSG32 dHubBaseAddr,
 			   UNSG32 hboSramAddr, int *pdhubHandle,
 			   int *dhub_config, SIGN32 numOfChans)
 {
@@ -191,7 +245,7 @@ void tz_DhubInitialization(SIGN32 cpuId, UNSG32 dHubBaseAddr,
 	result = TEEC_InvokeCommand(&session, DHUB_INIT, &operation, NULL);
 }
 
-void tz_DhubChannelClear(void *hdl, SIGN32 id, T64b cfgQ[])
+void DHUB_CA_ChannelClear(void *hdl, SIGN32 id, T64b cfgQ[])
 {
 	TEEC_Result result;
 	TEEC_Operation operation;
@@ -210,7 +264,7 @@ void tz_DhubChannelClear(void *hdl, SIGN32 id, T64b cfgQ[])
 					DHUB_CHANNEL_CLEAR, &operation, NULL);
 }
 
-UNSG32 tz_dhub_channel_write_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
+UNSG32 DHUB_CA_channel_write_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 				 SIGN32 id,	/*! Channel ID in $dHubReg ! */
 				 UNSG32 addr,	/*! CMD: buffer address ! */
 				 SIGN32 size,	/*! CMD: number of bytes to transfer ! */
@@ -257,7 +311,7 @@ UNSG32 tz_dhub_channel_write_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 	return operation.params[3].value.b;
 }
 
-void tz_dhub_channel_generate_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
+void DHUB_CA_channel_generate_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 				  SIGN32 id,	/*! Channel ID in $dHubReg ! */
 				  UNSG32 addr,	/*! CMD: buffer address ! */
 				  SIGN32 size,	/*! CMD: number of bytes to transfer ! */
@@ -294,7 +348,7 @@ void tz_dhub_channel_generate_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 	pData[1] = operation.params[0].value.b;
 }
 
-void tz_semaphore_pop(void *hdl,	/*  Handle to HDL_semaphore */
+void DHUB_CA_semaphore_pop(void *hdl,	/*  Handle to HDL_semaphore */
 			  SIGN32 id,	/*  Semaphore ID in $SemaHub */
 			  SIGN32 delta)	/*  Delta to pop as a consumer */
 {
@@ -317,7 +371,7 @@ void tz_semaphore_pop(void *hdl,	/*  Handle to HDL_semaphore */
 	//return operation.params[1].value.a;
 }
 
-void tz_semaphore_clr_full(void *hdl,	/*  Handle to HDL_semaphore */
+void DHUB_CA_semaphore_clr_full(void *hdl,	/*  Handle to HDL_semaphore */
 			   SIGN32 id)	/*  Semaphore ID in $SemaHub */
 {
 	TEEC_Result result;
@@ -339,7 +393,7 @@ void tz_semaphore_clr_full(void *hdl,	/*  Handle to HDL_semaphore */
 	//  return operation.params[1].value.a;
 }
 
-UNSG32 tz_semaphore_chk_full(void *hdl,	/*Handle to HDL_semaphore */
+UNSG32 DHUB_CA_semaphore_chk_full(void *hdl,	/*Handle to HDL_semaphore */
 				 SIGN32 id)	/*Semaphore ID in $SemaHub
 							 * -1 to return all 32b of the interrupt status
 							 */
@@ -368,7 +422,7 @@ UNSG32 tz_semaphore_chk_full(void *hdl,	/*Handle to HDL_semaphore */
 
 }
 
-void tz_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
+void DHUB_CA_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
 				  SIGN32 id,	/*! Semaphore ID in $SemaHub ! */
 				  SIGN32 empty,	/*! Interrupt enable for CPU at condition 'empty' ! */
 				  SIGN32 full,	/*! Interrupt enable for CPU at condition 'full' ! */
@@ -401,7 +455,7 @@ void tz_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
 
 }
 
-void tz_dhub2nd_channel_start_seq(void *hdl, SIGN32 id)
+void DHUB_CA_dhub2nd_channel_start_seq(void *hdl, SIGN32 id)
 {
 	TEEC_Result result;
 	TEEC_Operation operation;
@@ -419,7 +473,7 @@ void tz_dhub2nd_channel_start_seq(void *hdl, SIGN32 id)
 			DHUB_2ND_CHANNEL_START_SEQ, &operation, NULL);
 }
 
-void tz_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id)
+void DHUB_CA_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id)
 {
 	TEEC_Result result;
 	TEEC_Operation operation;
@@ -437,7 +491,7 @@ void tz_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id)
 		DHUB_2ND_CHANNEL_CLEAR_SEQ, &operation, NULL);
 }
 
-int tz_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ)
+int DHUB_CA_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ)
 {
 	TEEC_Result result;
 	TEEC_Operation operation;
@@ -461,7 +515,7 @@ int tz_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ)
 	return operation.params[1].value.b;
 }
 
-void tz_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts)
+void DHUB_CA_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts)
 {
 	TEEC_Result result;
 	TEEC_Operation operation;
@@ -483,7 +537,7 @@ void tz_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts)
 	*EmptySts = operation.params[0].value.b;
 }
 
-void tz_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent)
+void DHUB_CA_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent)
 {
 	TEEC_Result result;
 	TEEC_Operation operation;
@@ -501,6 +555,6 @@ void tz_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent)
 		DHUB_BCM_SCHED_SETMUX, &operation, NULL);
 }
 
-EXPORT_SYMBOL(DhubEnableAutoPush);
-EXPORT_SYMBOL(DhubInitialize);
-EXPORT_SYMBOL(DhubFinalize);
+EXPORT_SYMBOL(DHUB_CA_EnableAutoPush);
+EXPORT_SYMBOL(DHUB_CA_Initialize);
+EXPORT_SYMBOL(DHUB_CA_Finalize);

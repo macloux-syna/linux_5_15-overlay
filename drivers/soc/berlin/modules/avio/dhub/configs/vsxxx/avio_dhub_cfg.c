@@ -99,7 +99,7 @@ int drv_dhub_initialize_dhub(void *h_dhub_ctx)
 
 	/* initialize dhub */
 	if (hDhubCtx->isTeeEnabled)
-		DhubInitialize();
+		DHUB_CA_Initialize(hDhubCtx->dev);
 
 	/*Disable Autopush before initialization of VPP DHUB*/
 	wrap_DhubEnableAutoPush(false, true, hDhubCtx->fastlogo_framerate);
@@ -144,7 +144,7 @@ void drv_dhub_finalize_dhub(void *h_dhub_ctx)
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *)h_dhub_ctx;
 
 	if (hDhubCtx->isTeeEnabled)
-		DhubFinalize();
+		DHUB_CA_Finalize();
 }
 
 void drv_dhub_config_ctx(void *h_dhub_ctx, UNSG32 avio_base)

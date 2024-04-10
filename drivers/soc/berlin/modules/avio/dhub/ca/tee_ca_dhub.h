@@ -23,16 +23,16 @@
 extern "C" {
 #endif
 
-int DhubInitialize(void);
-void DhubEnableAutoPush(bool enable, bool useFastLogoTa);
-void DhubFinalize(void);
+int DHUB_CA_Initialize(struct device *dev);
+void DHUB_CA_EnableAutoPush(bool enable, bool useFastLogoTa);
+void DHUB_CA_Finalize(void);
 
-void tz_DhubInitialization(SIGN32 cpuId, UNSG32 dHubBaseAddr,
+void DHUB_CA_Initialization(SIGN32 cpuId, UNSG32 dHubBaseAddr,
 				UNSG32 hboSramAddr, int *pdhubHandle,
 				int *dhub_config, SIGN32 numOfChans);
-void tz_DhubChannelClear(void *hdl, SIGN32 id, T64b cfgQ[]);
+void DHUB_CA_ChannelClear(void *hdl, SIGN32 id, T64b cfgQ[]);
 
-UNSG32 tz_dhub_channel_write_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
+UNSG32 DHUB_CA_channel_write_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 				SIGN32 id,	/*! Channel ID in $dHubReg ! */
 				UNSG32 addr,	/*! CMD: buffer address ! */
 				SIGN32 size,	/*! CMD: number of bytes to transfer ! */
@@ -52,7 +52,7 @@ UNSG32 tz_dhub_channel_write_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 							 */
 	);
 
-void tz_dhub_channel_generate_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
+void DHUB_CA_channel_generate_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 				SIGN32 id,	/*! Channel ID in $dHubReg ! */
 				UNSG32 addr,	/*! CMD: buffer address ! */
 				SIGN32 size,	/*! CMD: number of bytes to transfer ! */
@@ -62,24 +62,24 @@ void tz_dhub_channel_generate_cmd(void *hdl,	/*! Handle to HDL_dhub ! */
 				SIGN32 interrupt,	/*! CMD: raise interrupt at CMD finish ! */
 				SIGN32 *pData);
 
-void tz_semaphore_pop(void *hdl,	/*  Handle to HDL_semaphore */
+void DHUB_CA_semaphore_pop(void *hdl,	/*  Handle to HDL_semaphore */
 				SIGN32 id,	/*  Semaphore ID in $SemaHub */
 				SIGN32 delta	/*  Delta to pop as a consumer */
 
 	);
 
-void tz_semaphore_clr_full(void *hdl,	/*  Handle to HDL_semaphore */
+void DHUB_CA_semaphore_clr_full(void *hdl,	/*  Handle to HDL_semaphore */
 				SIGN32 id	/*  Semaphore ID in $SemaHub */
 
 	);
 
-UNSG32 tz_semaphore_chk_full(void *hdl,	/*Handle to HDL_semaphore */
+UNSG32 DHUB_CA_semaphore_chk_full(void *hdl,	/*Handle to HDL_semaphore */
 				SIGN32 id	/*Semaphore ID in $SemaHub
 							 * -1 to return all 32b of the interrupt status
 							 */
 	);
 
-void tz_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
+void DHUB_CA_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
 				SIGN32 id,	/*! Semaphore ID in $SemaHub ! */
 				SIGN32 empty,	/*! Interrupt enable for CPU at condition 'empty' ! */
 				SIGN32 full,	/*! Interrupt enable for CPU at condition 'full' ! */
@@ -89,11 +89,11 @@ void tz_semaphore_intr_enable(void *hdl,	/*! Handle to HDL_semaphore ! */
 
 	);
 
-void tz_dhub2nd_channel_start_seq(void *hdl, SIGN32 id);
-void tz_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id);
-int tz_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ);
-void tz_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent);
-void tz_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts);
+void DHUB_CA_dhub2nd_channel_start_seq(void *hdl, SIGN32 id);
+void DHUB_CA_dhub2nd_channel_clear_seq(void *hdl, SIGN32 id);
+int DHUB_CA_BCM_SCHED_PushCmd(UNSG32 QID, UNSG32 *pCmd, UNSG32 *cfgQ);
+void DHUB_CA_BCM_SCHED_SetMux(UNSG32 QID, UNSG32 TrigEvent);
+void DHUB_CA_BCM_SCHED_GetEmptySts(UNSG32 QID, UNSG32 *EmptySts);
 
 #ifdef __cplusplus
 }

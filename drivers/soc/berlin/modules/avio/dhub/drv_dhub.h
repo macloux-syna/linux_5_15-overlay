@@ -30,6 +30,7 @@ typedef struct _DHUB_CONTEXT_ {
 	UNSG32 fastlogo_framerate;
 
 	spinlock_t dhub_cfg_spinlock;
+	struct device *dev;
 } DHUB_CTX;
 
 int avio_module_drv_dhub_probe(struct platform_device *dev);

@@ -35,6 +35,7 @@
 #define SYNA_FRAME_BUF_MAX_NUM 12U
 #define SYNA_ES_BUF_MIN_NUM (SYNA_FRAME_BUF_MIN_NUM << 1)
 #define SYNA_ES_BUF_MAX_NUM (SYNA_FRAME_BUF_MAX_NUM << 1)
+#define SYNA_ES_BUF_SIZE_H1 (2 * 1024 * 1024)
 
 #define SYNA_H1_ENC_NAME "berlin-h1-venc"
 #define SYNA_HANTRO_H1_STR "berlin-hantro-h1"
@@ -417,53 +418,46 @@ static int vidioc_venc_g_parm(struct file *file, void *priv,
 	return 0;
 }
 
-static void vidioc_try_fmt_cap(struct v4l2_format *f)
+static int hantro_try_fmt_cap(struct v4l2_pix_format_mplane *pix_mp)
 {
-	f->fmt.pix_mp.field = V4L2_FIELD_NONE;
-	f->fmt.pix_mp.num_planes = 1;
-	f->fmt.pix_mp.plane_fmt[0].bytesperline = 0;
-	f->fmt.pix_mp.flags = 0;
+	pix_mp->field = V4L2_FIELD_NONE;
+	pix_mp->num_planes = 1;
+	pix_mp->plane_fmt[0].bytesperline = 0;
+	pix_mp->flags = 0;
+
+	if (pix_mp->plane_fmt[0].sizeimage < SYNA_ES_BUF_SIZE_H1)
+		pix_mp->plane_fmt[0].sizeimage = SYNA_ES_BUF_SIZE_H1;
+
+	pix_mp->plane_fmt[0].sizeimage =
+		ALIGN(pix_mp->plane_fmt[0].sizeimage, SZ_4K);
+
+	return 0;
 }
 
-static int hantro_try_fmt(struct syna_vcodec_ctx *ctx,
-			  struct v4l2_pix_format_mplane *pix_mp,
-			  enum v4l2_buf_type type)
+static int hantro_try_fmt_out(struct syna_vcodec_ctx *ctx,
+			      struct v4l2_pix_format_mplane *pix_mp)
 {
 	const struct hantro_fmt *fmt, *vpu_fmt;
-	bool capture = (!V4L2_TYPE_IS_OUTPUT(type));
 
 	fmt = syna_venc_find_format(pix_mp->pixelformat, ctx->vpu);
 	if (!fmt) {
-		fmt = hantro_get_default_fmt(ctx, capture);
+		fmt = hantro_get_default_fmt(ctx, false);
 		pix_mp->pixelformat = fmt->fourcc;
 	}
 
-	if (capture) {
-		pix_mp->num_planes = 1;
-		vpu_fmt = fmt;
-	} else {
-		vpu_fmt = ctx->vpu_dst_fmt;
-	}
+	vpu_fmt = ctx->vpu_dst_fmt;
 
 	pix_mp->field = V4L2_FIELD_NONE;
 	v4l2_apply_frmsize_constraints(&pix_mp->width, &pix_mp->height,
 				       &vpu_fmt->frmsize);
 
-	if (capture) {
-		pix_mp->plane_fmt[0].sizeimage = fmt->header_size +
-		    pix_mp->width * pix_mp->height * fmt->max_depth;
-		pix_mp->plane_fmt[0].sizeimage =
-		    ALIGN(pix_mp->plane_fmt[0].sizeimage, SZ_4K);
-	} else {
-		v4l2_fill_pixfmt_mp(pix_mp, fmt->fourcc, pix_mp->width,
-				    pix_mp->height);
-		pix_mp->plane_fmt[0].sizeimage =
-		    ALIGN(pix_mp->plane_fmt[0].sizeimage, SZ_4K);
-		pix_mp->plane_fmt[1].sizeimage =
-		    ALIGN(pix_mp->plane_fmt[1].sizeimage, SZ_4K);
-		pix_mp->plane_fmt[2].sizeimage =
-		    ALIGN(pix_mp->plane_fmt[2].sizeimage, SZ_4K);
-	}
+	v4l2_fill_pixfmt_mp(pix_mp, fmt->fourcc, pix_mp->width, pix_mp->height);
+	pix_mp->plane_fmt[0].sizeimage =
+		ALIGN(pix_mp->plane_fmt[0].sizeimage, SZ_4K);
+	pix_mp->plane_fmt[1].sizeimage =
+		ALIGN(pix_mp->plane_fmt[1].sizeimage, SZ_4K);
+	pix_mp->plane_fmt[2].sizeimage =
+		ALIGN(pix_mp->plane_fmt[2].sizeimage, SZ_4K);
 
 	return 0;
 }
@@ -496,7 +490,7 @@ static int vidioc_venc_s_fmt_cap(struct file *file, void *priv,
 	}
 
 	p->format = fmt->enc_fmt;
-	vidioc_try_fmt_cap(f);
+	hantro_try_fmt_cap(pix_mp);
 	switch (pix_mp->pixelformat) {
 	case V4L2_PIX_FMT_VP8:
 		p->vp8_strm_mode = 2;
@@ -550,7 +544,7 @@ static int vidioc_venc_s_fmt_out(struct file *file, void *priv,
 	p->frm_height = pix_mp->height;
 
 	/* NOTE: make sure we have default dst format */
-	ret = hantro_try_fmt(ctx, pix_mp, f->type);
+	ret = hantro_try_fmt_out(ctx, pix_mp);
 	if (ret)
 		return ret;
 
@@ -587,13 +581,13 @@ static int vidioc_venc_g_fmt(struct file *file, void *priv,
 static int vidioc_try_fmt_vid_cap_mplane(struct file *file, void *priv,
 					 struct v4l2_format *f)
 {
-	return hantro_try_fmt(fh_to_ctx(priv), &f->fmt.pix_mp, f->type);
+	return hantro_try_fmt_cap(&f->fmt.pix_mp);
 }
 
 static int vidioc_try_fmt_vid_out_mplane(struct file *file, void *priv,
 					 struct v4l2_format *f)
 {
-	return hantro_try_fmt(fh_to_ctx(priv), &f->fmt.pix_mp, f->type);
+	return hantro_try_fmt_out(fh_to_ctx(priv), &f->fmt.pix_mp);
 }
 
 static int vidioc_venc_qbuf(struct file *file, void *priv,

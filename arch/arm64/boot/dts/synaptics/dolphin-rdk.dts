@@ -258,6 +258,23 @@
 		drive-strength = <7>;
 	};
 
+	hrx5v_pmux: hrx5v-pmux {
+		groups = "SM_HDMIRX_PWR5V";
+		function = "gpio";
+		drive-strength = <7>;
+	};
+
+	hrxhpd_pmux: hrxhpd-pmux {
+		groups = "SM_HDMI_HPD";
+		function = "gpio";
+	};
+
+	hrxedid_pmux: hrxedid-pmux {
+		groups = "SM_TW2_SCL", "SM_TW2_SDA";
+		function = "rx_edid";
+		drive-strength = <7>;
+	};
+
 	gmac_gpio_pmux: gmac_gpio_pmux {
 		groups = "SM_TDO";
 		function = "gpio";
@@ -873,6 +890,14 @@
 
 &aout {
 	status = "okay";
+};
+
+&hrx {
+	status = "okay";
+	pinctrl-0 = <&hrx5v_pmux>, <&hrxhpd_pmux>, <&hrxedid_pmux>;
+	pinctrl-names = "default";
+	hrxhpd-gpio = <&portd 2 GPIO_ACTIVE_HIGH>;
+	hrx5v-gpio = <&portd 21 GPIO_ACTIVE_HIGH>;
 };
 
 &i2s_pri {

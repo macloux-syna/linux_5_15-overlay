@@ -308,7 +308,7 @@ int VPP_CA_GetCPCBOutputResolution(int cpcbID, int *pResID)
 	return ret;
 }
 
-int VppGetResDescription(void *pOutBuffer, VPP_SHM_ID shmCmdId,
+int VPP_CA_GetResDescription(void *pOutBuffer, VPP_SHM_ID shmCmdId,
 						unsigned int sOutBufferSize, unsigned int ResId)
 {
 	int ret;
@@ -560,7 +560,7 @@ int VPP_CA_ObjConfig(const int *pvinport_cfg, const int *pdv_cfg,
 	memcpy(&cfg_mem[(plane_size*3)], pvoutport_cfg, vout_size);
 	memcpy(&cfg_mem[(plane_size*3)+vout_size], pfeature_cfg, feature_size);
 
-	Ret = VPP_PassShm_InBuffer(&cfg_mem[0], VPP_OBJCONFIG, 256);
+	Ret = VPP_CA_PassShm_InBuffer(&cfg_mem[0], VPP_OBJCONFIG, 256);
 
 	return Ret;
 }
@@ -1103,7 +1103,7 @@ int VPP_CA_EnableHdmiAudioFmt(int enable)
 
 }
 
-static int VppPassShm(struct tee_shm *pShm, unsigned int shmCmdId, unsigned int sBufferSize)
+static int VPP_CA_PassShm(struct tee_shm *pShm, unsigned int shmCmdId, unsigned int sBufferSize)
 {
 	int ret;
 	struct tee_param param[4];
@@ -1139,7 +1139,7 @@ static int VppPassShm(struct tee_shm *pShm, unsigned int shmCmdId, unsigned int 
 	return ret;
 }
 
-int VPP_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInBufferSize)
+int VPP_CA_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInBufferSize)
 {
 	int index;
 	int Ret;
@@ -1156,13 +1156,13 @@ int VPP_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInB
 
 	mutex_lock(&(TAVPPInstance[index].shm_mutex));
 	memcpy(pShm->kaddr, pBuffer, sInBufferSize);
-	Ret = VppPassShm(pShm, shmCmdId, sInBufferSize);
+	Ret = VPP_CA_PassShm(pShm, shmCmdId, sInBufferSize);
 
 	mutex_unlock(&(TAVPPInstance[index].shm_mutex));
 	return Ret;
 }
 
-int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int sOutBufferSize)
+int VPP_CA_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int sOutBufferSize)
 {
 	int index;
 	int Ret;
@@ -1179,7 +1179,7 @@ int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int 
 
 	mutex_lock(&(TAVPPInstance[index].shm_mutex));
 
-	Ret = VppPassShm(pShm, shmCmdId, sOutBufferSize);
+	Ret = VPP_CA_PassShm(pShm, shmCmdId, sOutBufferSize);
 	memcpy(pOutBuffer, pShm->kaddr, sOutBufferSize);
 
 	mutex_unlock(&(TAVPPInstance[index].shm_mutex));
@@ -1187,7 +1187,7 @@ int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int 
 	return Ret;
 }
 
-int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
+int VPP_CA_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 				VPP_SHM_ID shmCmdId, UINT32 sInBufferSize, UINT32 sOutBufferSize)
 {
 	int index;
@@ -1213,7 +1213,7 @@ int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 	else
 		memset(pShm->kaddr, 0, sInBufferSize);
 
-	Ret = VppPassShm(pShm, shmCmdId, sOutBufferSize);
+	Ret = VPP_CA_PassShm(pShm, shmCmdId, sOutBufferSize);
 	if (pOutBuffer)
 		memcpy(pOutBuffer, pShm->kaddr, sOutBufferSize);
 
@@ -1222,7 +1222,7 @@ int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 	return Ret;
 }
 
-int VppGetCPCBOutputPixelClock(int resID,  int *pixel_clock)
+int VPP_CA_GetCPCBOutputPixelClock(int resID,  int *pixel_clock)
 {
 	int ret;
 	struct tee_param param[4];
@@ -1251,7 +1251,7 @@ int VppGetCPCBOutputPixelClock(int resID,  int *pixel_clock)
 
 }
 
-int VppAVIOReset(void)
+int VPP_CA_AVIOReset(void)
 {
 	int ret;
 	struct tee_param param[4];
@@ -1295,6 +1295,36 @@ int VPP_CA_GetHPDStatus(unsigned char *pHpdStatus)
 	if (!ret) {
 		ret = param[0].u.value.b;
 		*pHpdStatus = (param[0].u.value.a & 0x01) ? true : false;
+	}
+
+	return ret;
+}
+
+int VPP_CA_GetBlockStatus(ENUM_VPP_BLOCK BlkId, int BlkSubId, int *status)
+{
+	int ret;
+	struct tee_param param[4];
+	int index;
+	u32 *pSession;
+
+	index = VPP_CA_GetInstanceID();
+	pSession = &(TAVPPInstance[index].session);
+
+	memset(param, 0, sizeof(param));
+	param[0].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT;
+	param[1].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_OUTPUT;
+
+	param[0].u.value.a = BlkSubId;
+	param[0].u.value.b = BlkId;
+
+	/* clear result */
+	param[1].u.value.b = 0xdeadbeef;
+	param[1].u.value.a = 0xdeadbeef;
+
+	ret = InvokeCommandHelper(index, pSession, VPP_GET_BLOCK_STATUS, param, 2);
+	if (!ret) {
+		ret = param[1].u.value.b;
+		*status = param[1].u.value.a;
 	}
 
 	return ret;

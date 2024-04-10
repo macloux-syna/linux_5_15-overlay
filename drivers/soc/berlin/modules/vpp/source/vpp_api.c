@@ -9,6 +9,11 @@
 #include "vpp_res_info.h"
 #include "hal_mipi_wrap.h"
 
+#include "linux/delay.h"
+
+#define VPP_CPCBTG_RESET_WAIT_TIME_MS	(100)
+#define VPP_CPCBTG_RESET_LOOP_DELAY_MS	(10)
+
 static mrvl_frame_size curr_input_frame_size[MAX_NUM_PLANES];
 static VPP_DISP_OUT_PARAMS curr_disp_res_params[MAX_NUM_CPCBS];
 vpp_config_params vpp_config_param = { 0 };
@@ -114,16 +119,60 @@ void MV_VPP_SetInputFrameSize(ENUM_PLANE_ID plane_id, int width, int height)
 	}
 }
 
+int MV_VPP_GetDispOutParams(int cpcbId, VPP_DISP_OUT_PARAMS* pDisplayOutParams)
+{
+	int result = MV_VPP_EBADPARAM;
+
+	if (pDisplayOutParams != NULL) {
+		memcpy(pDisplayOutParams, &curr_disp_res_params[cpcbId], sizeof(VPP_DISP_OUT_PARAMS));
+		result = MV_VPP_OK;
+	}
+
+	return result;
+}
+
 int MV_VPP_SetDisplayResolution(ENUM_CPCB_ID cpcbID,
 		VPP_DISP_OUT_PARAMS dispParams, int bApply)
 {
 	int res = MV_VPP_OK;
 	int pixel_clock;
+	int status = -1;
+	int wait_count = VPP_CPCBTG_RESET_WAIT_TIME_MS / VPP_CPCBTG_RESET_LOOP_DELAY_MS;
 
 	if (curr_disp_res_params[cpcbID].uiResId != dispParams.uiResId ||
 			curr_disp_res_params[cpcbID].uiDisplayMode != dispParams.uiDisplayMode ||
 			curr_disp_res_params[cpcbID].uiBitDepth != dispParams.uiBitDepth ||
 			curr_disp_res_params[cpcbID].uiColorFmt != dispParams.uiColorFmt) {
+
+		/* First : put CPCB TG to reset before setting new timing */
+		res = wrap_MV_VPPOBJ_GetBlockStatus(VPP_BLOCK_CPCB_TG, cpcbID, &status);
+		if (res) {
+			pr_err("%s %d> CPCB Status get failed\n", __FUNCTION__, __LINE__);
+			return res;
+		}
+
+		if (status != STATUS_INACTIVE) {
+			res = dispParams.uiResId;
+			dispParams.uiResId = RES_RESET;
+			wrap_MV_VPPOBJ_SetFormat(cpcbID, &dispParams);
+			dispParams.uiResId = res;
+
+			/* Wait until CPCB TG is reset, otherwise timeout after 100 ms */
+			do {
+				res = wrap_MV_VPPOBJ_GetBlockStatus(VPP_BLOCK_CPCB_TG, cpcbID, &status);
+				if (status == STATUS_INACTIVE)
+					break;
+				else
+					msleep(VPP_CPCBTG_RESET_LOOP_DELAY_MS);
+
+				wait_count--;
+			} while (wait_count);
+		}
+
+		if (!wait_count) {
+			pr_err("%s %d> Reset Failed\n", __FUNCTION__, __LINE__);
+			return MV_VPP_EIOFAIL;
+		}
 
 		memcpy(&curr_disp_res_params[cpcbID], &dispParams, sizeof(VPP_DISP_OUT_PARAMS));
 
@@ -330,3 +379,4 @@ EXPORT_SYMBOL(MV_VPP_GetOutResolutionSize);
 EXPORT_SYMBOL(MV_VPP_SetDisplayResolution);
 EXPORT_SYMBOL(MV_VPP_SetHdmiTxControl);
 EXPORT_SYMBOL(MV_VPP_GetResIndex);
+EXPORT_SYMBOL(MV_VPP_GetDispOutParams);

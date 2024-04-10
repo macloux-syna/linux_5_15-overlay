@@ -42,7 +42,7 @@ int TZ_MV_VPPOBJ_GetResolutionDescription(int ResId, VPP_RESOLUTION_DESCRIPTION 
 	int retVal = 0;
 
 	if (pResDesc)
-		retVal = VppGetResDescription(pResDesc, VPP_GET_RES_DESCRIPTION, sizeof(VPP_RESOLUTION_DESCRIPTION), ResId);
+		retVal = VPP_CA_GetResDescription(pResDesc, VPP_GET_RES_DESCRIPTION, sizeof(VPP_RESOLUTION_DESCRIPTION), ResId);
 
 	return retVal;
 }
@@ -103,7 +103,7 @@ int TZ_MV_VPP_Init(ENUM_TA_UUID_TYPE uuidType, VPP_INIT_PARM *vpp_init_parm)
 
 	VPP_CA_Initialize(uuidType, vpp_init_parm->dev);
 
-	VppAVIOReset();
+	VPP_CA_AVIOReset();
 
 	VPP_CA_Init(vpp_init_parm);
 
@@ -385,7 +385,7 @@ int TZ_MV_VPPOBJ_ChangeZOrder(int cpcbID, VPP_ZORDER_CTRL *pZorderCtrl)
 
 	*pZctrl_buf = cpcbID;
 	memcpy(pZctrl_buf + 1, pZorderCtrl, sizeof(VPP_ZORDER_CTRL));
-	Ret = VPP_PassShm_InOutBuffer(pZctrl_buf, pZctrl_buf,
+	Ret = VPP_CA_PassShm_InOutBuffer(pZctrl_buf, pZctrl_buf,
 				SET_ZORDER, pzctrl_buf_size, pzctrl_buf_size);
 	kfree(pZctrl_buf);
 	return Ret;
@@ -400,7 +400,7 @@ int TZ_MV_VPPOBJ_GetZOrder(int cpcbID, VPP_ZORDER_CTRL *pZorderCtrl)
     if (!pZctrl_buf)
 		*pZctrl_buf = -1;
 
-	Ret = VPP_PassShm_InOutBuffer(pZctrl_buf, pZctrl_buf,
+	Ret = VPP_CA_PassShm_InOutBuffer(pZctrl_buf, pZctrl_buf,
 				GET_ZORDER, pzctrl_buf_size, pzctrl_buf_size);
 	memcpy(pZorderCtrl, pZctrl_buf + 1, sizeof(VPP_ZORDER_CTRL));
 	kfree(pZctrl_buf);
@@ -443,7 +443,7 @@ int TZ_MV_VPPOBJ_SetHdmiTxControl(int enable)
  ***********************************************/
 int TZ_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid)
 {
-	return VPP_PassShm_OutBuffer(pRawEdid, READ_HDMI_RAWEDID,
+	return VPP_CA_PassShm_OutBuffer(pRawEdid, READ_HDMI_RAWEDID,
 				sizeof(VPP_HDMI_RAW_EDID));
 }
 /************************************************************************
@@ -517,29 +517,29 @@ int TZ_MV_VPPOBJ_InvokePassShm_Helper(void *pBuffer, unsigned int shmCmdId,
 {
 	HRESULT Ret = MV_VPP_OK;
 
-	Ret = VPP_PassShm_InBuffer(pBuffer, shmCmdId, sBufferSize);
+	Ret = VPP_CA_PassShm_InBuffer(pBuffer, shmCmdId, sBufferSize);
 
 	return Ret;
 }
 
 int TZ_MV_VPPOBJ_GetCPCBOutputPixelClock(int resID, int *pixel_clock)
 {
-	return VppGetCPCBOutputPixelClock(resID, pixel_clock);
+	return VPP_CA_GetCPCBOutputPixelClock(resID, pixel_clock);
 }
 
 int TZ_MV_VPPOBJ_GetDispOutParams(VPP_DISP_OUT_PARAMS *pdispParams, int size)
 {
-	return  VPP_PassShm_InOutBuffer(pdispParams, pdispParams, VPP_GET_DISP_VOUTPARAMS, size, size);
+	return  VPP_CA_PassShm_InOutBuffer(pdispParams, pdispParams, VPP_GET_DISP_VOUTPARAMS, size, size);
 }
 
 int TZ_MV_VPPOBJ_SetDispOutParams(void *pdispParams, int size)
 {
-	return  VPP_PassShm_InBuffer(pdispParams, VPP_SET_DISP_VOUTPARAMS, size);
+	return  VPP_CA_PassShm_InBuffer(pdispParams, VPP_SET_DISP_VOUTPARAMS, size);
 }
 
 int TZ_MV_VPPOBJ_LoadMipiConfig(VPP_MIPI_LOAD_CONFIG *pConfigParams)
 {
-	return VPP_PassShm_InBuffer(pConfigParams, VPP_MIPI_CONFIG, sizeof(VPP_MIPI_LOAD_CONFIG));
+	return VPP_CA_PassShm_InBuffer(pConfigParams, VPP_MIPI_CONFIG, sizeof(VPP_MIPI_LOAD_CONFIG));
 }
 
 int TZ_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus)
@@ -549,5 +549,10 @@ int TZ_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus)
 
 int TZ_MV_VPPOBJ_GetHDMISinkCaps(VPP_HDMI_SINK_CAPS *pSinkCaps)
 {
-	return VPP_PassShm_OutBuffer(pSinkCaps, GET_HDMI_SINKCAPS, sizeof(VPP_HDMI_SINK_CAPS));
+	return VPP_CA_PassShm_OutBuffer(pSinkCaps, GET_HDMI_SINKCAPS, sizeof(VPP_HDMI_SINK_CAPS));
+}
+
+int TZ_MV_VPPOBJ_GetBlockStatus(ENUM_VPP_BLOCK blkId, int blkSubID, int *status)
+{
+	return VPP_CA_GetBlockStatus(VPP_BLOCK_CPCB_TG, blkSubID, status);
 }

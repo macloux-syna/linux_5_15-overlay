@@ -7,6 +7,7 @@
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include "drm_syna_drv.h"
+#include "vpp_api.h"
 
 static void syna_tmds_encoder_helper_dpms(struct drm_encoder *encoder, int mode)
 {
@@ -33,6 +34,38 @@ syna_tmds_encoder_helper_mode_set(struct drm_encoder *encoder,
 				  struct drm_display_mode *mode,
 				  struct drm_display_mode *adjusted_mode)
 {
+	VPP_DISP_OUT_PARAMS dispParams;
+	int res_id;
+	int cpcb = CPCB_1;
+
+	// Always use CPCB_1 for correct displaymode
+	MV_VPP_GetDispOutParams(cpcb, &dispParams);
+
+	if (encoder->encoder_type == DRM_MODE_ENCODER_TMDS) {
+		res_id = MV_VPP_GetResIndex(mode->hdisplay, mode->vdisplay,
+				mode->flags & DRM_MODE_FLAG_INTERLACE, mode->clock,
+				drm_mode_vrefresh(mode));
+
+		dispParams.uiResId = res_id;
+		dispParams.uiDispId = VOUT_HDMI;
+	} else if (encoder->encoder_type == DRM_MODE_ENCODER_DPI) {
+
+		if (dispParams.uiDisplayMode == VPP_VOUT_DUAL_MODE_PIP) {
+			// For Dual Display mode Fetch info with CPCB_2
+			cpcb = CPCB_2;
+
+			MV_VPP_GetDispOutParams(cpcb, &dispParams);
+			dispParams.uiDisplayMode = VPP_VOUT_DUAL_MODE_PIP;
+		}
+
+		dispParams.uiResId = RES_DSI_CUSTOM;
+		dispParams.uiDispId = VOUT_DSI;
+		dispParams.uiBitDepth = OUTPUT_BIT_DEPTH_8BIT;
+		dispParams.uiColorFmt = OUTPUT_COLOR_FMT_RGB888;
+		dispParams.iPixelRepeat = 1;
+	}
+
+	MV_VPP_SetDisplayResolution(cpcb, dispParams, 1);
 }
 
 static void syna_tmds_encoder_destroy(struct drm_encoder *encoder)

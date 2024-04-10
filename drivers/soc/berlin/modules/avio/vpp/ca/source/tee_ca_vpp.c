@@ -286,7 +286,7 @@ int VPP_CA_GetCPCBOutputResolution(int cpcbID, int *pResID)
 	return operation.params[1].value.b;
 }
 
-int VppGetResDescription(void *pOutBuffer, VPP_SHM_ID shmCmdId,
+int VPP_CA_GetResDescription(void *pOutBuffer, VPP_SHM_ID shmCmdId,
 						unsigned int sOutBufferSize, unsigned int ResId)
 {
 	int index;
@@ -1271,7 +1271,7 @@ int VPP_CA_EnableHdmiAudioFmt(int enable)
 	return operation.params[0].value.b;
 }
 
-static int VppPassShm(void *pBuffer, unsigned int shmCmdId, unsigned int sBufferSize)
+static int VPP_CA_PassShm(void *pBuffer, unsigned int shmCmdId, unsigned int sBufferSize)
 {
 	int index;
 	TEEC_Session *pSession;
@@ -1307,7 +1307,7 @@ static int VppPassShm(void *pBuffer, unsigned int shmCmdId, unsigned int sBuffer
 	return operation.params[2].value.a;
 }
 
-int VPP_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInBufferSize)
+int VPP_CA_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInBufferSize)
 {
 	int index;
 	int Ret;
@@ -1324,13 +1324,13 @@ int VPP_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInB
 
 	mutex_lock(&(TAVPPInstance[index].shm_mutex));
 	memcpy(pShm->buffer, pBuffer, sInBufferSize);
-	Ret = VppPassShm(pShm, shmCmdId, sInBufferSize);
+	Ret = VPP_CA_PassShm(pShm, shmCmdId, sInBufferSize);
 
 	mutex_unlock(&(TAVPPInstance[index].shm_mutex));
 	return Ret;
 }
 
-int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int sOutBufferSize)
+int VPP_CA_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int sOutBufferSize)
 {
 	int index;
 	int Ret;
@@ -1341,14 +1341,14 @@ int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int 
 	pShm = &(TAVPPInstance[index].Shm);
 
 	mutex_lock(&(TAVPPInstance[index].shm_mutex));
-	Ret = VppPassShm(pShm,shmCmdId, sOutBufferSize);
+	Ret = VPP_CA_PassShm(pShm,shmCmdId, sOutBufferSize);
 	memcpy(pOutBuffer,pShm->buffer,sOutBufferSize);
 	mutex_unlock(&(TAVPPInstance[index].shm_mutex));
 
 	return Ret;
 }
 
-int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
+int VPP_CA_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 				VPP_SHM_ID shmCmdId, UINT32 sInBufferSize, UINT32 sOutBufferSize)
 {
 	int index;
@@ -1374,7 +1374,7 @@ int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 	else
 		memset(pShm->buffer, 0, sInBufferSize);
 
-	Ret = VppPassShm(pShm, shmCmdId, sOutBufferSize);
+	Ret = VPP_CA_PassShm(pShm, shmCmdId, sOutBufferSize);
 	if (pOutBuffer)
 		memcpy(pOutBuffer, pShm->buffer, sOutBufferSize);
 
@@ -1383,7 +1383,7 @@ int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 	return Ret;
 }
 
-int VppGetCPCBOutputPixelClock(int resID,  int *pixel_clock)
+int VPP_CA_GetCPCBOutputPixelClock(int resID,  int *pixel_clock)
 {
 	TEEC_Result result;
 	TEEC_Operation operation;
@@ -1416,7 +1416,7 @@ int VppGetCPCBOutputPixelClock(int resID,  int *pixel_clock)
 	return operation.params[1].value.b;
 }
 
-int VppAVIOReset(void)
+int VPP_CA_AVIOReset(void)
 {
 	int index;
 	TEEC_Session *pSession;
@@ -1476,4 +1476,38 @@ int VPP_CA_GetHPDStatus(unsigned char *pHpdStatus)
 	*pHpdStatus = (operation.params[0].value.a & 0x01) ? true : false;
 
 	return operation.params[0].value.b;
+}
+
+int VPP_CA_GetBlockStatus(ENUM_VPP_BLOCK BlkId, int BlkSubId, int *status)
+{
+	TEEC_Result result;
+	TEEC_Operation operation;
+	int index;
+	TEEC_Session *pSession;
+	index = VPP_CA_GetInstanceID();
+	pSession = &(TAVPPInstance[index].session);
+
+	operation.paramTypes = TEEC_PARAM_TYPES(
+			TEEC_VALUE_INPUT,
+			TEEC_VALUE_OUTPUT,
+			TEEC_NONE,
+			TEEC_NONE);
+
+	operation.params[0].value.a = BlkSubId;
+	operation.params[0].value.b = BlkId;
+
+	/* clear result */
+	operation.params[1].value.a = 0xdeadbeef;
+	operation.params[1].value.b = 0xdeadbeef;
+
+	operation.started = 1;
+	result = InvokeCommandHelper(index,
+			pSession,
+			VPP_GET_BLOCK_STATUS,
+			&operation,
+			NULL);
+	VPP_TEEC_LOGIFERROR(result);
+	*status = operation.params[1].value.a;
+
+	return operation.params[1].value.b;
 }

@@ -376,5 +376,4 @@ typedef enum {
 	ALPHA_POL_NORMAL	= 0,
 	ALPHA_POL_INVERSE	= 1,
 } ENUM_ALPHA_POL;
-
 #endif //_VPP_DEFINES_H_

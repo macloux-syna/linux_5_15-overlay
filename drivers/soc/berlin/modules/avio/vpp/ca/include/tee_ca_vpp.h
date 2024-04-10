@@ -15,6 +15,7 @@ extern "C" {
 #include "tee_ca_common.h"
 #include "vpp_cmd.h"
 #include "hal_vpp.h"
+#include "vpp_defines.h"
 
 #define MAX_NUM_FEATURE_CFG 1
 #ifdef VPP_ALLOW_ALL_PLANES
@@ -26,7 +27,7 @@ extern "C" {
 
 int VPP_CA_InitVPPS(UINT32 vpp_addr, UINT32 ta_heapHandle);
 int VPP_CA_GetCPCBOutputResolution(int cpcbID, int *resID);
-int VppGetResDescription(void *pOutBuffer, VPP_SHM_ID shmCmdId,
+int VPP_CA_GetResDescription(void *pOutBuffer, VPP_SHM_ID shmCmdId,
 						unsigned int sOutBufferSize, unsigned int ResId);
 int VPP_CA_GetCurrentHDCPVersion(int *pHDCPVersion);
 int VPP_CA_PassVbufInfo(int is_vpp_ta, void *Vbuf, unsigned int VbufSize,
@@ -63,13 +64,14 @@ int VPP_CA_IsrHandler(unsigned int MsgId, unsigned int IntSts);
 
 int VPP_CA_SemOper(int cmd_id, int sem_id, int *pParam);
 int VPP_CA_EnableHdmiAudioFmt(int enable);
-int VppGetCPCBOutputPixelClock(int resID,  int *pixel_clock);
-int VPP_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInBufferSize);
-int VPP_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int sOutBufferSize);
-int VPP_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
+int VPP_CA_GetCPCBOutputPixelClock(int resID,  int *pixel_clock);
+int VPP_CA_PassShm_InBuffer(void *pBuffer, unsigned int shmCmdId, unsigned int sInBufferSize);
+int VPP_CA_PassShm_OutBuffer(void *pOutBuffer, unsigned int shmCmdId, unsigned int sOutBufferSize);
+int VPP_CA_PassShm_InOutBuffer(void *pInBuffer, void *pOutBuffer,
 				VPP_SHM_ID shmCmdId, UINT32 sInBufferSize, UINT32 sOutBufferSize);
-int VppAVIOReset(void);
+int VPP_CA_AVIOReset(void);
 int VPP_CA_GetHPDStatus(unsigned char *pHpdStatus);
+int VPP_CA_GetBlockStatus(ENUM_VPP_BLOCK BlkId, int BlkSubId, int *status);
 #ifdef __cplusplus
 }
 #endif

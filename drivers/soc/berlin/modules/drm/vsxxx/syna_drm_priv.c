@@ -11,8 +11,11 @@
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_atomic_helper.h>
 #include "syna_vpp.h"
+#include "syna_hdmi_config.h"
+#include "vpp_api.h"
 
-#define PLATYPUS_VOUT_CONNECTOR_DEFAULT VOUT_CONNECTOR_HDMI
+#define IS_FORCE_GFX_FRAME_TO_PIP(plane, displayMode) \
+	((plane == PLANE_PIP) && (displayMode == VPP_VOUT_DUAL_MODE_PIP))
 
 static const ENUM_PLANE_ID syna_primary_plane_id[MAX_NUM_CPCBS] = {
 	PLANE_GFX1,
@@ -184,8 +187,13 @@ int syna_dsi_panel_send_cmd (unsigned int cmdsize, unsigned char *pcmd)
 
 void syna_push_buildin_frame(u32 plane)
 {
-	if (plane == PLANE_GFX1)
-		syna_vpp_push_buildin_frame(PLANE_GFX1);
+	VPP_DISP_OUT_PARAMS dispParams;
+
+	MV_VPP_GetDispOutParams(CPCB_1, &dispParams);
+
+	if (plane == PLANE_GFX1 || \
+			IS_FORCE_GFX_FRAME_TO_PIP(plane, dispParams.uiDisplayMode))
+		syna_vpp_push_buildin_frame(plane);
 	else
 		syna_vpp_push_buildin_null_frame(plane);
 }

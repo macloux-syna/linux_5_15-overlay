@@ -149,6 +149,7 @@ typedef enum {
 
 	VPP_DEBUG_CMD,
 	VPP_INITIATE_VPPS,
+	VPP_GET_BLOCK_STATUS,
 
 	/*Since this ID is specific used for verimatrix*/
 	/*So, please don't change its value*/

@@ -59,6 +59,7 @@ int TZ_MV_VPPOBJ_SetDispOutParams(void *pdispParams, int size);
 int TZ_MV_VPPOBJ_GetHDMIRawEdid(VPP_HDMI_RAW_EDID *pRawEdid);
 int TZ_MV_VPPOBJ_GetHPDStatus(unsigned char *pHpdStatus);
 int TZ_MV_VPPOBJ_GetHDMISinkCaps(VPP_HDMI_SINK_CAPS *pSinkCaps);
+int TZ_MV_VPPOBJ_GetBlockStatus(ENUM_VPP_BLOCK blkId, int blkSubID, int *status);
 #ifdef __cplusplus
 }
 #endif

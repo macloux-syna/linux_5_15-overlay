@@ -60,4 +60,5 @@ int VPP_Is_Recovery_Mode(void);
 int VPP_Is_Vpp_Ta(void);
 void vpp_force_enable_recovery(bool enable);
 int is_ampless_boot(void);
+int MV_VPP_GetDispOutParams(int cpcbId, VPP_DISP_OUT_PARAMS* pDisplayOutParams);
 #endif //_VPP_API_H_

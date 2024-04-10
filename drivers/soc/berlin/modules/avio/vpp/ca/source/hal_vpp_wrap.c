@@ -540,6 +540,17 @@ int wrap_MV_VPP_WaitHdmiConnChange(unsigned char *pSinkConnected)
 	return retVal;
 }
 
+int wrap_MV_VPPOBJ_GetBlockStatus(ENUM_VPP_BLOCK blkId, int blkSubID, int *status)
+{
+	HRESULT Ret = MV_VPP_OK;
+	DHUB_CTX *hDhubCtx = (DHUB_CTX *) avio_sub_module_get_ctx(AVIO_MODULE_TYPE_DHUB);
+
+	if (hDhubCtx->isTeeEnabled)
+		Ret = TZ_MV_VPPOBJ_GetBlockStatus(blkId, blkSubID, status);
+
+	return Ret;
+}
+
 EXPORT_SYMBOL(wrap_MV_VPP_InitVPPS);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetCPCBOutputResolution);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetResolutionDescription);
@@ -583,3 +594,4 @@ EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetHPDStatus);
 EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetHDMISinkCaps);
 EXPORT_SYMBOL(wrap_MV_VPP_RegisterWaitForHdmiHpd);
 EXPORT_SYMBOL(wrap_MV_VPP_WaitHdmiConnChange);
+EXPORT_SYMBOL(wrap_MV_VPPOBJ_GetBlockStatus);

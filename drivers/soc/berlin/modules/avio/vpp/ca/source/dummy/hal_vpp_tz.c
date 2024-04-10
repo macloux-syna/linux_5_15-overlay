@@ -195,3 +195,8 @@ int __weak TZ_MV_VPPOBJ_GetHDMISinkCaps(VPP_HDMI_SINK_CAPS *pSinkCaps)
 {
 	return 0;
 }
+
+int __weak TZ_MV_VPPOBJ_GetBlockStatus(ENUM_VPP_BLOCK blkId, int blkSubID, int *status)
+{
+	return 0;
+}

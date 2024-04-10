@@ -20,7 +20,10 @@ static unsigned int vpp_intrs [] = {
 	avioDhubSemMap_vpp128b_vpp_inr3,
 	avioDhubSemMap_vpp128b_vpp_inr4,
 	avioDhubSemMap_vpp128b_vpp_inr5,
-	avioDhubSemMap_vpp128b_vpp_inr15
+	avioDhubSemMap_vpp128b_vpp_inr15,
+	//HDMI-RX - EoF, Rx
+	avioDhubSemMap_vpp128b_vpp_inr9,
+	avioDhubSemMap_vpp128b_vpp_inr10
 };
 
 #define VPP_DHUB_VOP1_INTR avioDhubSemMap_vpp128b_vpp_inr0

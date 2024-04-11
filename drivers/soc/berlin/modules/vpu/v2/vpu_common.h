@@ -24,13 +24,11 @@
 #include <media/v4l2-mem2mem.h>
 #include <media/videobuf2-core.h>
 
-#if CONFIG_BERLIN_TZD
-#include "tee_client_api.h"
-#endif
 #include "vpu_fw_data.h"
 #include "v4g_pix_mod.h"
 #include "vpu_mfd.h"
 #include "vpu_enc_ctrls.h"
+#include "vpu_tee_wrap.h"
 
 #define SYNA_VPU_STATUS_ERROR			(0)
 #define SYNA_VPU_STATUS_EOS			(1)
@@ -57,9 +55,6 @@
 #define BUFPOOL_SLOT_SHIFT		(5)
 #define MAX_BUFPOOL_SLOT_NUM		(1 << BUFPOOL_SLOT_SHIFT)
 
-#if CONFIG_BERLIN_TZD
-extern TEEC_Context tee_ctx;
-#endif
 
 struct syna_vpu_task;
 struct syna_vpu_srv;
@@ -87,14 +82,8 @@ struct syna_vpu_dev {
 	struct syna_vpu_fw_data fw_data;
 	const struct syna_vpu_fw_ops *fw_ops;
 
-	/*
-	 * NOTE: we don't need a lock here, as tzd client has
-	 * had a sesion mutex lock. It would prevent the
-	 * other session command inovked when the other
-	 * caller is holding the lock.
-	 */
-#if CONFIG_BERLIN_TZD
-	TEEC_Session s_session;
+	VPU_TEEC_Context *tee_ctx;
+	VPU_TEEC_Session tee_session;
 
 	/*
 	 * layout:
@@ -113,9 +102,6 @@ struct syna_vpu_dev {
 	 * ************************
 	 */
 	void *vpu_ctx_buf;
-#else
-	void __iomem *reg_base;
-#endif
 
 	/* v4l2, only encoder uses them now */
 	/* vb2 queue lock, why all the instace share the same lock ? */
@@ -175,7 +161,11 @@ struct syna_vcodec_ctx {
 	struct list_head service_link;
 	unsigned long service_flags;
 
-#if CONFIG_BERLIN_TZD
+#if IS_ENABLED(CONFIG_OPTEE)
+	struct tee_shm *ctrl_shm;
+	void *ctx_buf;
+	struct tee_shm *cfg_shm;
+#else
 	/*
 	 * layout:
 	 * *********************
@@ -184,8 +174,7 @@ struct syna_vcodec_ctx {
 	 * Aligned to page size(4K)
 	 * *********************
 	 */
-	TEEC_SharedMemory ctrl_shm;
-	u64 ctrl_shm_vaddr;
+	TEEC_SharedMemory *ctrl_shm;
 	/*
 	 * strm_context_size
 	 * *********************
@@ -209,7 +198,7 @@ struct syna_vcodec_ctx {
 	 */
 	void *ctx_buf;
 
-	TEEC_SharedMemory cfg_shm;
+	TEEC_SharedMemory *cfg_shm;
 #endif
 	union {
 		struct syna_venc_strm_config *enc_params;

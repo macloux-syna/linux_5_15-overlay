@@ -811,7 +811,7 @@ static int vb2ops_syna_vpu_buf_init(struct vb2_buffer *vb)
 		vpu_buf->buf_type = ENCODER_STREAM;
 		buftype = SYNA_VPU_FW_VENC_STRM;
 	}
-	ctrl = ctx->ctrl_shm.buffer;
+	ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 
 	memset(vpu_buf->planes, 0, sizeof(struct syna_tz_generic_buf) << 2);
 	for (i = 0; i < vb->num_planes; i++) {
@@ -916,7 +916,7 @@ static int syna_vepu_push_queued_cap(struct syna_vcodec_ctx *ctx)
 
 static int vepu_configure_stream(struct syna_vcodec_ctx *ctx)
 {
-	struct syna_vpu_ctrl *ctrl = ctx->ctrl_shm.buffer;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	int ret;
 	if (!test_bit(SYNA_VPU_STATUS_SET_FMT, &ctx->status)) {
 		vpu_enc_ctrls_v4l2_to_h1(&ctx->v4l2_ctrls,
@@ -990,7 +990,7 @@ static void vb2ops_venc_buf_queue(struct vb2_buffer *vb)
 {
 	struct vb2_queue *vq = vb->vb2_queue;
 	struct syna_vcodec_ctx *ctx = vb2_get_drv_priv(vq);
-	struct syna_vpu_ctrl *ctrl = ctx->ctrl_shm.buffer;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	struct vb2_v4l2_buffer *vb2_v4l2 = to_vb2_v4l2_buffer(vb);
 	struct syna_vpu_tz_buf *vpu_buf;
 	unsigned int i;
@@ -1069,6 +1069,8 @@ static const struct v4l2_m2m_ops vpu_m2m_h1_ops = {
 	.job_abort = venc_job_abort,
 };
 
+#if IS_ENABLED(CONFIG_OPTEE)
+#else
 static TEEC_Result syna_venc_h1_callback(TEEC_Session * session,
 					 uint32_t commandID,
 					 TEEC_Operation * operation,
@@ -1082,7 +1084,7 @@ static TEEC_Result syna_venc_h1_callback(TEEC_Session * session,
 
 	return 0;
 }
-
+#endif
 static void syna_venc_h1_worker(struct work_struct *work)
 {
 	struct syna_vpu_dev *vpu =
@@ -1108,7 +1110,7 @@ static void syna_venc_h1_worker(struct work_struct *work)
 	 * NOTE: inform hw to encode as possible as it could, no waiting
 	 * for future input
 	 */
-	ctrl = ctx->ctrl_shm.buffer;
+	ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	memset(&ctrl->status, 0, sizeof(ctrl->status));
 
 	if (syna_venc_push_video_buf(ctx, src_buf->vb2_buf.index)) {
@@ -1272,7 +1274,7 @@ static int vepu_driver_open(struct file *filp)
 	struct syna_vcodec_ctx *ctx = NULL;
 	struct syna_vpu_ctrl *ctrl = NULL;
 	struct syna_vpu_fw_info *fw_info = NULL;
-	size_t ctx_buf_size;
+	size_t ctrl_buf_size, cfg_buf_size, ctx_buf_size;
 	dma_addr_t *memid;
 	int ret;
 
@@ -1291,28 +1293,25 @@ static int vepu_driver_open(struct file *filp)
 	fw_info = &vpu->fw_data.fw_info;
 	ctx->vpu = vpu;
 
-	ctx->cfg_shm.size = ALIGN(sizeof(struct syna_venc_strm_config), SZ_4K);
-	ctx->cfg_shm.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
-	ret = TEEC_AllocateSharedMemory(&tee_ctx, &ctx->cfg_shm);
-	if (ret || !ctx->cfg_shm.buffer) {
+	cfg_buf_size = ALIGN(sizeof(struct syna_venc_strm_config), PAGE_SIZE);
+	ret = syna_vpu_tee_alloc(vpu->tee_ctx, cfg_buf_size, (void **)&ctx->cfg_shm);
+	if (ret || !syna_vpu_get_cfg_shm_buffer(ctx)) {
 		vepu_err(vpu, "can't allocate cfg shm\n");
 		ret = -ENOMEM;
 		goto failed;
 	}
-	ctx->enc_params = ctx->cfg_shm.buffer;
+	ctx->enc_params = syna_vpu_get_cfg_shm_buffer(ctx);
 
-	ctx->ctrl_shm.size = ALIGN(sizeof(struct syna_vpu_ctrl), PAGE_SIZE);
-	ctx->ctrl_shm.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
-
-	ret = TEEC_AllocateSharedMemory(&tee_ctx, &ctx->ctrl_shm);
-	if (ret || !ctx->ctrl_shm.buffer) {
+	ctrl_buf_size = ALIGN(sizeof(struct syna_vpu_ctrl), PAGE_SIZE);
+	ret = syna_vpu_tee_alloc(vpu->tee_ctx, ctrl_buf_size, (void **)&ctx->ctrl_shm);
+	if (ret || !syna_vpu_get_ctrl_shm_buffer(ctx)) {
 		vepu_err(vpu, "can't allocate instance shm\n");
 		ret = -ENOMEM;
 		goto failed_shm;
 	}
-	ctrl = ctx->ctrl_shm.buffer;
-	ctrl->ctrl_buf.addr = (uintptr_t) ctx->ctrl_shm.phyAddr;
-	ctrl->ctrl_buf.size = ctx->ctrl_shm.size;
+	ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
+	ctrl->ctrl_buf.addr = syna_vpu_get_ctrl_shm_paddr(ctx);
+	ctrl->ctrl_buf.size = ctrl_buf_size;
 
 	ctx_buf_size = ALIGN(BERLIN_VPU_CTX_RESERVED_SIZE, PAGE_SIZE) +
 	    ALIGN(fw_info->venc_strm_context_size, PAGE_SIZE) +
@@ -1375,9 +1374,9 @@ err_ctx_free:
 fw_inst_failed:
 	vb2_syna_dh_bm_put(ctx->ctx_buf);
 failed_sec_ctx:
-	TEEC_ReleaseSharedMemory(&ctx->ctrl_shm);
+	syna_vpu_tee_release(ctx->ctrl_shm);
 failed_shm:
-	TEEC_ReleaseSharedMemory(&ctx->cfg_shm);
+	syna_vpu_tee_release(ctx->cfg_shm);
 failed:
 	kfree(ctx);
 	syna_mfd_disconnect(auxdev);
@@ -1399,8 +1398,8 @@ static int vepu_driver_release(struct file *filp)
 	syna_venc_destroy_instance(ctx);
 
 	vb2_syna_dh_bm_put(ctx->ctx_buf);
-	TEEC_ReleaseSharedMemory(&ctx->ctrl_shm);
-	TEEC_ReleaseSharedMemory(&ctx->cfg_shm);
+	syna_vpu_tee_release(ctx->ctrl_shm);
+	syna_vpu_tee_release(ctx->cfg_shm);
 
 	auxdev = container_of(vpu->dev, struct syna_vpu_auxiliary_device, dev);
 	ret = syna_mfd_disconnect(auxdev);
@@ -1445,10 +1444,14 @@ int syna_vepu_h1_init(struct syna_vpu_dev *vpu)
 
 	vpu->fw_ops = &vepu_fw_ops;
 	INIT_WORK(&vpu->job_work, syna_venc_h1_worker);
-	if (TEEC_RegisterCallback(&vpu->s_session, syna_venc_h1_callback, vpu)) {
+
+#if IS_ENABLED(CONFIG_OPTEE)
+#else
+	if (TEEC_RegisterCallback(&vpu->tee_session, syna_venc_h1_callback, vpu)) {
 		dev_err(vpu->dev, "can't register venc callback\n");
 		return -EINVAL;
 	}
+#endif
 	mutex_init(&vpu->mutex);
 
 	snprintf(vpu->v4l2_dev.name, sizeof(vpu->v4l2_dev.name), "%s",

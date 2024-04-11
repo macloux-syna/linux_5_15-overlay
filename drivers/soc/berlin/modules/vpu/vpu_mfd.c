@@ -27,10 +27,9 @@
 #include <linux/pm_runtime.h>
 #include <linux/delay.h>
 #include <linux/firmware.h>
-#include "tee_client_api.h"
+#include "vpu_tee_wrap.h"
 #include "vpu_mfd.h"
-
-#define VMETA_TA_IMAGE "ta/libvmeta.ta"
+#include "v2/vpu_fw.h"
 
 struct syna_vpu_mfd_parent {
 	struct device *dev;
@@ -46,7 +45,6 @@ struct syna_vpu_mfd_parent {
 static struct platform_driver syna_vpu_driver;
 
 static DEFINE_MUTEX(vpu_firmware_mutex);
-TEEC_Context tee_ctx = { 0, };
 
 static const struct syna_vpu_variant vpu_v4g_data = {
 	.hw_type = VPU_V2G,
@@ -94,61 +92,6 @@ static const struct of_device_id syna_vpu_of_match[] = {
 
 MODULE_DEVICE_TABLE(of, syna_vpu_of_match);
 
-__attribute__((__unused__)) static int
-vpu_fw_probe(struct device *dev, TEEC_Context * tee_ctx)
-{
-	static bool loaded = false;
-	int ret = 0;
-	size_t fw_size;
-	TEEC_SharedMemory fw_shm = { 0, };
-	TEEC_Parameter tee_param = { 0, };
-	const struct firmware *fw = NULL;
-
-	ret = mutex_lock_interruptible(&vpu_firmware_mutex);
-	if (ret)
-		return ret;
-
-	if (loaded)
-		goto bail;
-
-	ret = request_firmware(&fw, VMETA_TA_IMAGE, dev);
-	if (ret)
-		goto bail;
-
-	fw_size = ALIGN(fw->size, PAGE_SIZE);
-
-	fw_shm.size = fw_size;
-	fw_shm.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
-
-	ret = TEEC_AllocateSharedMemory(tee_ctx, &fw_shm);
-	if (ret || !fw_shm.buffer) {
-		dev_err(dev, "can't allocate memory for firmware loading\n");
-		goto bail;
-	}
-
-	memcpy(fw_shm.buffer, fw->data, fw->size);
-	release_firmware(fw);
-
-	tee_param.memref.parent = &fw_shm;
-	tee_param.memref.size = fw_size;
-
-	ret = TEEC_RegisterTA(tee_ctx, &tee_param, TEEC_MEMREF_PARTIAL_INPUT);
-	if (TEEC_ERROR_ACCESS_CONFLICT == ret) {
-		dev_warn(dev, "VPU TA has been loaded\n");
-		ret = 0;
-	} else if (ret) {
-		dev_err(dev, "can't register TA: 0x%08x\n", ret);
-		goto free_fw_mem;
-	}
-
-	loaded = true;
-
-free_fw_mem:
-	TEEC_ReleaseSharedMemory(&fw_shm);
-bail:
-	mutex_unlock(&vpu_firmware_mutex);
-	return ret;
-}
 
 int syna_mfd_request_connect(struct syna_vpu_auxiliary_device *auxdev)
 {
@@ -241,7 +184,7 @@ static int syna_vpu_mfd_probe(struct platform_device *pdev)
 	mutex_init(&vpu_dev->lock);
 
 #if defined(CONFIG_BERLIN_VPU_V4L2)
-	ret = vpu_fw_probe(dev, &tee_ctx);
+	ret = syna_vpu_fw_probe(dev);
 	if (ret)
 		goto failed;
 #endif
@@ -348,13 +291,6 @@ static int __init syna_vpu_device_init(void)
 {
 	int ret;
 
-	ret = TEEC_InitializeContext(NULL, &tee_ctx);
-	if (ret) {
-		pr_err("can't open TEE context\n");
-		ret = -EINVAL;
-		goto failed;
-	}
-
 	ret = syna_vpu_dh_memdev_alloc();
 	if (ret) {
 		pr_err("can't init ION memdevs\n");
@@ -370,7 +306,6 @@ static int __init syna_vpu_device_init(void)
 	return ret;
 
 failed:
-	TEEC_FinalizeContext(&tee_ctx);
 	return ret;
 }
 
@@ -378,7 +313,6 @@ static void __exit syna_vpu_device_exit(void)
 {
 	platform_driver_unregister(&syna_vpu_driver);
 	syna_vpu_dh_memdev_release();
-	TEEC_FinalizeContext(&tee_ctx);
 }
 
 module_init(syna_vpu_device_init);

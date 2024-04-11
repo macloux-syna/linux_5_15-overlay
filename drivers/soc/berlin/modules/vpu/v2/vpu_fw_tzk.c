@@ -13,69 +13,209 @@
 #include "vpu_fw_data.h"
 #include "vpu_fw.h"
 
+
+#define VMETA_TA_IMAGE "ta/libvmeta.ta"
 static const TEEC_UUID TAVmeta_UUID = { 0x1316a183, 0x894d, 0x43fe,
 	{0x98, 0x93, 0xbb, 0x94, 0x6a, 0xe1, 0x03, 0xf0}
 };
 
 static int fw_debug = 0;
+static VPU_TEEC_Context *tee_ctx = NULL;
 module_param(fw_debug, int, 0660);
 MODULE_PARM_DESC(fw_debug, "Firmware debug level");
 
-int vpu_open_tz_session(struct syna_vpu_dev *vpu, TEEC_Context * tee_ctx)
+static DEFINE_MUTEX(vpu_firmware_mutex);
+
+/*******************************************************************
+ * VPU Wrap API
+*******************************************************************/
+int syna_vpu_open_tz_session(struct syna_vpu_dev *vpu)
 {
 	TEEC_Operation operation = { 0 };
 	int ret;
 
-	operation.paramTypes =
-	    TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT, TEEC_NONE,
-			     TEEC_NONE);
+	if (tee_ctx == NULL) {
+		tee_ctx = kzalloc(sizeof(VPU_TEEC_Context), GFP_KERNEL);
+		TEEC_InitializeContext(NULL, tee_ctx);
+	}
+	if (vpu->tee_ctx == NULL)
+		vpu->tee_ctx = tee_ctx;
+
+	operation.paramTypes = TEEC_PARAM_TYPES(
+		TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT, TEEC_NONE, TEEC_NONE);
 
 	operation.params[0].value.a = vpu->variant->hw_type;
 	operation.params[0].value.b = 2;
 	operation.params[1].value.a = 0xdeadbeef;
 
 	/* Decoder and Encoder would open its own session */
-	ret = TEEC_OpenSession(tee_ctx, &vpu->s_session,
-			       &TAVmeta_UUID, TEEC_LOGIN_USER,
-			       NULL, &operation, NULL);
+	ret = TEEC_OpenSession(vpu->tee_ctx, &vpu->tee_session,
+				   &TAVmeta_UUID, TEEC_LOGIN_USER,
+				   NULL, &operation, NULL);
 	if (ret || operation.params[1].value.a) {
 		pr_err("[vpu]can't start a new TEE session ret=0x%08x 0x%08x\n",
-		       ret, operation.params[1].value.a);
+				ret, operation.params[1].value.a);
+		kfree(vpu->tee_ctx );
 		ret = -ENXIO;
 	}
 	return ret;
 }
 
-int syna_vpu_get_hwdata(TEEC_Context * tee_ctx, struct syna_vpu_dev *vpu)
+int syna_vpu_close_tz_session(struct syna_vpu_dev *vpu)
+{
+	TEEC_CloseSession(&vpu->tee_session);
+	TEEC_FinalizeContext(vpu->tee_ctx);
+
+	kfree(vpu->tee_ctx);
+	vpu->tee_ctx = NULL;
+
+	return 0;
+}
+
+int syna_vpu_tee_alloc(VPU_TEEC_Context *tee_ctx, u32 len, void **shm)
+{
+	TEEC_SharedMemory *shmTmp;
+	TEEC_Result ret = TEEC_SUCCESS;
+
+	shmTmp = kzalloc(sizeof(TEEC_SharedMemory), GFP_KERNEL);
+	if (!shmTmp)
+		return -ENOMEM;
+
+	shmTmp->size = len;
+	shmTmp->flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
+	ret = TEEC_AllocateSharedMemory(tee_ctx, shmTmp);
+	if (ret != TEEC_SUCCESS) {
+		pr_err("fail to allocate TEEC share memory: %x\n", ret);
+		kfree(shmTmp);
+		return -ENOMEM;
+	}
+
+	*shm = shmTmp;
+	return ret;
+}
+
+int syna_vpu_tee_release(void *shm)
+{
+	if (shm) {
+		TEEC_ReleaseSharedMemory(shm);
+		kfree(shm);
+	} else {
+		pr_err("invalid shm %px\n", shm);
+	}
+	return 0;
+}
+
+void *syna_vpu_get_ctrl_shm_buffer(struct syna_vcodec_ctx *ctx)
+{
+	return ctx->ctrl_shm->buffer;
+}
+
+void *syna_vpu_get_cfg_shm_buffer(struct syna_vcodec_ctx *ctx)
+{
+	return ctx->cfg_shm->buffer;
+}
+
+uintptr_t syna_vpu_get_ctrl_shm_paddr(struct syna_vcodec_ctx *ctx)
+{
+	return (uintptr_t)ctx->ctrl_shm->phyAddr;
+}
+
+uintptr_t syna_vpu_get_cfg_shm_paddr(struct syna_vcodec_ctx *ctx)
+{
+	return (uintptr_t)ctx->cfg_shm->phyAddr;
+}
+
+int syna_vpu_fw_probe(struct device *dev)
+{
+	static bool loaded = false;
+	int ret = 0;
+	size_t fw_size;
+	TEEC_SharedMemory fw_shm = { 0, };
+	TEEC_Parameter tee_param = { 0, };
+	const struct firmware *fw = NULL;
+
+	if (tee_ctx == NULL) {
+		tee_ctx = kzalloc(sizeof(VPU_TEEC_Context), GFP_KERNEL);
+		TEEC_InitializeContext(NULL, tee_ctx);
+	}
+
+	ret = mutex_lock_interruptible(&vpu_firmware_mutex);
+	if (ret)
+		return ret;
+
+	if (loaded)
+		goto bail;
+
+	ret = request_firmware(&fw, VMETA_TA_IMAGE, dev);
+	if (ret)
+		goto bail;
+
+	fw_size = ALIGN(fw->size, PAGE_SIZE);
+
+	fw_shm.size = fw_size;
+	fw_shm.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
+
+	ret = TEEC_AllocateSharedMemory(tee_ctx, &fw_shm);
+	if (ret || !fw_shm.buffer) {
+		dev_err(dev, "can't allocate memory for firmware loading\n");
+		goto bail;
+	}
+
+	memcpy(fw_shm.buffer, fw->data, fw->size);
+	release_firmware(fw);
+
+	tee_param.memref.parent = &fw_shm;
+	tee_param.memref.size = fw_size;
+
+	ret = TEEC_RegisterTA(tee_ctx, &tee_param, TEEC_MEMREF_PARTIAL_INPUT);
+	if (TEEC_ERROR_ACCESS_CONFLICT == ret) {
+		dev_warn(dev, "VPU TA has been loaded\n");
+		ret = 0;
+	} else if (ret) {
+		dev_err(dev, "can't register TA: 0x%08x\n", ret);
+		goto free_fw_mem;
+	}
+
+	loaded = true;
+
+free_fw_mem:
+	TEEC_ReleaseSharedMemory(&fw_shm);
+bail:
+	mutex_unlock(&vpu_firmware_mutex);
+	return ret;
+}
+
+int syna_vpu_get_hwdata(struct syna_vpu_dev *vpu)
 {
 	struct syna_vpu_fw_data *fw_data = &vpu->fw_data;
 	TEEC_SharedMemory shm = { 0, };
 	TEEC_Operation oper = { 0, };
 	int ret = 0;
 
+	pr_err("TZK: %s: %d\n", __FUNCTION__, __LINE__);
+
 	shm.size = ALIGN(sizeof(struct syna_vpu_fw_data), SZ_4K);
 	shm.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
 	/* FIXME: we could re-use the one for firmware loading */
-	ret = TEEC_AllocateSharedMemory(tee_ctx, &shm);
+	ret = TEEC_AllocateSharedMemory(vpu->tee_ctx, &shm);
 	if (ret || !shm.buffer) {
 		pr_err("can't allocate firmware memory\n");
 		ret = -ENOMEM;
 		goto failed;
 	}
-	oper.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT,
+	oper.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_PARTIAL_OUTPUT, TEEC_VALUE_OUTPUT,
 					   TEEC_NONE, TEEC_NONE);
 
-	oper.params[0].value.a = (uintptr_t) shm.phyAddr;
-	oper.params[0].value.b = shm.size;
-	oper.params[1].value.a = 0x0;
-	oper.params[1].value.b = 0xdeadbeef;
+	oper.params[0].memref.parent = &shm;
+	oper.params[0].memref.size   = shm.size;
+	oper.params[0].memref.offset = 0;
+	oper.params[1].value.a       = 0x0;
+	oper.params[1].value.b       = 0xdeadbeef;
 
-	ret =
-	    TEEC_InvokeCommand(&vpu->s_session, VMETA_GET_CONST_V2, &oper,
-			       NULL);
+	ret = TEEC_InvokeCommand(&vpu->tee_session, VMETA_GET_CONST_V2, &oper, NULL);
 	if (ret || oper.params[1].value.b) {
 		pr_err("failed to command VMETA TA: 0x%08x, 0x%08x\n",
-		       ret, oper.params[1].value.b);
+			   ret, oper.params[1].value.b);
 		ret = -EIO;
 		goto failed_tee;
 	}
@@ -91,7 +231,7 @@ failed:
 	return ret;
 }
 
-int syna_vpu_set_log_level(TEEC_Session * session)
+int syna_vpu_set_log_level(struct syna_vpu_dev *vpu)
 {
 	static int cur_level = 0;
 	TEEC_Operation oper = { 0, };
@@ -106,7 +246,7 @@ int syna_vpu_set_log_level(TEEC_Session * session)
 	oper.params[0].value.a = fw_debug;
 	oper.params[1].value.a = 0xdeadbeef;
 
-	ret = TEEC_InvokeCommand(session, VPU_SET_DEBUG_LEVEL_V2, &oper, NULL);
+	ret = TEEC_InvokeCommand(&vpu->tee_session, VPU_SET_DEBUG_LEVEL_V2, &oper, NULL);
 	if (ret)
 		return ret;
 
@@ -125,22 +265,22 @@ static int tz_vpu_create_instance(int cmd, struct syna_vcodec_ctx *ctx)
 	TEEC_Operation operation = { 0 };
 	int ret;
 
-	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
-						TEEC_VALUE_OUTPUT,
-						TEEC_NONE, TEEC_NONE);
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_PARTIAL_INPUT,
+								TEEC_VALUE_OUTPUT,
+								TEEC_NONE, TEEC_NONE);
 
-	operation.params[0].value.a = (uintptr_t) ctx->ctrl_shm.phyAddr;
-	operation.params[0].value.b = ctx->ctrl_shm.size;
-	operation.params[1].value.a = 0xdeadbeef;
+	operation.params[0].memref.parent = ctx->ctrl_shm;
+	operation.params[0].memref.size   = ctx->ctrl_shm->size;
+	operation.params[0].memref.offset = 0;
+	operation.params[1].value.a       = 0xdeadbeef;
 
-	ret = TEEC_InvokeCommand(&vpu->s_session, cmd, &operation, NULL);
+	ret = TEEC_InvokeCommand(&vpu->tee_session, cmd, &operation, NULL);
 	if (ret || operation.params[1].value.a) {
 		pr_err("can't create inst cmd %d ret:0x%x(0x%x)",
-		       cmd, ret, operation.params[1].value.a);
-		ret = operation.params[2].value.a;
+				cmd, ret, operation.params[1].value.a);
+		ret = operation.params[1].value.a;
 	} else {
-		ctrl = ctx->ctrl_shm.buffer;
-		ctx->ctrl_shm_vaddr = ctrl->ctrl_buf.vaddr64;
+		ctrl = ctx->ctrl_shm->buffer;
 	}
 	return ret;
 }
@@ -155,15 +295,16 @@ static int tz_vpu_stream_cmd1(int cmd, struct syna_vcodec_ctx *ctx)
 	TEEC_Operation operation = { 0 };
 	int ret = 0;
 
-	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
-						TEEC_VALUE_OUTPUT,
-						TEEC_NONE, TEEC_NONE);
-	operation.params[0].value.a = ctx->ctrl_shm_vaddr;
-	operation.params[0].value.b =
-	    ALIGN(sizeof(struct syna_vpu_ctrl), SZ_4K);
-	operation.params[1].value.a = 0xdeadbeef;
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_PARTIAL_INPUT,
+							TEEC_VALUE_OUTPUT,
+							TEEC_NONE,
+							TEEC_NONE);
+	operation.params[0].memref.parent = ctx->ctrl_shm;
+	operation.params[0].memref.size   = ctx->ctrl_shm->size;
+	operation.params[0].memref.offset = 0;
+	operation.params[1].value.a       = 0xdeadbeef;
 
-	ret = TEEC_InvokeCommand(&vpu->s_session, cmd, &operation, NULL);
+	ret = TEEC_InvokeCommand(&vpu->tee_session, cmd, &operation, NULL);
 	if (ret) {
 		pr_err("stmcmd %d failed: %08x\n", cmd, ret);
 		operation.params[1].value.a = ret;
@@ -183,18 +324,19 @@ static int tz_vpu_stream_cmd2(int cmd, struct syna_vcodec_ctx *ctx)
 	TEEC_Operation operation = { 0 };
 	int ret = 0;
 
-	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
-						TEEC_VALUE_INPUT,
-						TEEC_VALUE_OUTPUT, TEEC_NONE);
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_PARTIAL_INPUT,
+								TEEC_MEMREF_PARTIAL_INOUT,
+								TEEC_VALUE_OUTPUT,
+								TEEC_NONE);
+	operation.params[0].memref.parent = ctx->ctrl_shm;
+	operation.params[0].memref.size   = ctx->ctrl_shm->size;
+	operation.params[0].memref.offset = 0;
+	operation.params[1].memref.parent = ctx->cfg_shm;
+	operation.params[1].memref.size   = ctx->cfg_shm->size;
+	operation.params[1].memref.offset = 0;
+	operation.params[2].value.a       = 0xdeadbeef;
 
-	operation.params[0].value.a = ctx->ctrl_shm_vaddr;
-	operation.params[0].value.b =
-	    ALIGN(sizeof(struct syna_vpu_ctrl), SZ_4K);
-	operation.params[1].value.a = (uintptr_t) ctx->cfg_shm.phyAddr;
-	operation.params[1].value.b = ctx->cfg_shm.size;
-	operation.params[2].value.a = 0xdeadbeef;
-
-	ret = TEEC_InvokeCommand(&vpu->s_session, cmd, &operation, NULL);
+	ret = TEEC_InvokeCommand(&vpu->tee_session, cmd, &operation, NULL);
 
 	if (ret || operation.params[2].value.a)
 		return ret;
@@ -214,18 +356,19 @@ static int tz_vpu_buffer_cmd(int cmd, struct syna_vcodec_ctx *ctx,
 	TEEC_Operation operation = { 0 };
 	int ret;
 
-	operation.paramTypes =
-	    TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_INPUT,
-			     TEEC_VALUE_OUTPUT, TEEC_NONE);
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_PARTIAL_INPUT,
+								TEEC_VALUE_INPUT,
+					   			TEEC_VALUE_OUTPUT,
+								TEEC_NONE);
 
-	operation.params[0].value.a = ctx->ctrl_shm_vaddr;
-	operation.params[0].value.b =
-	    ALIGN(sizeof(struct syna_vpu_ctrl), SZ_4K);
-	operation.params[1].value.a = type;
-	operation.params[1].value.b = index;
-	operation.params[2].value.a = 0xdeadbeef;
+	operation.params[0].memref.parent = ctx->ctrl_shm;
+	operation.params[0].memref.size   = ctx->ctrl_shm->size;
+	operation.params[0].memref.offset = 0;
+	operation.params[1].value.a       = type;
+	operation.params[1].value.b       = index;
+	operation.params[2].value.a       = 0xdeadbeef;
 
-	ret = TEEC_InvokeCommand(&vpu->s_session, cmd, &operation, NULL);
+	ret = TEEC_InvokeCommand(&vpu->tee_session, cmd, &operation, NULL);
 
 	if (ret || operation.params[2].value.a) {
 		pr_err("can't put %d buffer into fw queue(type %d): 0x%x(0x%x)",
@@ -244,19 +387,20 @@ int syna_vpu_open(struct syna_vpu_dev *vpu, u32 memid, u32 size)
 	TEEC_Operation operation = { 0 };
 	int ret;
 
-	operation.paramTypes =
-	    TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT, TEEC_NONE,
-			     TEEC_NONE);
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
+								TEEC_VALUE_OUTPUT,
+								TEEC_NONE,
+			     				TEEC_NONE);
 
 	operation.params[0].value.a = memid;
 	operation.params[0].value.b = size;
 	operation.params[1].value.a = 0xdeadbeef;
 
-	ret = TEEC_InvokeCommand(&vpu->s_session, VMETA_OPEN_V2, &operation,
+	ret = TEEC_InvokeCommand(&vpu->tee_session, VMETA_OPEN_V2, &operation,
 				 NULL);
 	if (ret || operation.params[1].value.a) {
 		pr_err("[vpu]failed to initialize VPU HW: 0x%08x, 0x%08x\n",
-		       ret, operation.params[1].value.a);
+			ret, operation.params[1].value.a);
 		ret = -EIO;
 	}
 	return ret;
@@ -267,12 +411,13 @@ int syna_vpu_close(struct syna_vpu_dev *vpu)
 	TEEC_Operation operation = { 0 };
 	int ret;
 
-	operation.paramTypes =
-	    TEEC_PARAM_TYPES(TEEC_VALUE_INPUT, TEEC_VALUE_OUTPUT, TEEC_NONE,
-			     TEEC_NONE);
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_OUTPUT,
+								TEEC_NONE,
+								TEEC_NONE,
+								TEEC_NONE);
 
 	operation.params[0].value.a = 0xdeadbeef;
-	ret = TEEC_InvokeCommand(&vpu->s_session, VMETA_CLOSE_V2, &operation,
+	ret = TEEC_InvokeCommand(&vpu->tee_session, VMETA_CLOSE_V2, &operation,
 				 NULL);
 	return ret;
 }
@@ -359,18 +504,17 @@ int syna_vdec_pop_disp_buf(struct syna_vcodec_ctx *ctx, uint32_t * index)
 	TEEC_Operation operation = { 0 };
 	int ret;
 
-	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_VALUE_INPUT,
-						TEEC_VALUE_INOUT,
-						TEEC_VALUE_OUTPUT, TEEC_NONE);
+	operation.paramTypes = TEEC_PARAM_TYPES(TEEC_MEMREF_PARTIAL_INPUT, TEEC_VALUE_INOUT,
+					   TEEC_VALUE_OUTPUT, TEEC_NONE);
 
-	operation.params[0].value.a = ctx->ctrl_shm_vaddr;
-	operation.params[0].value.b =
-	    ALIGN(sizeof(struct syna_vpu_ctrl), SZ_4K);
-	operation.params[1].value.a = SYNA_VPU_FW_VDEC_DISP;
-	operation.params[1].value.b = 0xdeadbeef;
-	operation.params[2].value.a = 0xdeadbeef;
+	operation.params[0].memref.parent = ctx->ctrl_shm;
+	operation.params[0].memref.size   = ctx->ctrl_shm->size;
+	operation.params[0].memref.offset = 0;
+	operation.params[1].value.a 	  = SYNA_VPU_FW_VDEC_DISP;
+	operation.params[1].value.b 	  = 0xdeadbeef;
+	operation.params[2].value.a 	  = 0xdeadbeef;
 
-	ret = TEEC_InvokeCommand(&vpu->s_session, VDEC_POP_BUFFER_V2,
+	ret = TEEC_InvokeCommand(&vpu->tee_session, VDEC_POP_BUFFER_V2,
 				 &operation, NULL);
 
 	if (ret || operation.params[2].value.a) {

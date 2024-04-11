@@ -28,7 +28,6 @@
 #include <linux/uaccess.h>
 #include <linux/mm.h>
 #include <linux/delay.h>
-#include "tee_client_api.h"
 
 #include <vpu_mfd.h>
 

@@ -25,6 +25,12 @@ typedef unsigned long long u64;
 /* __KERNEL__ */
 #endif
 
+#ifdef CONFIG_OPTEE
+#define VPU_VOID_PTR uint64_t
+#else
+#define VPU_VOID_PTR uint32_t
+#endif
+
 #define VPU_TA_VER_MAJOR(ver)			((ver >> 24U) & 0x0fU)
 #define VPU_TA_VER_MINOR(ver)			((ver >> 16U) & 0x0fU)
 #define VPU_TA_API_VER_MAJOR(ver)		((ver >> 8U) & 0x0fU)
@@ -184,7 +190,7 @@ enum syna_frame_field {
 };
 
 /* ***VPU firmware APIs begins here*** */
-/* VPU Firmware version: 34485 */
+/* VPU Firmware version: 34540 */
 #ifdef __KERNEL__
 enum syna_dec_channel
 {
@@ -313,8 +319,8 @@ enum syna_venc_ref_opt
 struct syna_vpu_hw_info
 {
 	unsigned int hw_version;
-	uint32_t fw_version;
-	uint32_t version_string;
+	VPU_VOID_PTR fw_version;
+	VPU_VOID_PTR version_string;
 	unsigned int vmeta_enable;
 	unsigned int v2g_enable;
 	unsigned int g2_enable;
@@ -328,13 +334,13 @@ struct syna_vpu_hw_info
 
 struct syna_vdec_config
 {
-	uint32_t user_data;
-	uint32_t internal_data;
-	uint32_t vdec_cntxt;
-	uint32_t base_strm;
+	VPU_VOID_PTR user_data;
+	VPU_VOID_PTR internal_data;
+	VPU_VOID_PTR vdec_cntxt;
+	VPU_VOID_PTR base_strm;
 	unsigned int format;
 	unsigned int hw_context_addr;
-	uint32_t hw_context_vaddr;
+	VPU_VOID_PTR hw_context_vaddr;
 	unsigned int strm_pool_addr;
 	unsigned int strm_pool_size;
 	unsigned int mon_width;
@@ -360,7 +366,7 @@ struct syna_vdec_config
 	unsigned int disable_vld_dcg;
 	unsigned int disable_gmc23;
 	unsigned int enable_sei_3d;
-	uint32_t dma_obj;
+	VPU_VOID_PTR dma_obj;
 	unsigned int roi_x;
 	unsigned int roi_y;
 	unsigned int roi_w;
@@ -431,12 +437,12 @@ struct syna_vdec_config
 
 struct syna_venc_strm_config
 {
-	uint32_t user_data;
-	uint32_t internal_data;
-	uint32_t venc_cntxt;
+	VPU_VOID_PTR user_data;
+	VPU_VOID_PTR internal_data;
+	VPU_VOID_PTR venc_cntxt;
 	unsigned int format;
 	unsigned int hw_context_addr;
-	uint32_t hw_context_vaddr;
+	VPU_VOID_PTR hw_context_vaddr;
 	unsigned int src_yuv_format;
 	unsigned int use_1stpass;
 	unsigned int frm_width;
@@ -583,17 +589,7 @@ struct syna_tz_generic_buf {
 	/* Physical address for CMA or bus(iommu) address */
 	u64 addr;
 	/* virtual address in a TA, without offset */
-	union {
-#ifdef __aarch64__
-		void *vaddr;
-#else
-		struct {
-			void *vaddr;
-			u32 padding;
-		} __attribute__ ((packed));
-#endif
-		u64 vaddr64;
-	};
+	VPU_VOID_PTR vaddr;
 	u32 gfp_flags;
 } __attribute__ ((aligned(8)));
 

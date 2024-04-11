@@ -8,14 +8,23 @@
 
 #include <linux/types.h>
 #include <linux/device.h>
-#include "tee_client_api.h"
+#include "vpu_common.h"
+#include "vpu_tee_wrap.h"
 
-int vpu_open_tz_session(struct syna_vpu_dev *vpu, TEEC_Context * tee_ctx);
+int syna_vpu_open_tz_session(struct syna_vpu_dev *vpu);
+int syna_vpu_close_tz_session(struct syna_vpu_dev *vpu);
+int syna_vpu_tee_alloc(VPU_TEEC_Context *tee_ctx, u32 len, void **shm);
+int syna_vpu_tee_release(void *shm);
+int syna_vpu_fw_probe(struct device *dev);
+void *syna_vpu_get_ctrl_shm_buffer(struct syna_vcodec_ctx *ctx);
+uintptr_t syna_vpu_get_ctrl_shm_paddr(struct syna_vcodec_ctx *ctx);
+void *syna_vpu_get_cfg_shm_buffer(struct syna_vcodec_ctx *ctx);
+uintptr_t syna_vpu_get_cfg_shm_paddr(struct syna_vcodec_ctx *ctx);
 
 int syna_vpu_open(struct syna_vpu_dev *vpu, u32 memid, u32 size);
 int syna_vpu_close(struct syna_vpu_dev *vpu);
-int syna_vpu_get_hwdata(TEEC_Context * tee_ctx, struct syna_vpu_dev *vpu);
-int syna_vpu_set_log_level(TEEC_Session * session);
+int syna_vpu_get_hwdata(struct syna_vpu_dev *vpu);
+int syna_vpu_set_log_level(struct syna_vpu_dev *vpu);
 
 int syna_vpu_register_buf(struct syna_vcodec_ctx *ctx, u32 buftype, u32 idx);
 int syna_vpu_unregister_buf(struct syna_vcodec_ctx *ctx, u32 buftype, u32 idx);
@@ -43,4 +52,5 @@ int syna_venc_encode_stream(struct syna_vcodec_ctx *ctx);
 int syna_venc_push_video_buf(struct syna_vcodec_ctx *ctx, uint32_t index);
 int syna_venc_push_es_buf(struct syna_vcodec_ctx *ctx, uint32_t index);
 int syna_venc_push_ref_buf(struct syna_vcodec_ctx *ctx, uint32_t index);
-#endif
+
+#endif //end of __VPU_FIRMWARE_H__

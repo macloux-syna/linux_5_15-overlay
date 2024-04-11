@@ -11,7 +11,6 @@
 #include <linux/kernel.h>
 #include <linux/device.h>
 
-
 #define HW_SUPPORT_DEC_MPEG2	BIT(0)
 #define HW_SUPPORT_DEC_H263		BIT(1)
 #define HW_SUPPORT_DEC_H264		BIT(2)

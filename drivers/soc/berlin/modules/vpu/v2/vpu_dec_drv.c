@@ -506,7 +506,7 @@ static int vidioc_vdec_querycap(struct file *file, void *priv,
 static int syna_vpu_prepare_mtr_buffer(struct syna_vcodec_ctx *ctx,
 				       struct v4l2_pix_format_mplane *pixfmt)
 {
-	struct syna_vpu_ctrl *ctrl = ctx->ctrl_shm.buffer;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	size_t luma_size, cr_size, total_size;
 	dma_addr_t memid;
 
@@ -635,7 +635,7 @@ static int v4g_try_fmt(struct syna_vcodec_ctx *ctx,
 static int vdec_set_default_graphics_fmt(struct syna_vcodec_ctx *ctx, u32 codec)
 {
 	struct syna_vdec_config *p = ctx->dec_params;
-	struct syna_vpu_ctrl *ctrl = ctx->ctrl_shm.buffer;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	const struct v4g_fmt *fmt;
 
 	fmt = v4g_get_default_fmt(ctx, false);
@@ -835,7 +835,7 @@ static int vdpu_update_dst_fmt(struct syna_vcodec_ctx *ctx,
 			       const struct v4g_fmt *fmt)
 {
 	struct syna_vdec_config *p = ctx->dec_params;
-	struct syna_vpu_ctrl *ctrl = ctx->ctrl_shm.buffer;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 
 	if (fmt->postprocessed) {
 		/* Need internal ref bufs */
@@ -978,7 +978,7 @@ static int v4g_vdec_g_fmt_cap(struct syna_vcodec_ctx *ctx,
 	struct syna_vpu_ctrl *ctrl;
 	const struct v4g_fmt *src_fmt, *dst_fmt;
 
-	ctrl = ctx->ctrl_shm.buffer;
+	ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	src_fmt = ctx->vpu_src_fmt;
 	dst_fmt = ctx->vpu_dst_fmt;
 
@@ -1524,7 +1524,7 @@ static void vdec_release_internal_ref_bufs(struct syna_vcodec_ctx *ctx)
 		return;
 
 	ctx->ref_slots = 0;
-	ctrl = ctx->ctrl_shm.buffer;
+	ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 
 	for (i = ctx->n_ref_pool - 1; i >= 0; i--) {
 		vpu_buf = ctx->output_pool;
@@ -1812,7 +1812,7 @@ static int vb2ops_vdec_start_streaming(struct vb2_queue *q, unsigned int count)
 
 static int vdpu_fw_close_stream(struct syna_vcodec_ctx *ctx)
 {
-	struct syna_vpu_ctrl *ctrl = ctx->ctrl_shm.buffer;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	struct syna_vpu_dev *vpu = ctx->vpu;
 	struct syna_vdec_config *p = ctx->dec_params;
 	int ret;
@@ -1950,7 +1950,7 @@ static const struct v4l2_m2m_ops vpu_m2m_v4g_ops = {
 
 static void syna_record_free_ref_display_buf(struct syna_vcodec_ctx *ctx)
 {
-	struct syna_vpu_ctrl *ctrl = ctx->ctrl_shm.buffer;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
 	struct v4l2_m2m_buffer *buf, *n;
 	u32 i, idx;
@@ -2072,7 +2072,7 @@ static inline bool is_flushing(enum flush_state state)
 static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 {
 	struct syna_vpu_dev *vpu = ctx->vpu;
-	struct syna_vpu_ctrl *ctrl = ctx->ctrl_shm.buffer;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
 
 	struct vb2_queue *dst_vq;
@@ -2224,7 +2224,7 @@ static void syna_vdec_v4g_worker(struct work_struct *work)
 
 	ctx = v4l2_m2m_get_curr_priv(m2m_dev);
 
-	ctrl = ctx->ctrl_shm.buffer;
+	ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	m2m_ctx = ctx->fh.m2m_ctx;
 
 	vpu_srv_prepare_to_run(vpu->srv, ctx);
@@ -2419,7 +2419,7 @@ static int vdpu_driver_open(struct file *filp)
 	struct syna_vpu_ctrl *ctrl = NULL;
 	struct syna_vpu_fw_info *fw_info = NULL;
 	struct vb2_queue *src_vq = NULL;
-	size_t ctrl_buf_size, ctx_buf_size;
+	size_t ctrl_buf_size, cfg_buf_size, ctx_buf_size;
 	dma_addr_t *memid;
 	int ret;
 
@@ -2437,29 +2437,24 @@ static int vdpu_driver_open(struct file *filp)
 	fw_info = &vpu->fw_data.fw_info;
 	ctx->vpu = vpu;
 
-	ctx->cfg_shm.size = ALIGN(sizeof(struct syna_vdec_config), PAGE_SIZE);
-	ctx->cfg_shm.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
-	ret = TEEC_AllocateSharedMemory(&tee_ctx, &ctx->cfg_shm);
-	if (ret || !ctx->cfg_shm.buffer) {
+	cfg_buf_size = ALIGN(sizeof(struct syna_vdec_config), PAGE_SIZE);
+	ret = syna_vpu_tee_alloc(vpu->tee_ctx, cfg_buf_size, (void **)&ctx->cfg_shm);
+	if (ret || !syna_vpu_get_cfg_shm_buffer(ctx)) {
 		vdpu_err(vpu, "can't allocate cfg shm\n");
 		ret = -ENOMEM;
 		goto failed;
 	}
-	ctx->dec_params = ctx->cfg_shm.buffer;
+	ctx->dec_params = syna_vpu_get_cfg_shm_buffer(ctx);
 	memset(ctx->dec_params, 0, sizeof(struct syna_vdec_config));
 
 	ctrl_buf_size = ALIGN(sizeof(struct syna_vpu_ctrl), SZ_4K);
-
-	ctx->ctrl_shm.size = ALIGN(sizeof(struct syna_vpu_ctrl), SZ_4K);
-	ctx->ctrl_shm.flags = TEEC_MEM_INPUT | TEEC_MEM_OUTPUT;
-
-	ret = TEEC_AllocateSharedMemory(&tee_ctx, &ctx->ctrl_shm);
-	if (ret || !ctx->ctrl_shm.buffer) {
+	ret = syna_vpu_tee_alloc(vpu->tee_ctx, ctrl_buf_size, (void **)&ctx->ctrl_shm);
+	if (ret || !syna_vpu_get_ctrl_shm_buffer(ctx)) {
 		vdpu_err(vpu, "can't allocate instance shm\n");
 		ret = -ENOMEM;
 		goto failed_shm;
 	}
-	ctrl = ctx->ctrl_shm.buffer;
+	ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 
 	ctx_buf_size = ALIGN(BERLIN_VPU_CTX_RESERVED_SIZE, PAGE_SIZE) +
 	    ALIGN(fw_info->vdec_strm_context_size, PAGE_SIZE) +
@@ -2477,7 +2472,7 @@ static int vdpu_driver_open(struct file *filp)
 	}
 	memid = vb2_syna_bm_cookie(NULL, ctx->ctx_buf);
 
-	ctrl->ctrl_buf.addr = (uintptr_t) ctx->ctrl_shm.phyAddr;
+	ctrl->ctrl_buf.addr = syna_vpu_get_ctrl_shm_paddr(ctx);
 	ctrl->ctrl_buf.size = ctrl_buf_size;
 
 	ctrl->ctx_buf.type = CONTIGUOUS_MEM;
@@ -2545,9 +2540,9 @@ err_ctx_free:
 fw_inst_failed:
 	vb2_syna_dh_bm_put(ctx->ctx_buf);
 failed_sec_ctx:
-	TEEC_ReleaseSharedMemory(&ctx->ctrl_shm);
+	syna_vpu_tee_release(ctx->ctrl_shm);
 failed_shm:
-	TEEC_ReleaseSharedMemory(&ctx->cfg_shm);
+	syna_vpu_tee_release(ctx->cfg_shm);
 failed:
 	kfree(ctx);
 	syna_mfd_disconnect(auxdev);
@@ -2573,8 +2568,8 @@ static int vdpu_driver_release(struct file *filp)
 	}
 
 	vb2_syna_dh_bm_put(ctx->ctx_buf);
-	TEEC_ReleaseSharedMemory(&ctx->ctrl_shm);
-	TEEC_ReleaseSharedMemory(&ctx->cfg_shm);
+	syna_vpu_tee_release(ctx->ctrl_shm);
+	syna_vpu_tee_release(ctx->cfg_shm);
 
 	auxdev = container_of(vpu->dev, struct syna_vpu_auxiliary_device, dev);
 	ret = syna_mfd_disconnect(auxdev);

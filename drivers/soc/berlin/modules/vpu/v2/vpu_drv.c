@@ -27,7 +27,7 @@
 #include <linux/pm_runtime.h>
 #include <linux/delay.h>
 
-#include "tee_client_api.h"
+#include "vpu_tee_wrap.h"
 #include "vpu_common.h"
 #include "vpu_fw.h"
 #include "vpu_fw_data.h"
@@ -134,13 +134,13 @@ static int syna_vpu_v4l2_probe(struct syna_vpu_auxiliary_device *auxdev,
 
 	vpu_dev->irq = auxdev->irq;
 
-	ret = vpu_open_tz_session(vpu_dev, &tee_ctx);
+	ret = syna_vpu_open_tz_session(vpu_dev);
 	if (ret) {
 		dev_err(dev, "tz initilize failed\n");
 		goto failed_irq_workq;
 	}
 
-	ret = syna_vpu_get_hwdata(&tee_ctx, vpu_dev);
+	ret = syna_vpu_get_hwdata(vpu_dev);
 	if (ret) {
 		dev_err(dev, "tz get const failed\n");
 		goto failed_hwdata;
@@ -151,7 +151,7 @@ static int syna_vpu_v4l2_probe(struct syna_vpu_auxiliary_device *auxdev,
 
 	fw_data = &vpu_dev->fw_data;
 	dev_info(dev, "FW ver: %d, HW ver: %d\n",
-		 fw_data->hw_info.fw_version, fw_data->hw_info.hw_version);
+		 (uint32_t)fw_data->hw_info.fw_version, fw_data->hw_info.hw_version);
 
 	vpu_ctx_size = ALIGN(BERLIN_VPU_CFG_RESERVED_SIZE, PAGE_SIZE) +
 		       ALIGN(fw_data->fw_info.vpu_context_size, PAGE_SIZE) +
@@ -170,7 +170,7 @@ static int syna_vpu_v4l2_probe(struct syna_vpu_auxiliary_device *auxdev,
 	if (!p_memid) {
 		dev_err(dev, "no memid for the secure buf\n");
 		ret = -ENOMEM;
-		goto failed_hwdata;
+		goto failed_ctx_buf;
 	}
 
 	/*
@@ -182,11 +182,11 @@ static int syna_vpu_v4l2_probe(struct syna_vpu_auxiliary_device *auxdev,
 	ret = syna_vpu_open(vpu_dev, *p_memid, vpu_ctx_size);
 	if (ret) {
 		pm_runtime_put(dev);
-		goto failed_hwdata;
+		goto failed_ctx_buf;
 	}
 	pm_runtime_put(dev);
 
-	syna_vpu_set_log_level(&vpu_dev->s_session);
+	syna_vpu_set_log_level(vpu_dev);
 
 	switch (variant->hw_type) {
 	case VPU_V2G:
@@ -208,9 +208,10 @@ static int syna_vpu_v4l2_probe(struct syna_vpu_auxiliary_device *auxdev,
 
 failed_dev_node:
 	syna_vpu_close(vpu_dev);
-failed_hwdata:
-	TEEC_CloseSession(&vpu_dev->s_session);
+failed_ctx_buf:
 	vb2_syna_dh_bm_put(vpu_dev->vpu_ctx_buf);
+failed_hwdata:
+	syna_vpu_close_tz_session(vpu_dev);
 failed_irq_workq:
 	syna_srv_destroy(&vpu_dev->srv);
 	destroy_workqueue(vpu_dev->vcodec_workq);
@@ -240,7 +241,7 @@ static void syna_vpu_v4l2_remove(struct syna_vpu_auxiliary_device *auxdev)
 		break;
 	}
 
-	TEEC_CloseSession(&vpu_dev->s_session);
+	syna_vpu_close_tz_session(vpu_dev);
 	vb2_syna_dh_bm_put(vpu_dev->vpu_ctx_buf);
 }
 

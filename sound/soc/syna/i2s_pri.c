@@ -163,7 +163,7 @@ static void outdai_set_aio(struct outdai_priv *out,
 		else if (chnum == 8)
 			aio_set_interleaved_mode(out->aio_handle, AIO_ID_PRI_TX, 3, (1<<2) | (2<<4) | (3<<6));
 		else
-			dev_err(out->aio_handle, "not supported chnum: %d in I2S mode\n", chnum);
+			dev_err(out->dev, "not supported chnum: %d in I2S mode\n", chnum);
 	}
 	div = (24576000 * 8) / (8 * bclk);
 	div = ilog2(div);

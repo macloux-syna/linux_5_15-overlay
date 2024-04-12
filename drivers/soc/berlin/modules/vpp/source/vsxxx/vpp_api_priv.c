@@ -72,7 +72,6 @@ static int VPP_Init_Recovery_fastlogo_ta(VPP_MEM_LIST *vpp_shm_list,
 	/* 0 - Magic number, 1- heap handle which is not used FL ta as of now */
 	unsigned int fl_init_param[2] = {VPP_CA_INIT_MAGIC_NUM, 0};
 	VPP_DISP_OUT_PARAMS pdispParams[MAX_NUM_CPCBS];
-	int pixel_clock;
 	VPP_DISP_OUT_PARAMS dispParams;
 	VPP_RESOLUTION_DESCRIPTION  ResDesc;
 	VPP_MEM shm_handle;
@@ -141,13 +140,6 @@ static int VPP_Init_Recovery_fastlogo_ta(VPP_MEM_LIST *vpp_shm_list,
 		res = MV_DISP_E_CFG;
 		goto EXIT_DESTROY;
 	}
-
-	vpp_config_param.frame_rate = pixel_clock / (ResDesc.uiHeight * ResDesc.uiWidth);
-
-	/* Disable AutoPush enabled in bootlogo
-	 * recovery mode: should be done here
-	 * normal mode: Done by ampcore, alllowing bootlogo shown for longer time */
-	wrap_DhubEnableAutoPush(false, true, vpp_config_param.frame_rate);
 
 	res = wrap_MV_VPPOBJ_Reset();
 	if (res != MV_VPP_OK) {

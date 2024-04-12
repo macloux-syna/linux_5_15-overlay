@@ -217,8 +217,8 @@
 	no-mmc;
 	disable-wp;
 	sdclkdl-dc = /bits/ 8 <75>;
-	pad-sp = /bits/ 8 <12>;
-	pad-sn = /bits/ 8 <12>;
+	pad-sp = /bits/ 8 <4>;
+	pad-sn = /bits/ 8 <4>;
 	vmmc-supply = <&vmmc_sdhci1>;
 	vqmmc-supply = <&vqmmc_sdhci1>;
 };

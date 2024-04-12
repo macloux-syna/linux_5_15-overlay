@@ -232,7 +232,7 @@
 	gmac0_pmux: gmac0-pmux {
 		groups = "RGMIITXC", "RGMIITD0", "RGMIITD1", "RGMIITD2", "RGMIITD3", "RGMIITXCTL", "RGMIIRXC", "RGMIIRD0", "RGMIIRD1", "RGMIIRD2", "RGMIIRD3", "RGMIIRXCTL", "RGMII_CLK_OUT";
 		function = "rgmii";
-		drive-strength = <6>;
+		drive-strength = <3>;
 	};
 
 	rgmiia_pmux: rgmiia-pmux {
@@ -370,8 +370,8 @@
 	pinctrl-names = "default";
 	bus-width = <4>;
 	sdclkdl-dc = /bits/ 8 <75>;
-	pad-sp = /bits/ 8 <12>;
-	pad-sn = /bits/ 8 <12>;
+	pad-sp = /bits/ 8 <4>;
+	pad-sn = /bits/ 8 <4>;
 	no-sd;
 	no-mmc;
 	non-removable;

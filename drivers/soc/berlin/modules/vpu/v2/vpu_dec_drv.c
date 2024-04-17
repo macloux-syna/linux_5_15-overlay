@@ -676,7 +676,7 @@ static int vidioc_vdec_s_fmt_out(struct file *file, void *priv,
 	struct vb2_queue *vq;
 	const struct v4g_fmt *fmt;
 
-	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
+	vq = v4l2_m2m_get_src_vq(ctx->fh.m2m_ctx);
 	if (!vq) {
 		vdpu_err(vpu, "fail to get vq");
 		return -EINVAL;
@@ -914,7 +914,7 @@ static int vidioc_vdec_s_fmt_cap(struct file *file, void *priv,
 	struct vb2_queue *vq;
 	const struct v4g_fmt *fmt;
 
-	vq = v4l2_m2m_get_vq(ctx->fh.m2m_ctx, f->type);
+	vq = v4l2_m2m_get_dst_vq(ctx->fh.m2m_ctx);
 	if (!vq) {
 		vdpu_err(vpu, "fail to get vq");
 		return -EINVAL;
@@ -2032,6 +2032,7 @@ static void syna_record_free_ref_display_buf(struct syna_vcodec_ctx *ctx)
 
 			idx_queue_push(&ctrl->dbuf, i, idx);
 			idx_queue_push(&ctrl->rbuf, i, idx);
+			i++;
 
 			set_bit(idx, &ctx->ref_slots);
 			set_bit(idx, &ctx->dst_vb_bits);
@@ -2339,7 +2340,7 @@ decoding:
 	if (ctrl->status.flags & BERLIN_VPU_STATUS_DONE) {
 		if (vpu_srv_has_pending_isr(vpu->srv))
 			vdpu_err(vpu, "still has a irq not handled\n");
-		switchpoint = true;
+		WRITE_ONCE(switchpoint, true);
 	}
 
 	/* assume it is a switchpoint */
@@ -2347,7 +2348,7 @@ decoding:
 		set_bit(SYNA_VPU_STATUS_WAIT_INPUT_BUF, &ctx->status);
 
 		if (ctrl->status.flags & BERLIN_VPU_STATUS_PROC_END_SAFE)
-			switchpoint = true;
+			WRITE_ONCE(switchpoint, true);
 	}
 
 	if (ret) {
@@ -2399,7 +2400,7 @@ decoding:
 		set_last_buf_done(ctx);
 
 bail:
-	if (switchpoint) {
+	if (READ_ONCE(switchpoint)) {
 		pending_ctx = vpu_srv_schedule_pending(vpu->srv);
 		if (pending_ctx) {
 			m2m_ctx = pending_ctx->fh.m2m_ctx;
@@ -2636,9 +2637,10 @@ static const struct v4l2_file_operations syna_vdec_fops = {
 };
 
 static const struct syna_vpu_fw_ops vdpu_fw_ops = {
+	.fw_inst_swap = syna_vpu_ctx_switch_inst,
+	.release = vdpu_fw_close_stream,
 	.switch_in = syna_vdec_stream_switch_in,
 	.switch_out = syna_vdec_stream_switch_out,
-	.release = vdpu_fw_close_stream,
 };
 
 int syna_vdpu_v4g_init(struct syna_vpu_dev *vpu)

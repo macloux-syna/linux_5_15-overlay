@@ -41,7 +41,7 @@ struct syna_vpu_srv {
 
 /* service queue schedule */
 bool vpu_srv_push_to_pending(struct syna_vpu_srv *node,
-			      struct syna_vcodec_ctx *session)
+			     struct syna_vcodec_ctx *session)
 {
 	unsigned long flags;
 
@@ -101,7 +101,7 @@ void vpu_srv_remove_from_pending(struct syna_vpu_srv *node,
 }
 
 void vpu_srv_prepare_to_run(struct syna_vpu_srv *node,
-			    struct syna_vcodec_ctx *session)
+				struct syna_vcodec_ctx *session)
 {
 	struct syna_vpu_dev *vpu = node->vpu;
 	struct syna_vcodec_ctx *last_session;
@@ -113,14 +113,10 @@ void vpu_srv_prepare_to_run(struct syna_vpu_srv *node,
 	last_session = node->last_session;
 	spin_unlock_irqrestore(&node->srv_spinlock, flags);
 
-	if (last_session) {
-		if (last_session != session) {
-			vpu->fw_ops->switch_out(last_session);
-			vpu->fw_ops->switch_in(session);
-		}
-	} else {
-		vpu->fw_ops->switch_in(session);
-	}
+	if (last_session && (last_session != session))
+		vpu->fw_ops->fw_inst_swap(last_session, session);
+	else
+		vpu->fw_ops->fw_inst_swap(NULL, session);
 
 	spin_lock_irqsave(&node->srv_spinlock, flags);
 	node->last_session = session;
@@ -154,7 +150,7 @@ struct syna_vcodec_ctx* vpu_srv_schedule_pending(struct syna_vpu_srv *node)
 		list_del_init(&session->service_link);
 		spin_unlock_irqrestore(&node->srv_spinlock, flags);
 
-		vpu->fw_ops->switch_out(node->last_session);
+		vpu->fw_ops->fw_inst_swap(node->last_session, NULL);
 
 		spin_lock_irqsave(&node->srv_spinlock, flags);
 		node->last_session = NULL;

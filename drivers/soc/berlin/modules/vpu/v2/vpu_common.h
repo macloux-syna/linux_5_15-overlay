@@ -235,12 +235,14 @@ struct syna_vcodec_ctx {
 };
 
 struct syna_vpu_fw_ops {
+	/* stream context switching */
+	int (*fw_inst_swap) (struct syna_vcodec_ctx *, struct syna_vcodec_ctx *);
+	/* stream context close */
+	int (*release) (struct syna_vcodec_ctx *);
 	/* stream context switch in */
 	int (*switch_in) (struct syna_vcodec_ctx *);
 	/* stream context switch out */
 	int (*switch_out) (struct syna_vcodec_ctx *);
-	/* stream context close */
-	int (*release) (struct syna_vcodec_ctx *);
 };
 
 static inline struct syna_vcodec_ctx *fh_to_ctx(struct v4l2_fh *fh)

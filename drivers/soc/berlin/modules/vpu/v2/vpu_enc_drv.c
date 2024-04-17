@@ -1493,9 +1493,10 @@ static const struct v4l2_file_operations syna_venc_fops = {
 };
 
 static const struct syna_vpu_fw_ops vepu_fw_ops = {
+	.fw_inst_swap = syna_vpu_ctx_switch_inst,
+	.release = syna_venc_close_stream,
 	.switch_in = syna_venc_stream_switch_in,
 	.switch_out = syna_venc_stream_switch_out,
-	.release = syna_venc_close_stream,
 };
 
 int syna_vepu_h1_init(struct syna_vpu_dev *vpu)

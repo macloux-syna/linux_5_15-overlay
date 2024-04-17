@@ -628,6 +628,25 @@ struct idx_queue {
 	uint32_t pop;
 };
 
+struct syna_vdec_seq_desc {
+	u32 luma_size;
+	u32 chroma_size;
+	u32 meta_luma_size;
+	u32 meta_chroma_size;
+	u32 tctx_size;
+
+	u32 disp_luma_size;
+	u32 disp_chroma_size;
+
+	u32 format;
+	u32 startx;
+	u32 starty;
+	u32 width;
+	u32 height;
+	u16 max_ref_nums;
+	u16 max_dpb_size;
+} __attribute__ ((aligned(4)));
+
 struct syna_vpu_ctrl {
 	struct {
 		uint32_t flags;
@@ -691,25 +710,7 @@ struct syna_vpu_ctrl {
 
 	u32 cfg_flags;
 
-	struct {
-		u32 luma_size;
-		u32 chroma_size;
-		u32 meta_luma_size;
-		u32 meta_chroma_size;
-		u32 tctx_size;
-
-		u32 disp_luma_size;
-		u32 disp_chroma_size;
-
-		u32 format;
-		u32 startx;
-		u32 starty;
-		u32 width;
-		u32 height;
-		u16 max_ref_nums;
-		u16 max_dpb_size;
-	} seq_desc __attribute__ ((aligned(4)));
-
+	struct syna_vdec_seq_desc seq_desc;
 	struct syna_venc_2ndpass_param venc_2ndpass_para[32];
 	u32 venc_2ndpass_para_stats;
 

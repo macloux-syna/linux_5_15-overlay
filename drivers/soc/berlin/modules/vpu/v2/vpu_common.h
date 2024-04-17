@@ -155,6 +155,7 @@ struct syna_vcodec_ctx {
 	bool enable_user_dpb;
 	u32 n_user_dpb;
 	/* Only for decoder */
+	struct syna_vdec_seq_desc seq_desc;
 
 	struct completion work_done;
 
@@ -225,6 +226,9 @@ struct syna_vcodec_ctx {
 		long recon_slots;
 		long ref_slots;
 	};
+	long dst_vb_bits;
+	bool eos;
+	bool cap_resetup;
 
 	struct device *mtr_dh_dev;
 };

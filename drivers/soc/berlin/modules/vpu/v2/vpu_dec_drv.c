@@ -37,7 +37,7 @@
 #define SYNA_V4G_DEC_NAME "syna-v4g-vdec"
 #define SYNA_V4G_STR "synaptics-v4g"
 
-#define vdpu_dbg(level, fmt, arg...)	\
+#define vdpu_dbg(vpu, level, fmt, arg...)	\
 		v4l2_dbg(level, vdpu_debug, &vpu->v4l2_dev, fmt, ##arg)
 #define vdpu_info(vpu, fmt, arg...)	\
 		v4l2_info(&vpu->v4l2_dev, fmt, ##arg)
@@ -286,7 +286,7 @@ static int vidioc_vdec_s_ctrl(struct v4l2_ctrl *ctrl)
 		/* Firmware can't update this value during the decoding */
 		break;
 	default:
-		vdpu_dbg(2, "unknown ctrl id = %d", ctrl->id);
+		vdpu_dbg(vpu, 2, "unknown ctrl id = %d", ctrl->id);
 		ret = -EINVAL;
 		break;
 	}
@@ -722,13 +722,17 @@ static int vidioc_vdec_s_fmt_out(struct file *file, void *priv,
 	return 0;
 }
 
-static int vdec_fmt_from_cur_seq_fmt(struct syna_vcodec_ctx *ctx,
+static bool vdec_fmt_from_cur_seq_fmt(struct syna_vcodec_ctx *ctx,
 				     struct syna_vpu_ctrl *ctrl,
 				     struct v4l2_pix_format_mplane *pix_mp)
 {
 	const struct v4g_fmt *fmt;
 	uint32_t bytesperline, sizeimage;
 	uint32_t codec;
+
+	if (0 == memcmp(&ctx->seq_desc, &ctrl->seq_desc, sizeof(ctrl->seq_desc))) {
+		return false;
+	}
 
 	pix_mp->width = ctrl->seq_desc.width;
 	pix_mp->height = ctrl->seq_desc.height;
@@ -828,7 +832,17 @@ static int vdec_fmt_from_cur_seq_fmt(struct syna_vcodec_ctx *ctx,
 	if (sizeimage)
 		pix_mp->num_planes++;
 
-	return 1;
+	vdpu_dbg(ctx->vpu, 1,
+		"[%p] newseq %dx%d d(%d %d) r(%d %d) m(%d %d) t(%d) n(d%d, r%d), req_dpb %d",
+		ctx->fh.m2m_ctx, ctrl->seq_desc.width, ctrl->seq_desc.height,
+		ctrl->seq_desc.disp_luma_size, ctrl->seq_desc.disp_chroma_size,
+		ctrl->seq_desc.luma_size, ctrl->seq_desc.chroma_size,
+		ctrl->seq_desc.meta_luma_size, ctrl->seq_desc.meta_chroma_size,
+		ctrl->seq_desc.tctx_size, ctrl->seq_desc.max_dpb_size,
+		ctrl->seq_desc.max_ref_nums, ctx->req_dpb_size);
+
+	ctx->seq_desc = ctrl->seq_desc;
+	return true;
 }
 
 static int vdpu_update_dst_fmt(struct syna_vcodec_ctx *ctx,
@@ -1096,14 +1110,13 @@ static int vidioc_decoder_cmd(struct file *file, void *priv,
 	struct syna_vpu_dev *vpu = ctx->vpu;
 	struct vb2_queue *src_vq, *dst_vq;
 	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
-	struct vb2_v4l2_buffer *next_dst_buf;
 	int ret;
 
 	ret = v4l2_m2m_ioctl_try_decoder_cmd(file, priv, ec);
 	if (ret)
 		return ret;
 
-	vdpu_dbg(1, "decoder cmd=%u", ec->cmd);
+	vdpu_dbg(vpu, 1, "[%p] decoder cmd=%u", m2m_ctx, ec->cmd);
 
 	dst_vq = v4l2_m2m_get_dst_vq(m2m_ctx);
 	/**
@@ -1117,11 +1130,11 @@ static int vidioc_decoder_cmd(struct file *file, void *priv,
 		src_vq = v4l2_m2m_get_src_vq(m2m_ctx);
 
 		if (!vb2_is_streaming(src_vq)) {
-			vdpu_dbg(1, "Output stream is off. No need to flush.");
+			vdpu_dbg(vpu, 1, "Output stream is off. No need to flush.");
 			return 0;
 		}
 		if (!vb2_is_streaming(dst_vq)) {
-			vdpu_dbg(1, "Capture stream is off. No need to flush.");
+			vdpu_dbg(vpu, 1, "Capture stream is off. No need to flush.");
 			return 0;
 		}
 		/* use flush vb to flush decoder.
@@ -1132,22 +1145,9 @@ static int vidioc_decoder_cmd(struct file *file, void *priv,
 		if (m2m_ctx->has_stopped)
 			return 0;
 
-		m2m_ctx->last_src_buf = v4l2_m2m_last_src_buf(m2m_ctx);
 		m2m_ctx->is_draining = true;
-
-		if (m2m_ctx->last_src_buf) {
-			v4l2_m2m_buf_queue(m2m_ctx, &ctx->eof_flush_buf.vb);
-			v4l2_m2m_try_schedule(m2m_ctx);
-		} else {
-			wait_for_completion(&ctx->work_done);
-			next_dst_buf = v4l2_m2m_dst_buf_remove(m2m_ctx);
-			if (!next_dst_buf) {
-				m2m_ctx->next_buf_last = true;
-				return 0;
-			}
-
-			v4l2_m2m_last_buffer_done(m2m_ctx, next_dst_buf);
-		}
+		v4l2_m2m_buf_queue(m2m_ctx, &ctx->eof_flush_buf.vb);
+		v4l2_m2m_try_schedule(m2m_ctx);
 		break;
 	case V4L2_DEC_CMD_START:
 		vb2_clear_last_buffer_dequeued(dst_vq);
@@ -1156,7 +1156,9 @@ static int vidioc_decoder_cmd(struct file *file, void *priv,
 			if (ret)
 				return ret;
 			clear_bit(SYNA_VPU_STATUS_WAIT_NEW_RES_SETUP, &ctx->status);
+			ctx->cap_resetup = false;
 		}
+		ctx->eos = false;
 		ret = v4l2_m2m_decoder_cmd(file, m2m_ctx, ec);
 		v4l2_m2m_try_schedule(m2m_ctx);
 		break;
@@ -1212,6 +1214,10 @@ static int vb2ops_syna_vpu_queue_setup(struct vb2_queue *vq,
 	struct v4l2_pix_format_mplane *pixfmt;
 	unsigned int i;
 
+	vdpu_dbg(vpu, 1, "[%p] %s queue setup %d %d", ctx->fh.m2m_ctx,
+		 V4L2_TYPE_IS_OUTPUT(vq->type) ? "output" : "capture",
+		 *nbuffers, *nplanes);
+
 	switch (vq->type) {
 	case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
 		pixfmt = &ctx->dst_fmt;
@@ -1237,15 +1243,13 @@ static int vb2ops_syna_vpu_queue_setup(struct vb2_queue *vq,
 
 		if (*nplanes < pixfmt->num_planes)
 			*nplanes = pixfmt->num_planes;
-
-		*nbuffers = SYNA_VPU_MAX_BUF_SLOT - vq->num_buffers;
 	} else {
 		*nplanes = pixfmt->num_planes;
 
 		switch (vq->type) {
 		case V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE:
-			*nbuffers = clamp(*nbuffers,
-					  ctx->req_dpb_size + 1, 18U);
+			*nbuffers =
+				clamp(*nbuffers, ctx->req_dpb_size + 3, 18U);
 			break;
 		case V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE:
 		default:
@@ -1255,10 +1259,12 @@ static int vb2ops_syna_vpu_queue_setup(struct vb2_queue *vq,
 	}
 
 	for (i = 0; i < *nplanes; i++)
-		sizes[i] =
-		    max_t(unsigned int, sizes[i],
-			  pixfmt->plane_fmt[i].sizeimage);
+		sizes[i] = max_t(unsigned int, sizes[i],
+				 pixfmt->plane_fmt[i].sizeimage);
 
+	vdpu_dbg(vpu, 1, "[%p] %s queue setup adjust %d %d", ctx->fh.m2m_ctx,
+		 V4L2_TYPE_IS_OUTPUT(vq->type) ? "output" : "capture",
+		 *nbuffers, *nplanes);
 	return 0;
 }
 
@@ -1792,10 +1798,12 @@ static int vb2ops_vdec_start_streaming(struct vb2_queue *q, unsigned int count)
 	int ret;
 
 	v4l2_m2m_update_start_streaming_state(m2m_ctx, q);
+	vdpu_dbg(ctx->vpu, 1, "[%p] start_streaming %s", m2m_ctx,
+		 V4L2_TYPE_IS_OUTPUT(q->type) ? "output" : "capture");
 
 	if (V4L2_TYPE_IS_OUTPUT(q->type)) {
 		ctx->cur_src_buf = NULL;
-		ctx->flushing = FLUSH_NONE;
+		ctx->eos = false;
 
 		dst_vq = v4l2_m2m_get_dst_vq(m2m_ctx);
 		if (!vb2_start_streaming_called(dst_vq)) {
@@ -1821,6 +1829,7 @@ static int vb2ops_vdec_start_streaming(struct vb2_queue *q, unsigned int count)
 	if (ret)
 		return ret;
 
+	ctx->cap_resetup = false;
 	clear_bit(SYNA_VPU_STATUS_WAIT_NEW_RES_SETUP, &ctx->status);
 	v4l2_m2m_clear_state(m2m_ctx);
 
@@ -1877,6 +1886,9 @@ static void vb2ops_vdec_stop_streaming(struct vb2_queue *q)
 
 	vpu_srv_remove_from_pending(vpu->srv, ctx);
 
+	vdpu_dbg(vpu, 1, "[%p] stop_streaming %s", m2m_ctx,
+		 V4L2_TYPE_IS_OUTPUT(q->type) ? "output" : "capture");
+
 	v4l2_m2m_update_stop_streaming_state(m2m_ctx, q);
 	dst_vq = v4l2_m2m_get_dst_vq(m2m_ctx);
 	if (V4L2_TYPE_IS_OUTPUT(q->type)) {
@@ -1886,13 +1898,19 @@ static void vb2ops_vdec_stop_streaming(struct vb2_queue *q)
 		 */
 		ctx->cur_src_buf = NULL;
 		while ((src_buf = v4l2_m2m_src_buf_remove(m2m_ctx))) {
-			if (src_buf != &ctx->eof_flush_buf.vb)
+			if (src_buf != &ctx->eof_flush_buf.vb) {
 				v4l2_m2m_buf_done(src_buf, VB2_BUF_STATE_ERROR);
+				vdpu_dbg(vpu, 5, "[%p] src done clear %d",
+					 m2m_ctx, src_buf->vb2_buf.index);
+			}
 		}
 
 		if (vb2_start_streaming_called(dst_vq))
 			return;
 	}
+
+	if (!V4L2_TYPE_IS_OUTPUT(q->type) && !vb2_start_streaming_called(dst_vq))
+		return;
 
 	/* seek is not supported */
 	vpu_srv_release_out(ctx->vpu->srv, ctx, &next_ctx);
@@ -1901,7 +1919,12 @@ static void vb2ops_vdec_stop_streaming(struct vb2_queue *q)
 		for (j = 0; j < dst_buf->vb2_buf.num_planes; j++)
 			vb2_set_plane_payload(&dst_buf->vb2_buf, 0, 0);
 
+		if (test_bit(dst_buf->vb2_buf.index, &ctx->dst_vb_bits))
+			vdpu_err(vpu, "[%p] warning: return buffer %d in using",
+				 m2m_ctx, dst_buf->vb2_buf.index);
 		v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_ERROR);
+		vdpu_dbg(vpu, 5, "[%p] dst done clear %d", m2m_ctx,
+			 dst_buf->vb2_buf.index);
 	}
 
 	if (next_ctx) {
@@ -1934,6 +1957,8 @@ static void vb2ops_vdec_buf_queue(struct vb2_buffer *vb)
 		if (vb2_is_streaming(vb->vb2_queue) &&
 		    v4l2_m2m_dst_buf_is_last(ctx->fh.m2m_ctx)) {
 			v4l2_m2m_last_buffer_done(ctx->fh.m2m_ctx, vb2_v4l2);
+			vdpu_dbg(ctx->vpu, 1, "[%p] buf_queue last buf done %d",
+				 ctx->fh.m2m_ctx, vb->index);
 			return;
 		}
 	}
@@ -1975,13 +2000,14 @@ static void syna_record_free_ref_display_buf(struct syna_vcodec_ctx *ctx)
 	struct v4l2_m2m_buffer *buf, *n;
 	u32 i, idx;
 
-	i = 0;
-
 	if (test_bit(SYNA_VPU_POOL_ON_REFS, &ctx->status)) {
+		i = 0;
 		v4l2_m2m_for_each_dst_buf_safe(m2m_ctx, buf, n) {
 			idx = buf->vb.vb2_buf.index;
-			v4l2_m2m_dst_buf_remove_by_buf(m2m_ctx, &buf->vb);
+			if (test_bit(idx, &ctx->dst_vb_bits))
+				continue;
 			idx_queue_push(&ctrl->dbuf, i, idx);
+			set_bit(idx, &ctx->dst_vb_bits);
 			i++;
 		}
 
@@ -2000,11 +2026,11 @@ static void syna_record_free_ref_display_buf(struct syna_vcodec_ctx *ctx)
 			if (test_bit(idx, &ctx->ref_slots))
 				continue;
 
-			v4l2_m2m_dst_buf_remove_by_buf(m2m_ctx, &buf->vb);
 			idx_queue_push(&ctrl->dbuf, i, idx);
 			idx_queue_push(&ctrl->rbuf, i, idx);
 
 			set_bit(idx, &ctx->ref_slots);
+			set_bit(idx, &ctx->dst_vb_bits);
 		}
 	}
 
@@ -2017,6 +2043,9 @@ static void syna_record_free_ref_display_buf(struct syna_vcodec_ctx *ctx)
 
 	if (ctrl->rbuf.push)
 		ctrl->status.flags |= BERLIN_VPU_STATUS_PUSH_OUTPUT_BUFS;
+
+	vdpu_dbg(ctx->vpu, 3, "[%p] dbuf.push %d, rbuf.push %d\n", m2m_ctx,
+		 ctrl->dbuf.push, ctrl->rbuf.push);
 }
 
 /**
@@ -2028,153 +2057,55 @@ static int vdec_job_ready(void *priv)
 {
 	struct syna_vcodec_ctx *ctx = priv;
 	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
-	u32 idx;
 
-	if (test_bit(SYNA_VPU_STATUS_WAIT_NEW_RES_SETUP, &ctx->status))
+	if (test_bit(SYNA_VPU_STATUS_WAIT_NEW_RES_SETUP, &ctx->status)) {
+		vdpu_dbg(ctx->vpu, 1, "[%p] wait new res setup\n", m2m_ctx);
 		return 0;
-
-	/* May not necessary */
-	if (test_bit(SYNA_VPU_STATUS_WAIT_INPUT_BUF, &ctx->status)) {
-		if (!v4l2_m2m_num_src_bufs_ready(m2m_ctx))
-			return 0;
 	}
 
-	if (test_bit(SYNA_VPU_STATUS_WAIT_DISP_BUF, &ctx->status)) {
-		if (!v4l2_m2m_num_dst_bufs_ready(m2m_ctx))
-			return 0;
+	if (!v4l2_m2m_num_src_bufs_ready(m2m_ctx)) {
+		vdpu_dbg(ctx->vpu, 1, "[%p] lack of src ready\n", m2m_ctx);
+		return 0;
 	}
 
-	/* check whether we have available ref bufs */
-	if (test_bit(SYNA_VPU_STATUS_WAIT_OUTPUT_BUF, &ctx->status)) {
-		for (idx = 0; idx < ctx->n_ref_pool; idx++) {
-			if (!test_bit(idx, &ctx->ref_slots))
-				break;
-		}
-
-		if (idx == ctx->n_ref_pool)
-			return 0;
+	if (v4l2_m2m_num_dst_bufs_ready(m2m_ctx) < (ctx->req_dpb_size) &&
+		v4l2_m2m_next_src_buf(m2m_ctx) != &ctx->eof_flush_buf.vb) {
+		vdpu_dbg(ctx->vpu, 4, "[%p] lack dst buffer num %d\n", m2m_ctx,
+		       v4l2_m2m_num_dst_bufs_ready(m2m_ctx));
+		return 0;
 	}
+
+	vdpu_dbg(ctx->vpu, 4, "[%p] ready buf s%d d %d flush %d\n", m2m_ctx,
+		 v4l2_m2m_num_src_bufs_ready(m2m_ctx),
+		 v4l2_m2m_num_dst_bufs_ready(m2m_ctx),
+		 v4l2_m2m_next_src_buf(m2m_ctx) == &ctx->eof_flush_buf.vb);
 
 	return !vpu_srv_push_to_pending(ctx->vpu->srv, ctx);
 }
 
-static int syna_vdec_fast_update_pop_status(struct syna_vcodec_ctx *ctx)
+static void set_last_buf_done(struct syna_vcodec_ctx *ctx)
 {
-	struct syna_vpu_dev *vpu = ctx->vpu;
-	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
-	struct vb2_queue *dst_vq;
-	struct vb2_v4l2_buffer *dst_buf;
-	struct vb2_buffer *dst_vb;
-	struct syna_vpu_tz_buf *vpu_buf;
-	u32 idx, i, j;
-	u32 mtr_flags;
+	struct vb2_v4l2_buffer *vb;
+	int i;
 
-	dst_vq = v4l2_m2m_get_dst_vq(m2m_ctx);
-
-	for (i = 0; i < ctrl->dbuf.pop; i++) {
-		idx = idx_queue_pop(&ctrl->dbuf, i);
-		if (idx > VB2_MAX_FRAME) {
-			vdpu_err(vpu, "buf %d is out of CAPTURE range\n", idx);
-			goto out_of_range;
-		}
-
-		dst_vb = dst_vq->bufs[idx];
-		if (!dst_vb) {
-			vdpu_err(vpu, "buf %d is not in CAPTURE queue\n", idx);
-			goto out_of_range;
-		}
-		dst_buf = to_vb2_v4l2_buffer(dst_vb);
-
-		if (test_bit(SYNA_VPU_DEC_POST_PROCESSING, &ctx->status))
-			/* postproc mode */
-			vpu_buf = ctx->aux_pool;
-		else
-			/* tile mode */
-			vpu_buf = ctx->output_pool;
-
-		vpu_buf += dst_vb->index;
-
-		if (vpu_buf->flags & BERLIN_BUF_FLAG_ERROR) {
-			v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_ERROR);
-			continue;
-		}
-
-		if (!(vpu_buf->flags & BERLIN_BUF_FLAG_DONE)) {
-			v4l2_m2m_buf_queue(m2m_ctx, dst_buf);
-			continue;
-		}
-
-		/* handle normal buffer */
-		for (j = 0; j < dst_vb->num_planes; j++)
-			vb2_set_plane_payload(dst_vb, j, vpu_buf->bytesused[j]);
-
-		dst_buf->sequence = ctx->sequence_cap++;
-		dst_buf->vb2_buf.timestamp = vpu_buf->timestamp;
-		dst_buf->field = vpu_buf->field;
-
-		/**
-		 * mtr_flags
-		 * bit 0: MTR/compression enabled
-		 * bit 1: mmu enabled
-		 */
-		mtr_flags = 0;
-		if (ctrl->v4g_ext_cfg.mmu.en)
-			mtr_flags |= 0x2;
-		if (vpu_buf->flags & BERLIN_BUF_FLAG_COMPRESSED)
-			mtr_flags |= 0x1;
-		vb2_syna_fill_mtr_meta(dst_vb, 0, &vpu_buf->mtr_cfg0[0],
-				       mtr_flags);
-		vb2_syna_fill_mtr_meta(dst_vb, 1, &vpu_buf->mtr_cfg1[0],
-				       mtr_flags);
-
-		v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_DONE);
+	vb = v4l2_m2m_dst_buf_remove(m2m_ctx);
+	if (!vb) {
+		m2m_ctx->is_draining = true;
+		m2m_ctx->next_buf_last = true;
+		return;
 	}
+	for (i = 0; i < vb->vb2_buf.num_planes; i++)
+		vb2_set_plane_payload(&vb->vb2_buf, i, 0);
+	vb->field = V4L2_FIELD_NONE;
+	vb->vb2_buf.timestamp = 0;
 
-	/**
-	 * those buffers are not used by hardware as the reference buffer
-	 * now, we could reuse them if they are in the queue and their
-	 * state are not done(not used for display or have not been enqueued
-	 * from the userspace)
-	 */
-	for (i = 0; i < ctrl->rbuf.pop; i++)
-		clear_bit(idx_queue_pop(&ctrl->rbuf, i), &ctx->ref_slots);
-
-	return 0;
-
-out_of_range:
-	return -EINVAL;
-}
-
-static void set_last_buf_done(struct syna_vcodec_ctx *ctx,
-			 struct syna_vpu_tz_buf *vpu_buf,
-			 struct vb2_buffer *dst_vb)
-{
-	int j;
-	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
-	struct vb2_v4l2_buffer *dst_buf = to_vb2_v4l2_buffer(dst_vb);
-
-	if (vpu_buf->flags & BERLIN_BUF_FLAG_DONE) {
-		for (j = 0; j < dst_vb->num_planes; j++)
-			vb2_set_plane_payload(dst_vb, j, vpu_buf->bytesused[j]);
-
-		dst_buf->sequence = ctx->sequence_cap++;
-		dst_buf->vb2_buf.timestamp = vpu_buf->timestamp;
-		dst_buf->field = vpu_buf->field;
-	} else {
-		for (j = 0; j < dst_vb->num_planes; j++)
-			vb2_set_plane_payload(dst_vb, j, 0);
-		dst_buf->vb2_buf.timestamp = 0;
-		dst_buf->field = 0;
-		dst_buf->sequence = 0;
-	}
-	v4l2_m2m_last_buffer_done(m2m_ctx, dst_buf);
-	ctx->flushing = FLUSH_DONE;
-}
-
-static inline bool is_flushing(enum flush_state state)
-{
-	return (state == FLUSH_START || state == RES_CHANGING);
+	if (test_bit(vb->vb2_buf.index, &ctx->dst_vb_bits))
+		vdpu_err(ctx->vpu, "[%p] warning: return buffer %d in using",
+			 m2m_ctx, vb->vb2_buf.index);
+	v4l2_m2m_last_buffer_done(m2m_ctx, vb);
+	vdpu_dbg(ctx->vpu, 1, "[%p]set last buf done %d\n", m2m_ctx,
+		 vb->vb2_buf.index);
 }
 
 static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
@@ -2183,18 +2114,20 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
 
-	struct vb2_queue *dst_vq;
 	struct vb2_v4l2_buffer *src_buf, *dst_buf;
 	struct vb2_buffer *dst_vb;
 	struct syna_vpu_tz_buf *vpu_buf;
 	u32 idx, i, j;
 	u32 mtr_flags;
 
+	vdpu_dbg(vpu, 3, "[%p] dbuf.pop %d, sbuf.pop %d, rbuf.pop %d\n", m2m_ctx,
+		 ctrl->dbuf.pop, ctrl->sbuf.pop, ctrl->rbuf.pop);
+
 	for (i = 0; i < ctrl->sbuf.pop; i++) {
 		idx = idx_queue_pop(&ctrl->sbuf, i);
 		src_buf = v4l2_m2m_src_buf_remove_by_idx(m2m_ctx, idx);
 		if (!src_buf) {
-			vdpu_err(vpu, "%d is not in OUTPUT queue\n", idx);
+			vdpu_err(vpu, "[%p]%d is not in OUTPUT queue\n", m2m_ctx, idx);
 			continue;
 		}
 		if (ctx->cur_src_buf == src_buf)
@@ -2203,37 +2136,27 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 		if (src_buf != &ctx->eof_flush_buf.vb) {
 			src_buf->sequence = ctx->sequence_out++;
 			v4l2_m2m_buf_done(src_buf, VB2_BUF_STATE_DONE);
+			vdpu_dbg(vpu, 5, "[%p] src done %d %d", m2m_ctx, idx, src_buf->sequence);
+		} else {
+			ctx->eos = true;
+			vdpu_dbg(vpu, 5, "[%p] src flush back", m2m_ctx);
 		}
-	}
-
-	dst_vq = v4l2_m2m_get_dst_vq(m2m_ctx);
-
-	if (0 == ctrl->dbuf.pop) {
-		if (is_flushing(ctx->flushing)) {
-			m2m_ctx->is_draining = true;
-			m2m_ctx->next_buf_last = true;
-		}
-	}
-
-	if (v4l2_m2m_dst_buf_is_last(m2m_ctx)) {
-		dst_buf = v4l2_m2m_dst_buf_remove(m2m_ctx);
-		if (dst_buf)
-			v4l2_m2m_last_buffer_done(m2m_ctx, dst_buf);
 	}
 
 	for (i = 0; i < ctrl->dbuf.pop; i++) {
 		idx = idx_queue_pop(&ctrl->dbuf, i);
 		if (idx > VB2_MAX_FRAME) {
-			vdpu_err(vpu, "buf %d is out of CAPTURE range\n", idx);
+			vdpu_err(vpu, "[%p] buf %d is out of CAPTURE range\n", m2m_ctx, idx);
 			goto out_of_range;
 		}
 
-		dst_vb = dst_vq->bufs[idx];
-		if (!dst_vb) {
-			vdpu_err(vpu, "buf %d is not in CAPTURE queue\n", idx);
-			goto out_of_range;
+		clear_bit(idx, &ctx->dst_vb_bits);
+		dst_buf = v4l2_m2m_dst_buf_remove_by_idx(m2m_ctx, idx);
+		if (!dst_buf) {
+			vdpu_err(vpu, "[%p] buf %d is not in CAPTURE queue\n", m2m_ctx, idx);
+			continue;
 		}
-		dst_buf = to_vb2_v4l2_buffer(dst_vb);
+		dst_vb = &dst_buf->vb2_buf;
 
 		if (test_bit(SYNA_VPU_DEC_POST_PROCESSING, &ctx->status))
 			/* postproc mode */
@@ -2244,25 +2167,19 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 
 		vpu_buf += dst_vb->index;
 
-		/* flag on the last dbuf as not meet unused buffer */
-		if (is_flushing(ctx->flushing) && (i == (ctrl->dbuf.pop - 1))) {
-			set_last_buf_done(ctx, vpu_buf, dst_vb);
-			break;
-		}
-
 		if (vpu_buf->flags & BERLIN_BUF_FLAG_ERROR) {
 			v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_ERROR);
+			vdpu_dbg(vpu, 5, "[%p] dst done err %d", m2m_ctx, idx);
 			continue;
 		}
 
 		if (!(vpu_buf->flags & BERLIN_BUF_FLAG_DONE)) {
-			if (is_flushing(ctx->flushing)) {
-				/* last_buf flag on first unused buffer */
-				set_last_buf_done(ctx, vpu_buf, dst_vb);
-				continue;
-			}
-
-			v4l2_m2m_buf_queue(m2m_ctx, dst_buf);
+			if (ctx->eos || ctx->cap_resetup)
+				v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_ERROR);
+			else
+				v4l2_m2m_buf_queue(m2m_ctx, dst_buf);
+			vdpu_dbg(vpu, 5, "[%p] dst done %s %d", m2m_ctx,
+				((ctx->eos || ctx->cap_resetup) ? "err done" : "reuse"), idx);
 			continue;
 		}
 
@@ -2288,8 +2205,9 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 				       mtr_flags);
 		vb2_syna_fill_mtr_meta(dst_vb, 1, &vpu_buf->mtr_cfg1[0],
 				       mtr_flags);
-
 		v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_DONE);
+		vdpu_dbg(vpu, 5, "[%p] dst done %d %d", m2m_ctx, idx,
+			 dst_buf->sequence);
 	}
 
 	/**
@@ -2301,6 +2219,10 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 	for (i = 0; i < ctrl->rbuf.pop; i++)
 		clear_bit(idx_queue_pop(&ctrl->rbuf, i), &ctx->ref_slots);
 
+	/* clear pop status */
+	ctrl->sbuf.pop = 0;
+	ctrl->rbuf.pop = 0;
+	ctrl->dbuf.pop = 0;
 	return 0;
 
 out_of_range:
@@ -2326,8 +2248,10 @@ static void syna_vdec_v4g_worker(struct work_struct *work)
 	struct v4l2_m2m_ctx *m2m_ctx;
 	struct vb2_v4l2_buffer *src_buf;
 	struct syna_vpu_ctrl *ctrl;
+	struct vb2_queue *dst_vq;
 	u64 timestamp;
 	bool switchpoint = false;
+	bool fmt_change = false;
 	int ret;
 
 	ctx = v4l2_m2m_get_curr_priv(m2m_dev);
@@ -2359,25 +2283,21 @@ static void syna_vdec_v4g_worker(struct work_struct *work)
 		ctx->cur_src_buf = src_buf;
 	}
 
-	if (src_buf == &ctx->eof_flush_buf.vb)
-		ctx->flushing = FLUSH_START;
-
 	syna_record_free_ref_display_buf(ctx);
 
 	pm_runtime_get(vpu->dev);
 decoding:
-	down_write(&vpu->resource_rwsem);
 	ret = syna_vdec_decode_stream(ctx);
-	up_write(&vpu->resource_rwsem);
 
 	/* TA dead or something else */
 	if (ret) {
 		v4l2_m2m_buf_done(src_buf, VB2_BUF_STATE_ERROR);
+		vdpu_err(vpu, "[%p] src done err %d", m2m_ctx, src_buf->vb2_buf.index);
 		goto bail;
 	}
 
 	if (ctrl->status.flags & BERLIN_VPU_STATUS_POP_BREAK) {
-		ret = syna_vdec_fast_update_pop_status(ctx);
+		ret = syna_vdec_update_pop_status(ctx);
 		if (ret)
 			goto bail;
 
@@ -2430,6 +2350,7 @@ decoding:
 		vdpu_err(vpu, "decoding fatal: 0x%x\n", ret);
 		v4l2_m2m_src_buf_remove_by_buf(m2m_ctx, src_buf);
 		v4l2_m2m_buf_done(src_buf, VB2_BUF_STATE_ERROR);
+		vdpu_err(vpu, "[%p] src done err %d", m2m_ctx, src_buf->vb2_buf.index);
 		goto bail;
 	}
 
@@ -2451,29 +2372,27 @@ decoding:
 	 */
 
 	if (ctrl->status.flags & BERLIN_VPU_STATUS_NEW_SEQUENCE) {
-		v4l2_m2m_set_dst_buffered(m2m_ctx, false);
-		set_bit(SYNA_VPU_STATUS_WAIT_NEW_RES_SETUP, &ctx->status);
-		/**
-		 * after STREAM_ON in capture clear the flag above, we need
-		 * to wait display is ready.
-		 */
-		set_bit(SYNA_VPU_STATUS_WAIT_DISP_BUF, &ctx->status);
+		fmt_change = vdec_fmt_from_cur_seq_fmt(ctx, ctrl, &ctx->ref_fmt);
+		if (fmt_change) {
+			v4l2_m2m_set_dst_buffered(m2m_ctx, false);
+			set_bit(SYNA_VPU_STATUS_WAIT_NEW_RES_SETUP, &ctx->status);
+			/**
+			 * after STREAM_ON in capture clear the flag above, we need
+			 * to wait display is ready.
+			 */
+			set_bit(SYNA_VPU_STATUS_WAIT_DISP_BUF, &ctx->status);
+			dst_vq = v4l2_m2m_get_dst_vq(m2m_ctx);
+			if (vb2_start_streaming_called(dst_vq))
+				ctx->cap_resetup = true;
 
-		/* mark dynamic resolutin change, exclude first sequence */
-		if (vb2_start_streaming_called(v4l2_m2m_get_dst_vq(m2m_ctx)))
-			ctx->flushing = RES_CHANGING;
-
-		vdec_fmt_from_cur_seq_fmt(ctx, ctrl, &ctx->ref_fmt);
-		syna_vdec_event_new_res(ctx);
+			syna_vdec_event_new_res(ctx);
+		}
 	}
 
 	ret = syna_vdec_update_pop_status(ctx);
-	if (ctx->flushing == FLUSH_DONE) {
-		ctx->flushing = FLUSH_NONE;
-		/* switchpoint exclude resolution change */
-		if (!test_bit(SYNA_VPU_STATUS_WAIT_DISP_BUF, &ctx->status))
-			switchpoint = true;
-	}
+
+	if (ctx->eos || ctx->cap_resetup)
+		set_last_buf_done(ctx);
 
 bail:
 	if (switchpoint) {
@@ -2490,7 +2409,7 @@ bail:
 		}
 	}
 	v4l2_m2m_job_finish(vpu->m2m_dev, m2m_ctx);
-
+	vdpu_dbg(vpu, 4, "[%p] finish switch %d\n", m2m_ctx, switchpoint);
 	complete(&ctx->work_done);
 }
 

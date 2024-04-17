@@ -310,6 +310,26 @@ static int tz_vpu_stream_cmd1(int cmd, struct syna_vcodec_ctx *ctx)
 		operation.params[1].value.a = ret;
 	}
 
+#ifdef debug_vpu_cmd
+	switch (cmd) {
+		case VDEC_DECODE_STREAM_V2:
+			pr_info("[%p]vpu event %d\n", ctx->fh.m2m_ctx,
+				operation.params[1].value.b);
+		break;
+		case VDEC_RESET_INSTANCE_V2:
+			pr_info("[%p]vpu close-strm\n", ctx->fh.m2m_ctx);
+		break;
+		case VDEC_STREAM_SWITCH_IN_V2:
+			pr_info("[%p]vpu switch-in\n", ctx->fh.m2m_ctx);
+		break;
+		case VDEC_STREAM_SWITCH_OUT_V2:
+			pr_info("[%p]vpu switch-out\n", ctx->fh.m2m_ctx);
+		break;
+		case VDEC_DESTROY_INSTANCE_V2:
+			pr_info("[%p]vpu destroy-strm\n", ctx->fh.m2m_ctx);
+		break;
+	}
+#endif
 	return operation.params[1].value.a;
 }
 

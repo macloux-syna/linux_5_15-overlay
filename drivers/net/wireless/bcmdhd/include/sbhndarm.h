@@ -1,7 +1,26 @@
 /*
  * Broadcom SiliconBackplane ARM definitions
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -21,8 +40,8 @@
  * <<Broadcom-WL-IPTag/Dual:>>
  */
 
-#ifndef	_sbhndarm_h_
-#define	_sbhndarm_h_
+#ifndef _sbhndarm_h_
+#define _sbhndarm_h_
 
 #ifdef DONGLEBUILD
 
@@ -30,12 +49,12 @@
 #include <sbconfig.h>
 
 /* register offsets */
-#define	ARM7_CORECTL		0
+#define ARM7_CORECTL		0
 
 /* bits in corecontrol */
-#define	ACC_FORCED_RST		0x1
-#define	ACC_SERRINT		0x2
-#define	ACC_WFICLKSTOP		0x4
+#define ACC_FORCED_RST		0x1
+#define ACC_SERRINT		0x2
+#define ACC_WFICLKSTOP		0x4
 
 #if !defined(__ARM_ARCH_7A__)
 #define ACC_NOTSLEEPINGCLKREQ_SHIFT	24
@@ -107,10 +126,10 @@
 #define SERRORLOG		0x2
 
 /* arm core-specific control flags */
-#define	SICF_REMAP_MSK		0x001c
-#define	SICF_REMAP_NONE		0
-#define	SICF_REMAP_ROM		0x0004
-#define	SIFC_REMAP_FLASH	0x0008
+#define SICF_REMAP_MSK		0x001c
+#define SICF_REMAP_NONE		0
+#define SICF_REMAP_ROM		0x0004
+#define SIFC_REMAP_FLASH	0x0008
 
 /* misc core-specific defines */
 #if defined(__ARM_ARCH_7M__)
@@ -190,28 +209,28 @@
 #define ARMCR4_TCAMDATAREG		0x74
 #define ARMCR4_TCAMBANKXMASKREG		0x78
 
-#define	ARMCR4_ROMNB_MASK	0xf00
-#define	ARMCR4_ROMNB_SHIFT	8
-#define	ARMCR4_MSB_ROMNB_MASK	0x1E00000
+#define ARMCR4_ROMNB_MASK	0xf00
+#define ARMCR4_ROMNB_SHIFT	8
+#define ARMCR4_MSB_ROMNB_MASK	0x1E00000
 /* adjusted shift to fit 4-LSB (21 - 4 = 17) */
-#define	ARMCR4_MSB_ROMNB_SHIFT	17
-#define	ARMCR4_TCBBNB_MASK	0xf0
-#define	ARMCR4_TCBBNB_SHIFT	4
-#define	ARMCR4_TCBANB_MASK	0xf
-#define	ARMCR4_TCBANB_SHIFT	0
+#define ARMCR4_MSB_ROMNB_SHIFT	17
+#define ARMCR4_TCBBNB_MASK	0xf0
+#define ARMCR4_TCBBNB_SHIFT	4
+#define ARMCR4_TCBANB_MASK	0xf
+#define ARMCR4_TCBANB_SHIFT	0
 
-#define	ARMCR4_MT_MASK		0x300
-#define	ARMCR4_MT_SHIFT		8
-#define	ARMCR4_MT_ROM		0x100
-#define	ARMCR4_MT_RAM		0
+#define ARMCR4_MT_MASK		0x300
+#define ARMCR4_MT_SHIFT		8
+#define ARMCR4_MT_ROM		0x100
+#define ARMCR4_MT_RAM		0
 
-#define	ARMCR4_BSZ_MASK		0x7f
-#define	ARMCR4_BUNITSZ_MASK	0x200
-#define	ARMCR4_BSZ_8K		8192
-#define	ARMCR4_BSZ_1K		1024
+#define ARMCR4_BSZ_MASK		0x7f
+#define ARMCR4_BUNITSZ_MASK	0x200
+#define ARMCR4_BSZ_8K		8192
+#define ARMCR4_BSZ_1K		1024
 
-#define	ARMCR4_STBY_SUPPORTED		0x400
-#define	ARMCR4_STBY_TIMER_PRESENT	0x800
+#define ARMCR4_STBY_SUPPORTED		0x400
+#define ARMCR4_STBY_TIMER_PRESENT	0x800
 
 #define ARMCR4_TIMER_VAL_MASK		0xfffff
 #define ARMCR4_STBY_TIMER_ENABLE	(1 << 24)
@@ -255,14 +274,14 @@
 #define RAM_STBY_DEFAULT_WAIT_TIME	(3u)
 #define ROM_STBY_DEFAULT_WAIT_TIME	(4u)
 #define DEFAULT_FORCE_STBY_IN_WFI	(1u)
-#define	ARMCR4_DYN_STBY_CTRL_RAM_STBY_WAIT_TIMER_SHIFT	(0u)
+#define ARMCR4_DYN_STBY_CTRL_RAM_STBY_WAIT_TIMER_SHIFT	(0u)
 #define ARMCR4_DYN_STBY_CTRL_RAM_STBY_WAIT_TIMER_MASK	(0xF << \
 		ARMCR4_DYN_STBY_CTRL_RAM_STBY_WAIT_TIMER_SHIFT)
-#define	ARMCR4_DYN_STBY_CTRL_ROM_STBY_WAIT_TIMER_SHIFT	(8u)
-#define	ARMCR4_DYN_STBY_CTRL_ROM_STBY_WAIT_TIMER_MASK	(0x3F << \
+#define ARMCR4_DYN_STBY_CTRL_ROM_STBY_WAIT_TIMER_SHIFT	(8u)
+#define ARMCR4_DYN_STBY_CTRL_ROM_STBY_WAIT_TIMER_MASK	(0x3F << \
 		ARMCR4_DYN_STBY_CTRL_ROM_STBY_WAIT_TIMER_SHIFT)
-#define	ARMCR4_DYN_STBY_CTRL_FORCE_STBY_IN_WFI_SHIFT	(16u)
-#define	ARMCR4_DYN_STBY_CTRL_FORCE_STBY_IN_WFI_MASK	(0x1 << \
+#define ARMCR4_DYN_STBY_CTRL_FORCE_STBY_IN_WFI_SHIFT	(16u)
+#define ARMCR4_DYN_STBY_CTRL_FORCE_STBY_IN_WFI_MASK	(0x1 << \
 		ARMCR4_DYN_STBY_CTRL_FORCE_STBY_IN_WFI_SHIFT)
 
 /* using CHIPID because no capabilities bit */
@@ -282,9 +301,9 @@
 /* backplane related stuff */
 #define ARM_CORE_ID		ARMCA9_CORE_ID	/* arm coreid */
 #endif /* __ARM_ARCH_7A__ */
-#else	/* !__ARM_ARCH_7M__ && !__ARM_ARCH_7R__ */
+#else /* !__ARM_ARCH_7M__ && !__ARM_ARCH_7R__ */
 #error Unrecognized ARM Architecture
-#endif	/* !__ARM_ARCH_7M__ && !__ARM_ARCH_7R__ */
+#endif /* !__ARM_ARCH_7M__ && !__ARM_ARCH_7R__ */
 
 #endif /* DONGLEBUILD */
 
@@ -292,10 +311,10 @@
 
 /* cpp contortions to concatenate w/arg prescan */
 #ifndef PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif	/* PAD */
+#define _PADLINE(line)	pad ## line
+#define _XSTR(line)	_PADLINE(line)
+#define PAD		_XSTR(__LINE__)
+#endif /* PAD */
 
 /* cortex-m3 */
 typedef volatile struct {
@@ -396,19 +415,19 @@ typedef volatile struct {
 
 #if defined(__ARM_ARCH_7M__)
 #define ARMREG(regs, reg)	ARM_CM3_REG(regs, reg)
-#endif	/* __ARM_ARCH_7M__ */
+#endif /* __ARM_ARCH_7M__ */
 
 #if defined(__ARM_ARCH_7R__)
 #define ARMREG(regs, reg)	ARM_CR4_REG(regs, reg)
-#endif	/* __ARM_ARCH_7R__ */
+#endif /* __ARM_ARCH_7R__ */
 
 #if defined(__ARM_ARCH_7A__)
 #define ARMREG(regs, reg)	ARM_CA7_REG(regs, reg)
-#endif	/* __ARM_ARCH_7A__ */
+#endif /* __ARM_ARCH_7A__ */
 
 /* MPU is present mask of ca7regs_t->corecapabilities */
 #define CAP_MPU_MASK		2000000u
 
-#endif	/* _LANGUAGE_ASSEMBLY */
+#endif /* _LANGUAGE_ASSEMBLY */
 
-#endif	/* _sbhndarm_h_ */
+#endif /* _sbhndarm_h_ */

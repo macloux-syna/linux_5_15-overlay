@@ -1,7 +1,26 @@
 /*
  * BCM47XX Sonics SiliconBackplane embedded ram core
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -21,17 +40,17 @@
  * <<Broadcom-WL-IPTag/Dual:>>
  */
 
-#ifndef	_SBSOCRAM_H
-#define	_SBSOCRAM_H
+#ifndef _SBSOCRAM_H
+#define _SBSOCRAM_H
 
 #ifndef _LANGUAGE_ASSEMBLY
 
 /* cpp contortions to concatenate w/arg prescan */
 #ifndef PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif	/* PAD */
+#define _PADLINE(line)	pad ## line
+#define _XSTR(line)	_PADLINE(line)
+#define PAD		_XSTR(__LINE__)
+#endif /* PAD */
 
 /* Memcsocram core registers */
 typedef volatile struct sbsocramregs {
@@ -71,19 +90,19 @@ typedef volatile struct sbsocramregs {
 	uint32  sr_data;        /* corerev >= 15 */
 } sbsocramregs_t;
 
-#endif	/* _LANGUAGE_ASSEMBLY */
+#endif /* _LANGUAGE_ASSEMBLY */
 
 /* Register offsets */
-#define	SR_COREINFO		0x00
-#define	SR_BWALLOC		0x04
-#define	SR_BISTSTAT		0x0c
-#define	SR_BANKINDEX		0x10
-#define	SR_BANKSTBYCTL		0x14
+#define SR_COREINFO		0x00
+#define SR_BWALLOC		0x04
+#define SR_BISTSTAT		0x0c
+#define SR_BANKINDEX		0x10
+#define SR_BANKSTBYCTL		0x14
 #define SR_PWRCTL		0x1e8
 
 /* Coreinfo register */
-#define	SRCI_PT_MASK		0x00070000	/* corerev >= 6; port type[18:16] */
-#define	SRCI_PT_SHIFT		16
+#define SRCI_PT_MASK		0x00070000	/* corerev >= 6; port type[18:16] */
+#define SRCI_PT_SHIFT		16
 /* port types : SRCI_PT_<processorPT>_<backplanePT> */
 #define SRCI_PT_OCP_OCP		0
 #define SRCI_PT_AXI_OCP		1
@@ -100,7 +119,7 @@ typedef volatile struct sbsocramregs {
 /* In corerev 0, the memory size is 2 to the power of the
  * base plus 16 plus to the contents of the memsize field plus 1.
  */
-#define	SRCI_MS0_MASK		0xf
+#define SRCI_MS0_MASK		0xf
 #define SR_MS0_BASE		16
 
 /*
@@ -108,26 +127,26 @@ typedef volatile struct sbsocramregs {
  * the memory size is number of banks times bank size.
  * The same applies to rom size.
  */
-#define	SRCI_ROMNB_MASK		0xf000
-#define	SRCI_ROMNB_SHIFT	12
-#define	SRCI_ROMBSZ_MASK	0xf00
-#define	SRCI_ROMBSZ_SHIFT	8
-#define	SRCI_SRNB_MASK		0xf0
-#define	SRCI_SRNB_SHIFT		4
-#define	SRCI_SRBSZ_MASK		0xf
-#define	SRCI_SRBSZ_SHIFT	0
+#define SRCI_ROMNB_MASK		0xf000
+#define SRCI_ROMNB_SHIFT	12
+#define SRCI_ROMBSZ_MASK	0xf00
+#define SRCI_ROMBSZ_SHIFT	8
+#define SRCI_SRNB_MASK		0xf0
+#define SRCI_SRNB_SHIFT		4
+#define SRCI_SRBSZ_MASK		0xf
+#define SRCI_SRBSZ_SHIFT	0
 
-#define	SRCI_SRNB_MASK_EXT	0x100
+#define SRCI_SRNB_MASK_EXT	0x100
 
 #define SR_BSZ_BASE		14
 
 /* Standby control register */
-#define	SRSC_SBYOVR_MASK	0x80000000
-#define	SRSC_SBYOVR_SHIFT	31
-#define	SRSC_SBYOVRVAL_MASK	0x60000000
-#define	SRSC_SBYOVRVAL_SHIFT	29
-#define	SRSC_SBYEN_MASK		0x01000000	/* rev >= 3 */
-#define	SRSC_SBYEN_SHIFT	24
+#define SRSC_SBYOVR_MASK	0x80000000
+#define SRSC_SBYOVR_SHIFT	31
+#define SRSC_SBYOVRVAL_MASK	0x60000000
+#define SRSC_SBYOVRVAL_SHIFT	29
+#define SRSC_SBYEN_MASK		0x01000000	/* rev >= 3 */
+#define SRSC_SBYEN_SHIFT	24
 
 /* Power control register */
 #define SRPC_PMU_STBYDIS_MASK	0x00000010	/* rev >= 3 */
@@ -168,10 +187,10 @@ typedef volatile struct sbsocramregs {
 #define SOCRAM_MEMTYPE_ROM		1
 #define SOCRAM_MEMTYPE_DEVRAM		2
 
-#define	SOCRAM_BANKINFO_REG		0x40
-#define	SOCRAM_BANKIDX_REG		0x10
-#define	SOCRAM_BANKINFO_STDBY_MASK	0x400
-#define	SOCRAM_BANKINFO_STDBY_TIMER	0x800
+#define SOCRAM_BANKINFO_REG		0x40
+#define SOCRAM_BANKIDX_REG		0x10
+#define SOCRAM_BANKINFO_STDBY_MASK	0x400
+#define SOCRAM_BANKINFO_STDBY_TIMER	0x800
 
 /* bankinfo rev >= 10 */
 #define SOCRAM_BANKINFO_DEVRAMSEL_SHIFT		13
@@ -195,4 +214,4 @@ typedef volatile struct sbsocramregs {
 #define   SOCRAM_BANKINFO_SZBASE          8192
 #define SOCRAM_BANKSIZE_SHIFT         13      /* SOCRAM_BANKINFO_SZBASE */
 
-#endif	/* _SBSOCRAM_H */
+#endif /* _SBSOCRAM_H */

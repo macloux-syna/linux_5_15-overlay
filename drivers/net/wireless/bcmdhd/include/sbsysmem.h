@@ -1,7 +1,26 @@
 /*
  * SiliconBackplane System Memory core
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -21,17 +40,17 @@
  * <<Broadcom-WL-IPTag/Dual:>>
  */
 
-#ifndef	_SBSYSMEM_H
-#define	_SBSYSMEM_H
+#ifndef _SBSYSMEM_H
+#define _SBSYSMEM_H
 
 #ifndef _LANGUAGE_ASSEMBLY
 
 /* cpp contortions to concatenate w/arg prescan */
 #ifndef PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif	/* PAD */
+#define _PADLINE(line)	pad ## line
+#define _XSTR(line)	_PADLINE(line)
+#define PAD		_XSTR(__LINE__)
+#endif /* PAD */
 
 /* sysmem core registers */
 typedef volatile struct sysmemregs {
@@ -75,19 +94,19 @@ typedef volatile struct sysmemregs {
 /* bus MPU disable mask of sysmemregs_t->mpucontrol */
 #define BUSMPU_DISABLE_MASK	0xfu
 
-#endif	/* _LANGUAGE_ASSEMBLY */
+#endif /* _LANGUAGE_ASSEMBLY */
 
 /* Register offsets */
-#define	SR_COREINFO		0x00
-#define	SR_BWALLOC		0x04
-#define	SR_BISTSTAT		0x0c
-#define	SR_BANKINDEX		0x10
-#define	SR_BANKSTBYCTL		0x14
+#define SR_COREINFO		0x00
+#define SR_BWALLOC		0x04
+#define SR_BISTSTAT		0x0c
+#define SR_BANKINDEX		0x10
+#define SR_BANKSTBYCTL		0x14
 #define SR_PWRCTL		0x1e8
 
 /* Coreinfo register */
-#define	SRCI_PT_MASK		0x00070000	/* port type[18:16] */
-#define	SRCI_PT_SHIFT		16
+#define SRCI_PT_MASK		0x00070000	/* port type[18:16] */
+#define SRCI_PT_SHIFT		16
 /* port types : SRCI_PT_<processorPT>_<backplanePT> */
 #define SRCI_PT_OCP_OCP		0
 #define SRCI_PT_AXI_OCP		1
@@ -104,7 +123,7 @@ typedef volatile struct sysmemregs {
 /* In corerev 0, the memory size is 2 to the power of the
  * base plus 16 plus to the contents of the memsize field plus 1.
  */
-#define	SRCI_MS0_MASK		0xf
+#define SRCI_MS0_MASK		0xf
 #define SR_MS0_BASE		16
 
 /*
@@ -112,23 +131,23 @@ typedef volatile struct sysmemregs {
  * the memory size is number of banks times bank size.
  * The same applies to rom size.
  */
-#define	SYSMEM_SRCI_ROMNB_MASK	0x3e0
-#define	SYSMEM_SRCI_ROMNB_SHIFT	5
-#define	SYSMEM_SRCI_SRNB_MASK	0x1f
-#define	SYSMEM_SRCI_SRNB_SHIFT	0
+#define SYSMEM_SRCI_ROMNB_MASK	0x3e0
+#define SYSMEM_SRCI_ROMNB_SHIFT	5
+#define SYSMEM_SRCI_SRNB_MASK	0x1f
+#define SYSMEM_SRCI_SRNB_SHIFT	0
 /* Above bits are obsolete and replaced with below in rev 12 */
-#define	SYSMEM_SRCI_NEW_ROMNB_MASK	0xff000000u
-#define	SYSMEM_SRCI_NEW_ROMNB_SHIFT	24u
-#define	SYSMEM_SRCI_NEW_SRNB_MASK	0xff0000u
-#define	SYSMEM_SRCI_NEW_SRNB_SHIFT	16u
+#define SYSMEM_SRCI_NEW_ROMNB_MASK	0xff000000u
+#define SYSMEM_SRCI_NEW_ROMNB_SHIFT	24u
+#define SYSMEM_SRCI_NEW_SRNB_MASK	0xff0000u
+#define SYSMEM_SRCI_NEW_SRNB_SHIFT	16u
 
 /* Standby control register */
-#define	SRSC_SBYOVR_MASK	0x80000000
-#define	SRSC_SBYOVR_SHIFT	31
-#define	SRSC_SBYOVRVAL_MASK	0x60000000
-#define	SRSC_SBYOVRVAL_SHIFT	29
-#define	SRSC_SBYEN_MASK		0x01000000
-#define	SRSC_SBYEN_SHIFT	24
+#define SRSC_SBYOVR_MASK	0x80000000
+#define SRSC_SBYOVR_SHIFT	31
+#define SRSC_SBYOVRVAL_MASK	0x60000000
+#define SRSC_SBYOVRVAL_SHIFT	29
+#define SRSC_SBYEN_MASK		0x01000000
+#define SRSC_SBYEN_SHIFT	24
 
 /* Power control register */
 #define SRPC_PMU_STBYDIS_MASK	0x00000010
@@ -163,10 +182,10 @@ typedef volatile struct sysmemregs {
 #define SYSMEM_BANKINFO_SZMASK		0x7f
 #define SYSMEM_BANKIDX_ROM_MASK		0x80
 
-#define	SYSMEM_BANKINFO_REG		0x40
-#define	SYSMEM_BANKIDX_REG		0x10
-#define	SYSMEM_BANKINFO_STDBY_MASK	0x200
-#define	SYSMEM_BANKINFO_STDBY_TIMER	0x400
+#define SYSMEM_BANKINFO_REG		0x40
+#define SYSMEM_BANKIDX_REG		0x10
+#define SYSMEM_BANKINFO_STDBY_MASK	0x200
+#define SYSMEM_BANKINFO_STDBY_TIMER	0x400
 
 #define SYSMEM_BANKINFO_SLPSUPP_SHIFT		14
 #define SYSMEM_BANKINFO_SLPSUPP_MASK		0x4000
@@ -178,7 +197,7 @@ typedef volatile struct sysmemregs {
 #define SYSMEM_DEVRAMBANK_SHIFT		12
 
 /* bank info to calculate bank size */
-#define	SYSMEM_BANKINFO_SZBASE          8192
+#define SYSMEM_BANKINFO_SZBASE          8192
 #define SYSMEM_BANKSIZE_SHIFT		13      /* SYSMEM_BANKINFO_SZBASE */
 
 /* standbycontrol register default values */
@@ -188,4 +207,4 @@ typedef volatile struct sysmemregs {
 /* sbywaitcycle register default values (sysme rev 8) */
 #define SYSMEM_SBYWAIT_RAM_TIMEVAL	0xau	/* RAM memory access after standby exit */
 
-#endif	/* _SBSYSMEM_H */
+#endif /* _SBSYSMEM_H */

@@ -1,7 +1,26 @@
 /*
  * Common OS-independent driver header for rate management.
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -192,9 +211,9 @@ typedef uint32	ratespec_t;
 #define RSPEC_ENCODE(rspec)	(((rspec) & WL_RSPEC_ENCODING_MASK) >> WL_RSPEC_ENCODING_SHIFT)
 #define RSPEC_ISLEGACY(rspec)	(((rspec) & WL_RSPEC_ENCODING_MASK) == WL_RSPEC_ENCODE_RATE)
 
-#define	RSPEC_ISCCK(rspec)	(RSPEC_ISLEGACY(rspec) && \
+#define RSPEC_ISCCK(rspec)	(RSPEC_ISLEGACY(rspec) && \
 				 (int8)rate_info[(rspec) & WL_RSPEC_LEGACY_RATE_MASK] > 0)
-#define	RSPEC_ISOFDM(rspec)	(RSPEC_ISLEGACY(rspec) && \
+#define RSPEC_ISOFDM(rspec)	(RSPEC_ISLEGACY(rspec) && \
 				 (int8)rate_info[(rspec) & WL_RSPEC_LEGACY_RATE_MASK] < 0)
 
 #define RSPEC_ISHT(rspec)	(((rspec) & WL_RSPEC_ENCODING_MASK) == WL_RSPEC_ENCODE_HT)
@@ -261,11 +280,11 @@ typedef uint32	ratespec_t;
 #define WLC_MAXRATE	108	/**< in 500kbps units */
 extern const uint8 rate_info[];
 /* phy_rate table value is encoded */
-#define	RATE_INFO_OFDM_MASK	0x80	/* ofdm mask */
-#define	RATE_INFO_RATE_MASK	0x7f	/* rate signal index mask */
-#define	RATE_INFO_M_RATE_MASK	0x0f	/* M_RATE_TABLE index mask */
-#define	RATE_INFO_RATE_ISCCK(r)	((r) <= WLC_MAXRATE && (int8)rate_info[r] > 0)
-#define	RATE_INFO_RATE_ISOFDM(r) ((r) <= WLC_MAXRATE && (int8)rate_info[r] < 0)
+#define RATE_INFO_OFDM_MASK	0x80	/* ofdm mask */
+#define RATE_INFO_RATE_MASK	0x7f	/* rate signal index mask */
+#define RATE_INFO_M_RATE_MASK	0x0f	/* M_RATE_TABLE index mask */
+#define RATE_INFO_RATE_ISCCK(r)	((r) <= WLC_MAXRATE && (int8)rate_info[r] > 0)
+#define RATE_INFO_RATE_ISOFDM(r) ((r) <= WLC_MAXRATE && (int8)rate_info[r] < 0)
 
 /**
  * ===================

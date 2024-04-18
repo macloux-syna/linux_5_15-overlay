@@ -1,7 +1,26 @@
 /*
  * BCM43XX Sonics SiliconBackplane PCMCIA core hardware definitions.
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -21,8 +40,8 @@
  * <<Broadcom-WL-IPTag/Dual:>>
  */
 
-#ifndef	_SBPCMCIA_H
-#define	_SBPCMCIA_H
+#ifndef _SBPCMCIA_H
+#define _SBPCMCIA_H
 
 /* All the addresses that are offsets in attribute space are divided
  * by two to account for the fact that odd bytes are invalid in
@@ -32,32 +51,32 @@
  */
 
 /* PCMCIA Function Configuration Registers */
-#define	PCMCIA_FCR		(0x700 / 2)
+#define PCMCIA_FCR		(0x700 / 2)
 
-#define	FCR0_OFF		0
-#define	FCR1_OFF		(0x40 / 2)
-#define	FCR2_OFF		(0x80 / 2)
-#define	FCR3_OFF		(0xc0 / 2)
+#define FCR0_OFF		0
+#define FCR1_OFF		(0x40 / 2)
+#define FCR2_OFF		(0x80 / 2)
+#define FCR3_OFF		(0xc0 / 2)
 
-#define	PCMCIA_FCR0		(0x700 / 2)
-#define	PCMCIA_FCR1		(0x740 / 2)
-#define	PCMCIA_FCR2		(0x780 / 2)
-#define	PCMCIA_FCR3		(0x7c0 / 2)
+#define PCMCIA_FCR0		(0x700 / 2)
+#define PCMCIA_FCR1		(0x740 / 2)
+#define PCMCIA_FCR2		(0x780 / 2)
+#define PCMCIA_FCR3		(0x7c0 / 2)
 
 /* Standard PCMCIA FCR registers */
 
-#define	PCMCIA_COR		0
+#define PCMCIA_COR		0
 
-#define	COR_RST			0x80
-#define	COR_LEV			0x40
-#define	COR_IRQEN		0x04
-#define	COR_BLREN		0x01
-#define	COR_FUNEN		0x01
+#define COR_RST			0x80
+#define COR_LEV			0x40
+#define COR_IRQEN		0x04
+#define COR_BLREN		0x01
+#define COR_FUNEN		0x01
 
-#define	PCICIA_FCSR		(2 / 2)
-#define	PCICIA_PRR		(4 / 2)
-#define	PCICIA_SCR		(6 / 2)
-#define	PCICIA_ESR		(8 / 2)
+#define PCICIA_FCSR		(2 / 2)
+#define PCICIA_PRR		(4 / 2)
+#define PCICIA_SCR		(6 / 2)
+#define PCICIA_ESR		(8 / 2)
 
 #define PCM_MEMOFF		0x0000
 #define F0_MEMOFF		0x1000
@@ -81,8 +100,8 @@
 #define SROM_DATAH		(0x073a / 2)
 #define SROM_ADDRL		(0x073c / 2)
 #define SROM_ADDRH		(0x073e / 2)
-#define	SROM_INFO2		(0x0772 / 2)	/* Corerev >= 2 && <= 5 */
-#define	SROM_INFO		(0x07be / 2)	/* Corerev >= 6 */
+#define SROM_INFO2		(0x0772 / 2)	/* Corerev >= 2 && <= 5 */
+#define SROM_INFO		(0x07be / 2)	/* Corerev >= 6 */
 
 /*  Values for srom_cs: */
 #define SROM_IDLE		0
@@ -93,9 +112,9 @@
 #define SROM_DONE		8
 
 /* Fields in srom_info: */
-#define	SRI_SZ_MASK		0x03
-#define	SRI_BLANK		0x04
-#define	SRI_OTP			0x80
+#define SRI_SZ_MASK		0x03
+#define SRI_BLANK		0x04
+#define SRI_OTP			0x80
 
 #define SROM16K_BANK_SEL_MASK		(3 << 11)
 #define SROM16K_BANK_SHFT_MASK		11
@@ -112,7 +131,7 @@
 /* CIS stuff */
 
 /* The CIS stops where the FCRs start */
-#define	CIS_SIZE		PCMCIA_FCR
+#define CIS_SIZE		PCMCIA_FCR
 #define CIS_SIZE_12K    1154    /* Maximum h/w + s/w sub region size for 12k OTP */
 
 /* CIS tuple length field max */
@@ -121,23 +140,23 @@
 /* Standard tuples we know about */
 
 #define CISTPL_NULL		0x00
-#define	CISTPL_END		0xff		/* End of the CIS tuple chain */
+#define CISTPL_END		0xff		/* End of the CIS tuple chain */
 
-#define	CISTPL_VERS_1		0x15		/* CIS ver, manf, dev & ver strings */
-#define	CISTPL_MANFID		0x20		/* Manufacturer and device id */
+#define CISTPL_VERS_1		0x15		/* CIS ver, manf, dev & ver strings */
+#define CISTPL_MANFID		0x20		/* Manufacturer and device id */
 #define CISTPL_FUNCID		0x21		/* Function identification */
-#define	CISTPL_FUNCE		0x22		/* Function extensions */
-#define	CISTPL_CFTABLE		0x1b		/* Config table entry */
+#define CISTPL_FUNCE		0x22		/* Function extensions */
+#define CISTPL_CFTABLE		0x1b		/* Config table entry */
 
 /* Function identifier provides context for the function extentions tuple */
 #define CISTPL_FID_SDIO		0x0c		/* Extensions defined by SDIO spec */
 
 /* Function extensions for LANs (assumed for extensions other than SDIO) */
-#define	LAN_TECH		1		/* Technology type */
-#define	LAN_SPEED		2		/* Raw bit rate */
-#define	LAN_MEDIA		3		/* Transmission media */
-#define	LAN_NID			4		/* Node identification (aka MAC addr) */
-#define	LAN_CONN		5		/* Connector standard */
+#define LAN_TECH		1		/* Technology type */
+#define LAN_SPEED		2		/* Raw bit rate */
+#define LAN_MEDIA		3		/* Transmission media */
+#define LAN_NID			4		/* Node identification (aka MAC addr) */
+#define LAN_CONN		5		/* Connector standard */
 
 /* CFTable */
 #define CFTABLE_REGWIN_2K	0x08		/* 2k reg windows size */
@@ -148,7 +167,7 @@
  * take one for HNBU, and use "extensions" (a la FUNCE) within it.
  */
 
-#define	CISTPL_BRCM_HNBU	0x80
+#define CISTPL_BRCM_HNBU	0x80
 
 /* Subtypes of BRCM_HNBU: */
 
@@ -162,8 +181,8 @@
 					 */
 #define HNBU_OEM		0x04	/* Eight bytes OEM data (sromrev == 1) */
 #define HNBU_CC			0x05	/* Default country code (sromrev == 1) */
-#define	HNBU_AA			0x06	/* Antennas available */
-#define	HNBU_AG			0x07	/* Antenna gain */
+#define HNBU_AA			0x06	/* Antennas available */
+#define HNBU_AG			0x07	/* Antenna gain */
 #define HNBU_BOARDFLAGS		0x08	/* board flags (2 or 4 bytes) */
 #define HNBU_UNUSED		0x09	/* UNUSED (was LEDs) */
 #define HNBU_CCODE		0x0a	/* Country code (2 bytes ascii + 1 byte cctl)
@@ -412,4 +431,4 @@
 
 /* sbtmstatehigh */
 #define SBTMH_INT_STATUS	0x40000		/* sb interrupt status */
-#endif	/* _SBPCMCIA_H */
+#endif /* _SBPCMCIA_H */

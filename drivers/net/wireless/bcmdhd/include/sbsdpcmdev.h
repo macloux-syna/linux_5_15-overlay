@@ -2,7 +2,26 @@
  * Broadcom SiliconBackplane SDIO/PCMCIA hardware-specific
  * device core support
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -22,15 +41,15 @@
  * <<Broadcom-WL-IPTag/Dual:>>
  */
 
-#ifndef	_sbsdpcmdev_h_
-#define	_sbsdpcmdev_h_
+#ifndef _sbsdpcmdev_h_
+#define _sbsdpcmdev_h_
 
 /* cpp contortions to concatenate w/arg prescan */
 #ifndef PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif	/* PAD */
+#define _PADLINE(line)	pad ## line
+#define _XSTR(line)	_PADLINE(line)
+#define PAD		_XSTR(__LINE__)
+#endif /* PAD */
 
 typedef volatile struct {
 	dma64regs_t	xmt;		/* dma tx */
@@ -192,16 +211,16 @@ typedef volatile struct {
 #define I_HMB_SW_SHIFT	4		/* To Host Mail S/W interrupts shift */
 #define I_WR_OOSYNC	(1 << 8)	/* Write Frame Out Of Sync */
 #define I_RD_OOSYNC	(1 << 9)	/* Read Frame Out Of Sync */
-#define	I_PC		(1 << 10)	/* descriptor error */
-#define	I_PD		(1 << 11)	/* data error */
-#define	I_DE		(1 << 12)	/* Descriptor protocol Error */
-#define	I_RU		(1 << 13)	/* Receive descriptor Underflow */
-#define	I_RO		(1 << 14)	/* Receive fifo Overflow */
-#define	I_XU		(1 << 15)	/* Transmit fifo Underflow */
-#define	I_RI		(1 << 16)	/* Receive Interrupt */
+#define I_PC		(1 << 10)	/* descriptor error */
+#define I_PD		(1 << 11)	/* data error */
+#define I_DE		(1 << 12)	/* Descriptor protocol Error */
+#define I_RU		(1 << 13)	/* Receive descriptor Underflow */
+#define I_RO		(1 << 14)	/* Receive fifo Overflow */
+#define I_XU		(1 << 15)	/* Transmit fifo Underflow */
+#define I_RI		(1 << 16)	/* Receive Interrupt */
 #define I_BUSPWR	(1 << 17)	/* SDIO Bus Power Change (rev 9) */
 #define I_XMTDATA_AVAIL (1 << 23)	/* bits in fifo */
-#define	I_XI		(1 << 24)	/* Transmit Interrupt */
+#define I_XI		(1 << 24)	/* Transmit Interrupt */
 #define I_RF_TERM	(1 << 25)	/* Read Frame Terminate */
 #define I_WF_TERM	(1 << 26)	/* Write Frame Terminate */
 #define I_PCMCIA_XU	(1 << 27)	/* PCMCIA Transmit FIFO Underflow */
@@ -209,7 +228,7 @@ typedef volatile struct {
 #define I_CHIPACTIVE	(1 << 29)	/* chip transitioned from doze to active state */
 #define I_SRESET	(1 << 30)	/* CCCR RES interrupt */
 #define I_IOE2		(1U << 31)	/* CCCR IOE2 Bit Changed */
-#define	I_ERRORS	(I_PC | I_PD | I_DE | I_RU | I_RO | I_XU)	/* DMA Errors */
+#define I_ERRORS	(I_PC | I_PD | I_DE | I_RU | I_RO | I_XU)	/* DMA Errors */
 #define I_DMA		(I_RI | I_XI | I_ERRORS)
 
 /* sbintstatus */
@@ -278,9 +297,9 @@ typedef volatile struct {
 #define PFC_WF_TERM	(1 << 1)	/* Write Frame Terminate */
 
 /* intrcvlazy */
-#define	IRL_TO_MASK	0x00ffffff	/* timeout */
-#define	IRL_FC_MASK	0xff000000	/* frame count */
-#define	IRL_FC_SHIFT	24		/* frame count */
+#define IRL_TO_MASK	0x00ffffff	/* timeout */
+#define IRL_FC_MASK	0xff000000	/* frame count */
+#define IRL_FC_SHIFT	24		/* frame count */
 
 /* rx header */
 typedef volatile struct {
@@ -304,4 +323,4 @@ typedef volatile struct {
 #define SDPCM_HWEXT_LEN	0
 #endif /* !defined(NDISVER) || (NDISVER < 0x0630) */
 
-#endif	/* _sbsdpcmdev_h_ */
+#endif /* _sbsdpcmdev_h_ */

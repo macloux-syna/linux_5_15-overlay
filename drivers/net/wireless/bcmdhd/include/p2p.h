@@ -1,7 +1,26 @@
 /*
  * Fundamental types and constants relating to WFA P2P (aka WiFi Direct)
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -88,7 +107,7 @@ typedef struct wifi_p2p_ie wifi_p2p_ie_t;
 #define P2P_SEID_ADVERTISE_SERVICE	25	/* Advertised service */
 #define P2P_SEID_SESSION_ID		26	/* Session ID */
 #define P2P_SEID_FEATURE_CAP		27	/* Feature capability */
-#define	P2P_SEID_PERSISTENT_GROUP	28	/* Persistent group */
+#define P2P_SEID_PERSISTENT_GROUP	28	/* Persistent group */
 #define P2P_SEID_SESSION_INFO_RESP	29	/* Session Information Response */
 #define P2P_SEID_VNDR			221	/* Vendor-specific subelement */
 
@@ -538,15 +557,15 @@ typedef struct wifi_p2p_noa_se wifi_p2p_noa_se_t;
 /*
  * P2P Service Discovery related
  */
-#define	P2PSD_ACTION_CATEGORY		0x04
+#define P2PSD_ACTION_CATEGORY		0x04
 				/* Public action frame */
-#define	P2PSD_ACTION_ID_GAS_IREQ	0x0a
+#define P2PSD_ACTION_ID_GAS_IREQ	0x0a
 				/* Action value for GAS Initial Request AF */
-#define	P2PSD_ACTION_ID_GAS_IRESP	0x0b
+#define P2PSD_ACTION_ID_GAS_IRESP	0x0b
 				/* Action value for GAS Initial Response AF */
-#define	P2PSD_ACTION_ID_GAS_CREQ	0x0c
+#define P2PSD_ACTION_ID_GAS_CREQ	0x0c
 				/* Action value for GAS Comeback Request AF */
-#define	P2PSD_ACTION_ID_GAS_CRESP	0x0d
+#define P2PSD_ACTION_ID_GAS_CRESP	0x0d
 				/* Action value for GAS Comeback Response AF */
 #define P2PSD_AD_EID				0x6c
 				/* Advertisement Protocol IE ID */

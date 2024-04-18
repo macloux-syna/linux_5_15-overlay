@@ -1,7 +1,26 @@
 /*
  * SiliconBackplane GCI core hardware definitions
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -30,10 +49,10 @@
 
 /* cpp contortions to concatenate w/arg prescan */
 #ifndef PAD
-#define	_PADLINE(line)	pad ## line
-#define	_XSTR(line)	_PADLINE(line)
-#define	PAD		_XSTR(__LINE__)
-#endif	/* PAD */
+#define _PADLINE(line)	pad ## line
+#define _XSTR(line)	_PADLINE(line)
+#define PAD		_XSTR(__LINE__)
+#endif /* PAD */
 
 #define GCI_OFFSETOF(sih, reg) \
 	(AOB_ENAB(sih) ? OFFSETOF(gciregs_t, reg) : OFFSETOF(chipcregs_t, reg))
@@ -378,7 +397,7 @@ typedef volatile struct {
 	uint32 spmi_coex_event_gpr_status_adr;		/* 0xFF4 */
 } gciregs_t;
 
-#define	GCI_CAP0_REV_MASK	0x000000ff
+#define GCI_CAP0_REV_MASK	0x000000ff
 
 /* GCI Capabilities registers */
 #define GCI_CORE_CAP_0_COREREV_MASK			0xFF
@@ -421,4 +440,4 @@ typedef volatile struct {
 
 #endif /* !_LANGUAGE_ASSEMBLY && !__ASSEMBLY__ */
 
-#endif	/* _SBGCI_H */
+#endif /* _SBGCI_H */

@@ -1,7 +1,26 @@
 /*
  * Fundamental constants relating to IP Protocol
  *
- * Copyright (C) 2021, Broadcom.
+ * Copyright (C) 2024 Synaptics Incorporated. All rights reserved.
+ *
+ * This software is licensed to you under the terms of the
+ * GNU General Public License version 2 (the "GPL") with Broadcom special exception.
+ *
+ * INFORMATION CONTAINED IN THIS DOCUMENT IS PROVIDED "AS-IS," AND SYNAPTICS
+ * EXPRESSLY DISCLAIMS ALL EXPRESS AND IMPLIED WARRANTIES, INCLUDING ANY
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE,
+ * AND ANY WARRANTIES OF NON-INFRINGEMENT OF ANY INTELLECTUAL PROPERTY RIGHTS.
+ * IN NO EVENT SHALL SYNAPTICS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, PUNITIVE, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OF THE INFORMATION CONTAINED IN THIS DOCUMENT, HOWEVER CAUSED
+ * AND BASED ON ANY THEORY OF LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, AND EVEN IF SYNAPTICS WAS ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE. IF A TRIBUNAL OF COMPETENT JURISDICTION
+ * DOES NOT PERMIT THE DISCLAIMER OF DIRECT DAMAGES OR ANY OTHER DAMAGES,
+ * SYNAPTICS' TOTAL CUMULATIVE LIABILITY TO ANY PARTY SHALL NOT
+ * EXCEED ONE HUNDRED U.S. DOLLARS
+ *
+ * Copyright (C) 2024, Broadcom.
  *
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -77,13 +96,13 @@
 #define IPV4_ADDR_BCAST(a)	((((uint8 *)(a))[0] & ((uint8 *)(a))[1] & \
 				  ((uint8 *)(a))[2] & ((uint8 *)(a))[3]) == 0xff)
 
-#define	IPV4_TOS_DSCP_MASK	0xfc	/* DiffServ codepoint mask */
-#define	IPV4_TOS_DSCP_SHIFT	2	/* DiffServ codepoint shift */
+#define IPV4_TOS_DSCP_MASK	0xfc	/* DiffServ codepoint mask */
+#define IPV4_TOS_DSCP_SHIFT	2	/* DiffServ codepoint shift */
 
-#define	IPV4_TOS(ipv4_body)	(((uint8 *)(ipv4_body))[IPV4_TOS_OFFSET])
+#define IPV4_TOS(ipv4_body)	(((uint8 *)(ipv4_body))[IPV4_TOS_OFFSET])
 
-#define	IPV4_TOS_PREC_MASK	0xe0	/* Historical precedence mask */
-#define	IPV4_TOS_PREC_SHIFT	5	/* Historical precedence shift */
+#define IPV4_TOS_PREC_MASK	0xe0	/* Historical precedence mask */
+#define IPV4_TOS_PREC_SHIFT	5	/* Historical precedence shift */
 
 #define IPV4_TOS_LOWDELAY	0x10	/* Lowest delay requested */
 #define IPV4_TOS_THROUGHPUT	0x8	/* Best throughput requested */
@@ -283,4 +302,4 @@ ipv6_exthdr_len_check(uint8 *h, uint16 plen, uint8 *proto)
 								((uint32)addr & 0x0000ff00) >> 8, \
 								((uint32)addr & 0x000000ff)
 
-#endif	/* _bcmip_h_ */
+#endif /* _bcmip_h_ */

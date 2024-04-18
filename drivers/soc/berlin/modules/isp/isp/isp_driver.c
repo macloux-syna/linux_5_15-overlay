@@ -473,6 +473,7 @@ static int isp_probe(struct platform_device *pdev)
 	struct i2c_adapter *i2c;
 	u32 dev_addr;
 	char sensor;
+	struct gpio_desc *reset_gpio;
 
 	dev = &pdev->dev;
 	isp_dev = devm_kzalloc(&pdev->dev, sizeof(*isp_dev), GFP_KERNEL);
@@ -550,6 +551,12 @@ static int isp_probe(struct platform_device *pdev)
 			isp_i2c_write(isp_dev, 1, &sensor, sizeof(sensor));
 		}
 	}
+	/* Reset Sensor */
+	reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
+	if (IS_ERR(reset_gpio))
+		isp_error(dev, "failed to fetch reset pin of sensor device..!\n");
+	else
+		gpiod_set_value_cansleep(reset_gpio, 1);
 
 	isp_dev->gpio_values.nvalues = isp_dev->enable_gpios->ndescs;
 	isp_dev->gpio_values.values = bitmap_alloc(isp_dev->gpio_values.nvalues, GFP_KERNEL);

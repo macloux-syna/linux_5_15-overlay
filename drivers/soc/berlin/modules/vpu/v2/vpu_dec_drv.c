@@ -892,6 +892,7 @@ static int vidioc_vdec_s_fmt_cap(struct file *file, void *priv,
 {
 	struct syna_vcodec_ctx *ctx = fh_to_ctx(priv);
 	struct syna_vpu_dev *vpu = ctx->vpu;
+	struct syna_vdec_config *p = ctx->dec_params;
 	struct v4l2_pix_format_mplane *pix_mp = &f->fmt.pix_mp;
 	struct vb2_queue *vq;
 	const struct v4g_fmt *fmt;
@@ -942,6 +943,25 @@ static int vidioc_vdec_s_fmt_cap(struct file *file, void *priv,
 			    ALIGN(ctx->dst_fmt.plane_fmt[1].sizeimage, SZ_4K);
 			ctx->dst_fmt.width = pix_mp->width;
 			ctx->dst_fmt.height = pix_mp->height;
+		}
+
+		if (pix_mp->plane_fmt[0].bytesperline
+		     > ctx->dst_fmt.plane_fmt[0].bytesperline) {
+			v4l2_fill_pixfmt_mp(&ctx->dst_fmt, fmt->fourcc,
+					    pix_mp->plane_fmt[0].bytesperline,
+					    ALIGN(pix_mp->height, 64));
+
+			ctx->dst_fmt.width = pix_mp->width;
+			ctx->dst_fmt.height = pix_mp->height;
+
+			p->dis_stride = pix_mp->plane_fmt[0].bytesperline;
+
+			ctx->dst_fmt.plane_fmt[0].sizeimage =
+			    ALIGN(ctx->dst_fmt.plane_fmt[0].sizeimage, SZ_4K);
+			ctx->dst_fmt.plane_fmt[1].sizeimage =
+			    ALIGN(ctx->dst_fmt.plane_fmt[1].sizeimage, SZ_4K);
+		} else {
+			p->dis_stride = 0;
 		}
 		/**
 		 * after the video parsing state, we could confirm what

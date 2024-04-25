@@ -500,11 +500,21 @@
 			clk_csr = <1>;
 			snps,multicast-filter-bins = <128>;
 			snps,perfect-filter-entries = <16>;
+			snps,pbl = <32>;
+			rx-fifo-depth = <4096>;
+			tx-fifo-depth = <4096>;
+			snps,axi-config = <&gmac0_stmmac_axi_setup>;
 			status = "disabled";
+
 			mdio0: mdio0 {
 				compatible = "snps,dwmac-mdio";
 				#address-cells = <1>;
 				#size-cells = <0>;
+			};
+
+			gmac0_stmmac_axi_setup: stmmac-axi-config {
+				snps,wr_osr_lmt = <7>;
+				snps,rd_osr_lmt = <7>;
 			};
 		};
 

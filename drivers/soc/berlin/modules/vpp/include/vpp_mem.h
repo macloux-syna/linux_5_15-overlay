@@ -66,7 +66,6 @@ typedef struct __VPP_MEM__ {
 	struct dma_buf_attachment *attach;
 	struct sg_table *table;
 #endif //CONFIG_DMABUF_HEAPS
-	void *teeShm;                //handle to mem registered with tee
 } VPP_MEM;
 
 typedef struct __VPP_MEM_OPS__ {

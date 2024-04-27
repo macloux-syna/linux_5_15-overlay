@@ -46,7 +46,9 @@
 #include "drv_dhub.h"
 #include "avio_regmap.h"
 #include "avio_common.h"
+#if !IS_ENABLED(CONFIG_OPTEE)
 #include "tz_driver.h"
+#endif
 #include "hal_vpp_wrap.h"
 
 #define AVIO_MODULE_NAME	"avio_module_avio"
@@ -309,9 +311,11 @@ static int avio_probe(struct platform_device *pdev)
 	int ret;
 	dev_t pedev;
 
+#if !IS_ENABLED(CONFIG_OPTEE)
 	//Defer probe until dependent soc module/s are probed/initialized
 	if (!tzd_get_kernel_dev_file())
 		return -EPROBE_DEFER;
+#endif
 
 	//Initialize/probe sub module framework
 	ret = avio_sub_module_probe(pdev);

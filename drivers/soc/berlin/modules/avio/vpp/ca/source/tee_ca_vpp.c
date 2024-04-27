@@ -12,6 +12,8 @@
 #include "tee_ca_vpp.h"
 #include "tee_ca_common.h"
 #include "vbuf.h"
+#include "tee_client_type.h"
+#include "tee_client_api.h"
 
 #define bTST(x, b) (((x) >> (b)) & 1)
 

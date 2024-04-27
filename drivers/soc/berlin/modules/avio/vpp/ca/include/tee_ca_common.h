@@ -3,9 +3,6 @@
 #ifndef _TEE_COMMON_CA_H_
 #define _TEE_COMMON_CA_H_
 
-#include "tee_client_type.h"
-#include "tee_client_api.h"
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -13,7 +10,7 @@ extern "C"
 
 #define VPP_TEEC_LOGIFERROR(result) \
 		do { \
-			if (result != TEEC_SUCCESS) \
+			if (result) \
 				pr_err("%s:TEEC Error ret=0x%08x\n", __func__, result); \
 		} while (0)
 

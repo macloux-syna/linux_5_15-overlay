@@ -1056,6 +1056,105 @@
 			compatible = "syna,dolphin-isp-scaler";
 		};
 
+		isp_vsi: isp_vsi@f9100000{
+			id = <0>;
+			status = "disabled";
+			compatible = "verislicon,isp";
+			reg = <0xf9100000 0x100000>;
+			interrupts = <GIC_SPI 112 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "isp_core";
+		};
+
+		isp_vsi_video: isp_vsi_video{
+			status = "disabled";
+			compatible = "verisilicon,video";
+
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					#address-cells = <1>;
+					#size-cells = <0>;
+					isp_vsi_video_ep0: endpoint@0 {
+						reg = <0>;
+						remote-endpoint = <&isp_vsi_subdev_ep0>;
+					};
+				};
+
+				port@1 {
+					reg = <1>;
+					#address-cells = <1>;
+					#size-cells = <0>;
+					isp_vsi_video_ep1: endpoint@1 {
+						reg = <1>;
+						remote-endpoint = <&isp_vsi_subdev_ep1>;
+					};
+				};
+
+				port@2 {
+					reg = <2>;
+					#address-cells = <1>;
+					#size-cells = <0>;
+					isp_vsi_video_ep2: endpoint@2 {
+						reg = <2>;
+						remote-endpoint = <&isp_vsi_subdev_ep2>;
+					};
+				};
+			};
+		};
+
+		isp_vsi_vb: isp_vsi_vb{
+			id = <0>;
+			status = "disabled";
+			compatible = "verislicon,vb";
+		};
+
+		isp_vsi_mipi: isp_vsi_mipi{
+			status = "disabled";
+			compatible = "verisilicon,mipi";
+			reg = <0xf9150000 0x10000>;
+		};
+
+		isp_vsi_subdev: isp_vsi_subdev{
+			id = <0>;
+			status = "disabled";
+			compatible = "verisilicon,isp";
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@1 {
+					reg = <1>;
+					#address-cells = <1>;
+					#size-cells = <0>;
+					isp_vsi_subdev_ep0: endpoint@1 {
+						reg = <1>;
+						remote-endpoint = <&isp_vsi_video_ep0>;
+					};
+				};
+
+				port@2 {
+					reg = <2>;
+					#address-cells = <1>;
+					#size-cells = <0>;
+					isp_vsi_subdev_ep1: endpoint@2 {
+						reg = <2>;
+						remote-endpoint = <&isp_vsi_video_ep1>;
+					};
+				};
+
+				port@3 {
+					reg = <3>;
+					#address-cells = <1>;
+					#size-cells = <0>;
+					isp_vsi_subdev_ep2: endpoint@3 {
+						reg = <3>;
+						remote-endpoint = <&isp_vsi_video_ep2>;
+					};
+				};
+			};
+		};
+
 		cec: cec@f7fe1000 {
 			compatible = "syna,berlin-cec";
 			interrupt-parent = <&sic>;

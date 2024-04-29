@@ -447,8 +447,6 @@
 
 &isp {
 	status = "okay";
-	enable-gpio = <&expander2 1 GPIO_ACTIVE_HIGH>;
-	reset-gpio = <&expander2 0 GPIO_ACTIVE_HIGH>;
 	i2c-bus = <&i2c3>;
 	dev-addr = <112>;
 };
@@ -459,6 +457,28 @@
 
 &vpp {
         status = "okay";
+};
+
+&isp_vsi {
+	status = "okay";
+	enable-gpio = <&expander2 1 GPIO_ACTIVE_HIGH>;
+	reset-gpio = <&expander2 0 GPIO_ACTIVE_HIGH>;
+};
+
+&isp_vsi_video {
+	status = "okay";
+};
+
+&isp_vsi_vb {
+	status = "okay";
+};
+
+&isp_vsi_mipi {
+	status = "okay";
+};
+
+&isp_vsi_subdev {
+	status = "okay";
 };
 
 &fb {

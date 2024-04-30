@@ -13,23 +13,20 @@ endif
 
 HEADER_PATH +=  $(ISP_INC_PATH)    \
 		-I$(srctree)/drivers/soc/berlin/modules/isp \
-		-I$(srctree)/drivers/soc/berlin/modules/isp/isp \
-		-I$(srctree)/drivers/soc/berlin/modules/isp/isp/dhub \
+		-I$(srctree)/drivers/soc/berlin/modules/isp/isp/drv \
+		-I$(srctree)/drivers/soc/berlin/modules/isp/isp/drv/dhub \
 		-I$(srctree)/drivers/soc/berlin/modules/isp/fw \
 		-I$(srctree)/drivers/soc/berlin/modules/msgQ
 
 ccflags-y += $(HEADER_PATH)
 
-isp-objs += isp/isp_driver.o \
-		isp/drv_isp.o \
-		isp/dhub/drv_ispdhub.o \
-		isp/dhub/ispdhub_sema.o \
-		isp/dhub/configs/dolphin/isp_dhub_cfg.o
+isp-objs += isp/drv/isp_driver.o \
+		isp/drv/drv_isp.o \
+		isp/drv/dhub/drv_ispdhub.o \
+		isp/drv/dhub/ispdhub_sema.o \
+		isp/drv/dhub/configs/dolphin/isp_dhub_cfg.o
 
 HEADER_PATH +=  $(ISP_INC_PATH)    \
-		-I$(srctree)/drivers/soc/berlin/modules/isp/ \
-		-I$(srctree)/drivers/soc/berlin/modules/isp/dhub \
-		-I$(srctree)/drivers/soc/berlin/modules/msgQ \
 		-I$(srctree)/drivers/soc/berlin/modules/isp/be/drv/src/scl \
 		-I$(srctree)/drivers/soc/berlin/modules/isp/be/drv/src/common \
 		-I$(srctree)/drivers/soc/berlin/modules/isp/be/drv/inc \

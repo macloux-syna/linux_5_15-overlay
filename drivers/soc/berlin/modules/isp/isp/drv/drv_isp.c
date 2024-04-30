@@ -147,8 +147,9 @@ static int isp_core_mod_open(isp_device *isp_dev, isp_module_ctx *mod_ctx)
 		return 0;
 	}
 
-	ret = request_irq(hCoreCtx->irq_num, isp_irq_handler, 0,
+	ret = request_irq(hCoreCtx->irq_num, isp_irq_handler, IRQF_SHARED,
 				ISP_CORE_SUB_MODULE, mod_ctx);
+
 	if (ret)
 		ispcore_error(
 			"Interrupt registration failed for ISP Core Sub Module\n");

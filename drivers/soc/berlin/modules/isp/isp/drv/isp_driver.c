@@ -474,6 +474,7 @@ static int isp_probe(struct platform_device *pdev)
 	u32 dev_addr;
 	char sensor;
 	struct gpio_desc *reset_gpio;
+	int i;
 
 	dev = &pdev->dev;
 	isp_dev = devm_kzalloc(&pdev->dev, sizeof(*isp_dev), GFP_KERNEL);
@@ -485,7 +486,7 @@ static int isp_probe(struct platform_device *pdev)
 	isp_dev->dev = &pdev->dev;
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	isp_dev->reg_base = devm_ioremap_resource(&pdev->dev, res);
+	isp_dev->reg_base = devm_ioremap(&pdev->dev, res->start,  resource_size(res));
 	if (IS_ERR(isp_dev->reg_base)) {
 		isp_error(dev, "ioremap failed...!\n");
 		return PTR_ERR(isp_dev->reg_base);
@@ -551,6 +552,10 @@ static int isp_probe(struct platform_device *pdev)
 			isp_i2c_write(isp_dev, 1, &sensor, sizeof(sensor));
 		}
 	}
+
+	/* Power On Sensor  */
+	for (i = 0; i < isp_dev->enable_gpios->ndescs; i++)
+		gpiod_set_value_cansleep(isp_dev->enable_gpios->desc[i], 1);
 	/* Reset Sensor */
 	reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(reset_gpio))

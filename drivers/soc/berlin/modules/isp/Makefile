@@ -1,7 +1,14 @@
 obj-$(CONFIG_SYNA_ISP) += isp.o
 obj-$(CONFIG_SYNA_ISP_SCALER) += scaler.o
+obj-$(CONFIG_VIDEO_VVCAM_DRIVER) += vvcam_isp.o
+obj-$(CONFIG_VIDEO_VVCAM_DRIVER) += vvcam_vb.o
+obj-$(CONFIG_VIDEO_VVCAM_DRIVER) += vvcam_video.o
+obj-$(CONFIG_VIDEO_VVCAM_DRIVER) += vvcam_isp_subdev.o
 
 ISP_ABS_PATH := $(srctree)/drivers/soc/berlin/modules/isp
+
+include $(ISP_ABS_PATH)/isp/vvcam/Param.mk
+include $(ISP_ABS_PATH)/isp/vvcam/isp_subdev.mk
 
 ifeq ($(CONFIG_ISP_DOLPHIN),y)
  ccflags-y += -D DOLPHIN
@@ -33,8 +40,6 @@ HEADER_PATH +=  $(ISP_INC_PATH)    \
 		-I$(srctree)/drivers/soc/berlin/modules/isp/be/v4l2/memops \
 		-I$(srctree)/drivers/soc/berlin/modules/isp/be/v4l2/scaler
 
-ccflags-y += $(HEADER_PATH)
-
 scaler-objs += be/v4l2/scaler/m2m_scaler.o \
 		be/v4l2/scaler/scaler_dbg.o \
 		be/v4l2/scaler/scaler_drv_api.o \
@@ -54,3 +59,30 @@ scaler-objs += be/v4l2/scaler/m2m_scaler.o \
 		be/drv/src/common/ispSS_shm.o \
 		be/drv/src/common/ispSS_reg.o \
 		be/drv/src/common/hal_dhub.o
+
+HEADER_PATH += -I$(srctree)/drivers/soc/berlin/modules/isp/isp/vvcam/common \
+		-I$(srctree)/drivers/soc/berlin/modules/isp/isp/vvcam/v4l2/isp/isp_ctrl \
+		-I$(srctree)/drivers/soc/berlin/modules/isp/isp/vvcam/v4l2/isp \
+		-I$(srctree)/drivers/soc/berlin/modules/isp/isp/vvcam/v4l2/common/
+
+ccflags-y += $(HEADER_PATH)
+
+vvcam_isp-objs += isp/vvcam/isp/vvcam_isp_driver.o \
+		isp/vvcam/isp/vvcam_isp_hal.o \
+		isp/vvcam/isp/vvcam_isp_procfs.o \
+		isp/vvcam/common/vvcam_event.o
+
+vvcam_vb-objs += isp/vvcam/vb/vvcam_vb_driver.o \
+		isp/vvcam/vb/vvcam_mmz.o \
+		isp/vvcam/vb/vvcam_cma.o \
+		isp/vvcam/vb/vvcam_vb_procfs.o
+
+vvcam_isp_subdev-objs += isp/vvcam/v4l2/isp/vvcam_isp_driver.o \
+		isp/vvcam/v4l2/isp/vvcam_isp_event.o \
+		isp/vvcam/v4l2/isp/vvcam_isp_procfs.o \
+		isp/vvcam/v4l2/isp/isp_ctrl/vvcam_isp_ctrl.o
+
+vvcam_video-objs += isp/vvcam/v4l2/video/vvcam_video_driver.o \
+        isp/vvcam/v4l2/video/vvcam_video_register.o \
+        isp/vvcam/v4l2/video/vvcam_video_m2m_register.o \
+        isp/vvcam/v4l2/video/vvcam_video_event.o

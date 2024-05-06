@@ -596,20 +596,20 @@ static int v4g_try_fmt(struct syna_vcodec_ctx *ctx,
 		switch (fmt->fourcc) {
 		case V4L2_PIX_FMT_NV15M:
 			pix_mp->plane_fmt[0].bytesperline =
-			    ALIGN(DIV_ROUND_UP(pix_mp->width, 4) * 5, 128);
+			    ALIGN(DIV_ROUND_UP(pix_mp->width, 4) * 5, 64);
 			pix_mp->plane_fmt[1].bytesperline =
 			    pix_mp->plane_fmt[0].bytesperline;
 			pix_mp->plane_fmt[0].sizeimage =
 			    pix_mp->plane_fmt[0].bytesperline
-			    * ALIGN(height, 16);
+			    * ALIGN(height, 64);
 			pix_mp->plane_fmt[1].sizeimage =
 			    pix_mp->plane_fmt[0].sizeimage >> 1;
 			pix_mp->num_planes = 2;
 			break;
 		default:
 			v4l2_fill_pixfmt_mp(pix_mp, fmt->fourcc,
-					    ALIGN(pix_mp->width, 16),
-					    ALIGN(pix_mp->height, 16));
+					    ALIGN(pix_mp->width, 64),
+					    ALIGN(pix_mp->height, 64));
 			break;
 		}
 		pix_mp->width = width;
@@ -764,7 +764,7 @@ static int vdec_fmt_from_cur_seq_fmt(struct syna_vcodec_ctx *ctx,
 		ctx->dst_fmt.height = pix_mp->height;
 		ctx->dst_fmt.pixelformat = pix_mp->pixelformat;
 		ctx->dst_fmt.plane_fmt[0].bytesperline =
-		    ALIGN(DIV_ROUND_UP(pix_mp->width, 4) * 5, 128);
+		    ALIGN(DIV_ROUND_UP(pix_mp->width, 4) * 5, 64);
 		ctx->dst_fmt.plane_fmt[1].bytesperline =
 		    ctx->dst_fmt.plane_fmt[0].bytesperline;
 		break;
@@ -858,12 +858,12 @@ static int vdpu_update_dst_fmt(struct syna_vcodec_ctx *ctx,
 			if (fmt->fourcc == V4L2_PIX_FMT_NV15M) {
 				pix_mp->plane_fmt[0].bytesperline =
 				    ALIGN(DIV_ROUND_UP(pix_mp->width, 4) * 5,
-					  128);
+					  64);
 				pix_mp->plane_fmt[1].bytesperline =
 				    pix_mp->plane_fmt[0].bytesperline;
 				pix_mp->plane_fmt[0].sizeimage =
 				    pix_mp->plane_fmt[0].bytesperline *
-				    ALIGN(pix_mp->height, 128);
+				    ALIGN(pix_mp->height, 64);
 				pix_mp->plane_fmt[1].sizeimage =
 				    pix_mp->plane_fmt[0].sizeimage >> 1;
 				pix_mp->num_planes = 2;

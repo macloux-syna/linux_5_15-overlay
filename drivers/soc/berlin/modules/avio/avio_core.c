@@ -50,6 +50,7 @@
 #include "tz_driver.h"
 #endif
 #include "hal_vpp_wrap.h"
+#include "vpp_mem.h"
 
 #define AVIO_MODULE_NAME	"avio_module_avio"
 #define AVIO_DEVICE_NAME	"avio"
@@ -316,6 +317,10 @@ static int avio_probe(struct platform_device *pdev)
 	if (!tzd_get_kernel_dev_file())
 		return -EPROBE_DEFER;
 #endif
+
+	//Defer probe until VPP MEMory module is ready to allocate memory
+	if (!VPP_MEM_IsReady())
+		return -EPROBE_DEFER;
 
 	//Initialize/probe sub module framework
 	ret = avio_sub_module_probe(pdev);

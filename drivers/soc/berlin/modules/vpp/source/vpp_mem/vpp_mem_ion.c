@@ -131,6 +131,28 @@ err:
 }
 
 /* ION MEMORY Public APIs */
+int VPP_ION_IsReady(void)
+{
+	int ret = VPP_MEM_ERROR_TYPE_OK;
+	unsigned int heap_id;
+	struct dma_buf *ion_dma_buf;
+
+	ret = Ion_InitIonMem(0);
+	if (ret == VPP_MEM_ERROR_TYPE_OK) {
+		heap_id = heap_id_mask;
+		ion_dma_buf = ion_alloc(shm_handle->size, heap_id, ION_FLAG_CACHED);
+
+		if (IS_ERR(ion_dma_buf)) {
+			ret = VPP_MEM_ERROR_TYPE_ENOMEM;
+		} else {
+			dma_buf_end_cpu_access(ion_dma_buf, DMA_BIDIRECTIONAL);
+			dma_buf_put(ion_dma_buf);
+		}
+	}
+
+	return ret;
+}
+
 int VPP_ION_AllocMem(VPP_MEM_NODE *shm_node, VPP_MEM *shm_handle, gfp_t flags)
 {
 	unsigned int heap_id;
@@ -188,6 +210,7 @@ void VPP_ION_FreeMemory(VPP_MEM *shm_handle)
 
 void VPP_MEM_probe(VPP_MEM_LIST *shm_list)
 {
+	shm_list->ops->VPP_MEM_IsReady = VPP_ION_IsReady;
 	shm_list->ops->VPP_MEM_InitMemory = VPP_ION_InitMemory;
 	shm_list->ops->VPP_MEM_DeInitMemory = VPP_ION_DeinitMemory;
 	shm_list->ops->VPP_MEM_AllocateMemory = VPP_ION_AllocMem;

@@ -70,6 +70,7 @@ typedef struct __VPP_MEM__ {
 } VPP_MEM;
 
 typedef struct __VPP_MEM_OPS__ {
+	int (*VPP_MEM_IsReady)(void);
 	int (*VPP_MEM_InitMemory)(VPP_MEM_LIST *shm_list);
 	void (*VPP_MEM_DeInitMemory)(VPP_MEM_LIST *shm_list);
 	int (*VPP_MEM_AllocateMemory)(VPP_MEM_NODE *shm_node,
@@ -78,6 +79,7 @@ typedef struct __VPP_MEM_OPS__ {
 } VPP_MEM_OPS;
 
 
+int VPP_MEM_IsReady(void);
 void VPP_MEM_probe(VPP_MEM_LIST *shm_list);
 int VPP_MEM_InitMemory(VPP_MEM_LIST *shm_list);
 void VPP_MEM_DeInitMemory(VPP_MEM_LIST *shm_list);

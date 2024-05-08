@@ -94,6 +94,18 @@ static int VPP_DMABUF_InitMem_NonCached(int index)
 }
 
 /* DMABUF MEMORY Public APIs */
+int VPP_DMABUF_IsReady(void)
+{
+	int ret = VPP_MEM_ERROR_TYPE_OK;
+	struct dma_heap *heap;
+
+	heap = dma_heap_find("reserved");
+	if (heap == NULL)
+		ret = VPP_MEM_ERROR_TYPE_ENOMEM;
+
+	return ret;
+}
+
 int VPP_DMABUF_AllocMem(VPP_MEM_NODE *shm_node, VPP_MEM *shm_handle, gfp_t flags)
 {
 	struct dma_heap *dmabuf_heap;
@@ -149,6 +161,7 @@ void VPP_DMABUF_FreeMemory(VPP_MEM *shm_handle)
 
 void VPP_MEM_probe(VPP_MEM_LIST *shm_list)
 {
+	shm_list->ops->VPP_MEM_IsReady = VPP_DMABUF_IsReady;
 	shm_list->ops->VPP_MEM_InitMemory = VPP_DMABUF_InitMemory;
 	shm_list->ops->VPP_MEM_DeInitMemory = VPP_DMABUF_DeinitMemory;
 	shm_list->ops->VPP_MEM_AllocateMemory = VPP_DMABUF_AllocMem;

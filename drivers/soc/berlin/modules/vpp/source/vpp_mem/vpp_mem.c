@@ -5,6 +5,29 @@
 
 #include "vpp_mem.h"
 
+int VPP_MEM_IsReady(void)
+{
+	int res;
+
+	VPP_MEM_LIST shm_list;
+
+	shm_list.ops = kmalloc(sizeof(VPP_MEM_OPS), GFP_KERNEL);
+	if (!shm_list.ops) {
+		pr_err("%s alloc mem failed\n", __func__);
+		return 0;
+	}
+
+	VPP_MEM_probe(&shm_list);
+
+	res = shm_list.ops->VPP_MEM_IsReady();
+
+	pr_info("%s - res : %d\n", __func__, res);
+
+	kfree(shm_list.ops);
+
+	return res == VPP_MEM_ERROR_TYPE_OK ? 1 : 0;
+}
+
 int VPP_MEM_InitMemory(VPP_MEM_LIST *shm_list)
 {
 	int i;

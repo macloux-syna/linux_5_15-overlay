@@ -844,7 +844,7 @@
 
 		chip: chip-control@f7ea0000 {
 			compatible = "marvell,berlin4ct-chip-ctrl";
-			reg = <0xf7ea0000 0x10000>;
+			reg = <0xf7ea0000 0x700>;
 			#reset-cells = <4>;
 		};
 

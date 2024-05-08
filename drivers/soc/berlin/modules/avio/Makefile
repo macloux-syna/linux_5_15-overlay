@@ -121,7 +121,6 @@ ifeq ($(USE_VPP_TA), 0)
 
 include $(AVIO_ABS_PATH)/lcdc/lcdc.mak
 
-AVIO_INC_PATH += -I$(srctree)/drivers/soc/berlin/modules/vpp/include
 AVIO_INC_PATH  += -I$(AVIO_ABS_PATH)/lcdc/include/
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/vpp/common/include
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/vpp/ca/include/asxxx
@@ -142,6 +141,7 @@ else
 AVIO_VPP_API_OBJS += vpp/ca/source/dummy/hal_vpp_tz.o
 endif
 
+AVIO_INC_PATH += -I$(srctree)/drivers/soc/berlin/modules/vpp/include
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/vpp/ca/include
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/vpp
 

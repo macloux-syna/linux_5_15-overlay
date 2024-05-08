@@ -41,10 +41,8 @@
 	};
 
 	chosen {
-		bootargs = "cma=0x4000000@0x38800000 earlycon=uart8250,mmio32,0xF7E81400";
+		bootargs = "cma=0x4000000@0x38800000";
 		stdout-path = "serial0:115200n8";
-		linux,initrd-start = <0x0ec00000>;
-		linux,initrd-end = <0x0eccdd00>;
 	};
 
 	memory {

@@ -385,7 +385,7 @@
 
 		gmac0: ethernet@f7b60000 {
 			compatible = "snps,dwmac";
-			reg = <0xf7b60000 0x2000>, <0xf7ea0a00 0x10>;
+			reg = <0xf7b60000 0x2000>;
 			interrupts = <GIC_SPI 107 IRQ_TYPE_LEVEL_HIGH>;
 			interrupt-names = "macirq";
 			clocks = <&clk CLK_GETHRGMII>, <&gateclk CLK_GETHRGMIISYS>;

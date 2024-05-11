@@ -10,7 +10,7 @@ source "drivers/soc/berlin/Kconfig.isp"
 source "drivers/soc/berlin/Kconfig.gpu"
 
 config BERLIN_CHIPID
-	bool "Support BERLIN CHIPID"
+	tristate "Support BERLIN CHIPID"
 	default n
 	select SOC_BUS
 	help

@@ -24,4 +24,9 @@ int berlin_capture_close(struct snd_pcm_substream *substream);
 void berlin_capture_set_ch_inuse(struct snd_pcm_substream *substream,
 				 u32 ch_num);
 u32 berlin_capture_get_pause_count(struct snd_pcm_substream *substream);
+
+int berlin_indai_aip_alloc(struct snd_pcm_substream *ss,void **pFrame, int *size);
+int berlin_aip_event_callback_newframe(struct snd_pcm_substream *ss);
+void set_mic_mute_state(struct snd_pcm_substream *ss, int mute);
+
 #endif

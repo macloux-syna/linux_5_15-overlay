@@ -27,6 +27,7 @@ enum berlin_xrun_t {
 #define PDMI_MODE		(I2SI_MODE << 1)
 #define SPDIFI_MODE		(I2SI_MODE << 2)
 #define DMICI_MODE		(I2SI_MODE << 3)
+#define HDMII_MODE		(I2SI_MODE << 7)
 #define FLAG_EARC_MODE	(I2SI_MODE << 0xF)
 /*
  * Playback substream may masked to I2S AND SPDIF at the sametime

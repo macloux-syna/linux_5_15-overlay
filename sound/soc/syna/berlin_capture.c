@@ -657,6 +657,39 @@ static bool is_all_zero(const void *data, size_t length)
 	return (memcmp(data, p, length) == 0);
 }
 
+void set_mic_mute_state(struct snd_pcm_substream *ss, int mute)
+{
+	struct snd_pcm_runtime *runtime = ss->runtime;
+	struct berlin_capture *bc = runtime->private_data;
+	struct input_dev *mic_mute = bc->mic_mute;
+
+	if (!bc->enable_mic_mute)
+		return;
+
+	if (mute) {
+		if (bc->mic_mute_state != BERLIN_MIC_MUTE_STATE_MUTE) {
+			if (bc->mic_mute_state == BERLIN_MIC_MUTE_STATE_UNKNOWN) {
+				/* set_bit avoid key up missing */
+				set_bit(KEY_MICMUTE, mic_mute->key);
+			} else {
+				input_event(mic_mute, EV_KEY, KEY_MICMUTE, 1);
+				input_sync(mic_mute);
+			}
+
+			bc->mic_mute_state = BERLIN_MIC_MUTE_STATE_MUTE;
+			return;
+		}
+	} else {
+		if (bc->mic_mute_state != BERLIN_MIC_MUTE_STATE_UNMUTE) {
+			if (bc->mic_mute_state != BERLIN_MIC_MUTE_STATE_UNKNOWN) {
+				input_event(mic_mute, EV_KEY, KEY_MICMUTE, 0);
+				input_sync(mic_mute);
+			}
+			bc->mic_mute_state = BERLIN_MIC_MUTE_STATE_UNMUTE;
+		}
+	}
+}
+
 static void check_mic_mute_state(struct berlin_capture *bc,
 				 uint32_t *base,
 				 size_t byte_per_chunk)
@@ -669,6 +702,7 @@ static void check_mic_mute_state(struct berlin_capture *bc,
 	 * = (# of millisecond * sample_rate(Hz) * 8) / \
 	 *   (1000 * byte_per_chunk)
 	 */
+
 	const size_t mute_threshold_in_chunk =
 		DIV_ROUND_UP(MUTE_THRESHOLD_MS * bc->fs * 8,
 			     1000 * byte_per_chunk);
@@ -782,6 +816,41 @@ static void pdm_copy(struct snd_pcm_substream *ss)
 
 	queue_delayed_work(bc->wq, &bc->delayed_work, 0);
 }
+
+static void hdmi_copy(struct snd_pcm_substream *ss)
+{
+	struct snd_pcm_runtime *runtime = ss->runtime;
+	struct berlin_capture *bc = runtime->private_data;
+	size_t period_total = bc->dma_period_total;
+	const size_t pcm_buffer_size_bytes =
+		frames_to_bytes(runtime, runtime->buffer_size);
+	unsigned long flags;
+	int frames = bc->dma_period_ch /
+			(bc->channel_num * DHUB_FIFO_DEPTH / 8);
+
+	u32 *src = (u32 *)(bc->dma_area[0] + bc->read_offset);
+	u32 *dst = (u32 *)(runtime->dma_area + bc->runtime_offset);
+
+	period_total = frames_to_bytes(runtime, frames);
+
+	check_mic_mute_state(bc, (u32 *)src, bc->dma_period_ch/bc->pcm_ratio);
+
+	if (bc->mic_mute_state == BERLIN_MIC_MUTE_STATE_UNMUTE)
+		memcpy((void *)dst, (void *)src, bc->dma_period_ch/bc->pcm_ratio);
+	else
+		memset((void *)dst, 0, bc->dma_period_ch/bc->pcm_ratio);
+
+	spin_lock_irqsave(&bc->lock, flags);
+	bc->read_offset += bc->dma_period_ch/bc->pcm_ratio;
+	bc->read_offset %= bc->dma_bytes_ch;
+	bc->runtime_offset += period_total;
+	bc->runtime_offset %= pcm_buffer_size_bytes;
+	bc->cnt -= period_total;
+	spin_unlock_irqrestore(&bc->lock, flags);
+
+	snd_pcm_period_elapsed(ss);
+}
+
 
 static void copy_pcm(struct snd_pcm_substream *ss)
 {
@@ -996,9 +1065,11 @@ int berlin_capture_hw_free(struct snd_pcm_substream *ss)
 	struct berlin_chip *chip = bc->chip;
 	u32 i;
 
-	for (i = 0; i < bc->chid_num; i++) {
+	if (bc->mode != HDMII_MODE) {
+		for (i = 0; i < bc->chid_num; i++) {
 		/* clear the DMA queue Ddub*/
-		DhubChannelClear(bc->chip->dhub, bc->chid[i], 0);
+			DhubChannelClear(bc->chip->dhub, bc->chid[i], 0);
+		}
 	}
 
 	if (chip && bc->dma_area[0]) {
@@ -1064,6 +1135,8 @@ int berlin_capture_hw_params(struct snd_pcm_substream *ss,
 		bc->copy = &dmic_copy;
 	} else if (bc->mode == SPDIFI_MODE) {
 		bc->copy = &spdif_copy;
+	} else if (bc->mode == HDMII_MODE) {
+		bc->copy = &hdmi_copy;
 	} else {
 		snd_printk("non valid mode %d!", bc->mode);
 		return -EINVAL;
@@ -1094,6 +1167,7 @@ int berlin_capture_hw_params(struct snd_pcm_substream *ss,
 
 	bc->chip = chip;
 	berlin_capture_hw_free(ss);
+
 	err = snd_pcm_lib_malloc_pages(ss, pcm_buffer_size_bytes);
 	if (err < 0) {
 		snd_printk("fail to alloc pages for buffers %d\n", err);
@@ -1123,7 +1197,8 @@ int berlin_capture_hw_params(struct snd_pcm_substream *ss,
 				(bc->cic[0].decimation / PCM_SAMPLE_BITS);
 	} else if (bc->mode == I2SI_MODE ||
 		bc->mode == SPDIFI_MODE ||
-		bc->mode == DMICI_MODE) {
+		bc->mode == DMICI_MODE ||
+		bc->mode == HDMII_MODE) {
 		bc->dma_bytes_total = pcm_buffer_size_bytes;
 		bc->dma_period_total = pcm_period_size_bytes;
 	}
@@ -1184,12 +1259,17 @@ int berlin_capture_prepare(struct snd_pcm_substream *ss)
 int berlin_capture_trigger(struct snd_pcm_substream *ss, int cmd)
 {
 	int ret = 0;
+	struct snd_pcm_runtime *runtime = ss->runtime;
+	struct berlin_capture *bc = runtime->private_data;
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		berlin_capture_trigger_start(ss);
+		if (bc->mode != HDMII_MODE)
+			berlin_capture_trigger_start(ss);
+		else
+			bc->capturing = true;
 		break;
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_SUSPEND:
@@ -1215,6 +1295,56 @@ berlin_capture_pointer(struct snd_pcm_substream *ss)
 	spin_unlock_irqrestore(&bc->lock, flags);
 
 	return bytes_to_frames(runtime, buf_pos);
+}
+
+int berlin_indai_aip_alloc(struct snd_pcm_substream *ss, void **pFrame, int *size)
+{
+	int ret = 0;
+	struct snd_pcm_runtime *runtime = ss->runtime;
+	struct berlin_capture *bc = runtime->private_data;
+	u32 dma_size;
+	u32 *dma_src;
+
+
+	if (!bc->capturing) {
+		snd_printd("%s: capturing: %u\n", __func__, bc->capturing);
+		*pFrame = NULL;
+		*size = 0;
+		return ret;
+	}
+
+	if (bc->dma_pending) {
+		snd_printd("%s: DMA pending. Skipping DMA start.\n", __func__);
+		*pFrame = NULL;
+		*size = 0;
+		ret = -1;
+		return ret;
+	}
+
+	if (bc->cnt > (bc->dma_bytes_ch - bc->dma_period_ch)) {
+		snd_printd("%s: overrun: PCM conversion too slow.\n", __func__);
+		*pFrame = NULL;
+		*size = 0;
+		ret = -1;
+		return ret;
+	}
+
+	dma_size = bc->dma_period_ch/bc->pcm_ratio;
+
+	dma_src = (u32 *)(bc->dma_area[0] + bc->read_offset);
+	bc->dma_pending = true;
+
+	*pFrame = (u32 *)dma_src;
+	*size = dma_size;
+
+	return ret;
+}
+
+int berlin_aip_event_callback_newframe(struct snd_pcm_substream *ss)
+{
+	berlin_capture_isr(ss);
+
+	return 0;
 }
 
 int berlin_capture_isr(struct snd_pcm_substream *ss)
@@ -1244,8 +1374,8 @@ int berlin_capture_isr(struct snd_pcm_substream *ss)
 	bc->current_dma_offset %= bc->dma_bytes_ch;
 	bc->dma_pending = false;
 	bc->cnt += period_total;
-
-	start_dma_if_needed(ss);
+	if (bc->mode != HDMII_MODE)
+		start_dma_if_needed(ss);
 	spin_unlock(&bc->lock);
 	bc->copy(ss);
 

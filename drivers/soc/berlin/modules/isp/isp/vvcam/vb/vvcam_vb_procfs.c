@@ -398,12 +398,11 @@ int vvcam_vb_procfs_register(struct vvcam_vb_dev *vb_dev,
                                 struct proc_dir_entry **pde)
 {
     struct vvcam_vb_proc *vb_proc;
-    struct platform_device *pdev = to_platform_device(vb_dev->dev);
     char vb_proc_name[32];
     int ret = 0;
     bool found = false;
 
-    sprintf(vb_proc_name, "vsi/vb%d", pdev->id);
+    sprintf(vb_proc_name, "vsi/vb%d", vb_dev->id);
     vb_proc = devm_kzalloc(vb_dev->dev, 
                         sizeof(struct vvcam_vb_proc), GFP_KERNEL);
     if (!vb_proc)

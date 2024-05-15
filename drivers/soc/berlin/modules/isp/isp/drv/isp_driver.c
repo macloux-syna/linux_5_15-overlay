@@ -554,8 +554,10 @@ static int isp_probe(struct platform_device *pdev)
 	}
 
 	/* Power On Sensor  */
-	for (i = 0; i < isp_dev->enable_gpios->ndescs; i++)
-		gpiod_set_value_cansleep(isp_dev->enable_gpios->desc[i], 1);
+	if (isp_dev->enable_gpios) {
+		for (i = 0; i < isp_dev->enable_gpios->ndescs; i++)
+			gpiod_set_value_cansleep(isp_dev->enable_gpios->desc[i], 1);
+	}
 	/* Reset Sensor */
 	reset_gpio = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(reset_gpio))
@@ -563,11 +565,14 @@ static int isp_probe(struct platform_device *pdev)
 	else
 		gpiod_set_value_cansleep(reset_gpio, 1);
 
-	isp_dev->gpio_values.nvalues = isp_dev->enable_gpios->ndescs;
-	isp_dev->gpio_values.values = bitmap_alloc(isp_dev->gpio_values.nvalues, GFP_KERNEL);
-	if (!isp_dev->gpio_values.values) {
-		isp_error(dev, "failed to allocate memory for gpio_values...!\n");
-		return -ENOMEM;
+	if (isp_dev->enable_gpios) {
+		isp_dev->gpio_values.nvalues = isp_dev->enable_gpios->ndescs;
+		isp_dev->gpio_values.values = bitmap_alloc(isp_dev->gpio_values.nvalues,
+									GFP_KERNEL);
+		if (!isp_dev->gpio_values.values) {
+			isp_error(dev, "failed to allocate memory for gpio_values...!\n");
+			return -ENOMEM;
+		}
 	}
 
 	ret = isp_fetch_clocks(dev, isp_clks);

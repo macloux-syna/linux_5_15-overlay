@@ -79,6 +79,7 @@ struct vvcam_vb_dev {
     int32_t type;
     struct vvcam_vb_mm_allocator allocator;
     struct proc_dir_entry *pde;
+    int  id;
 };
 
 #endif

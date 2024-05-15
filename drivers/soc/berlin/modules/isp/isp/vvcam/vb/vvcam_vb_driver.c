@@ -52,6 +52,7 @@
  *****************************************************************************/
 
 #include <linux/module.h>
+#include <linux/of.h>
 #include <linux/mod_devicetable.h>
 #include <linux/platform_device.h>
 #include <linux/miscdevice.h>
@@ -318,6 +319,9 @@ static int vvcam_vb_probe(struct platform_device *pdev)
             return ret;
         }
     }
+
+    fwnode_property_read_u32(of_fwnode_handle(pdev->dev.of_node),
+			"id", &vb_dev->id);
 
     mutex_init(&vb_dev->mlock);
     vb_dev->dev = &pdev->dev;

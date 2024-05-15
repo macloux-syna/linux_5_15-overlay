@@ -52,6 +52,7 @@
  *****************************************************************************/
 
 #include <linux/module.h>
+#include <linux/of.h>
 #include <linux/mod_devicetable.h>
 #include <linux/platform_device.h>
 #include <linux/miscdevice.h>
@@ -63,6 +64,9 @@
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/mm.h>
+#ifdef DOLPHIN
+#include <linux/gpio/consumer.h>
+#endif
 
 #include "vvcam_isp_driver.h"
 #include "vvcam_isp_platform.h"
@@ -275,6 +279,10 @@ static int vvcam_isp_parse_params(struct vvcam_isp_dev *isp_dev,
                         struct platform_device *pdev)
 {
     struct resource *res;
+#ifdef DOLPHIN
+	struct gpio_desc *reset_gpio;
+	struct gpio_desc *enable_gpio;
+#endif
 
     res =  platform_get_resource(pdev, IORESOURCE_MEM, 0);
     if (!res) {
@@ -299,7 +307,19 @@ static int vvcam_isp_parse_params(struct vvcam_isp_dev *isp_dev,
 		return -ENXIO;
 	}
 
-#ifndef DOLPHIN
+#ifdef DOLPHIN
+	reset_gpio = devm_gpiod_get_optional(&pdev->dev, "reset", GPIOD_OUT_LOW);
+	if (IS_ERR(reset_gpio))
+		dev_err(&pdev->dev, "failed to fetch reset pin of sensor device..!\n");
+	else
+		gpiod_set_value_cansleep(reset_gpio, 1);
+
+	enable_gpio = devm_gpiod_get_optional(&pdev->dev, "enable", GPIOD_OUT_LOW);
+	if (IS_ERR(enable_gpio))
+		dev_err(&pdev->dev, "failed to fetch enable pin of sensor device..!\n");
+	else
+		gpiod_set_value_cansleep(enable_gpio, 1);
+#else
     isp_dev->mi_irq = platform_get_irq(pdev, 1);
     if (isp_dev->mi_irq < 0) {
 		dev_err(&pdev->dev, "can't get mi irq resource\n");
@@ -358,12 +378,13 @@ static int vvcam_isp_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, isp_dev);
 
     isp_dev->dev = &pdev->dev;
-    isp_dev->id  = pdev->id;
+    fwnode_property_read_u32(of_fwnode_handle(pdev->dev.of_node),
+			"id", &isp_dev->id);
 
     ispdev_name = devm_kzalloc(&pdev->dev, 16, GFP_KERNEL);
     if (!ispdev_name)
         return -ENOMEM;
-    snprintf(ispdev_name, 16, "%s.%d", VVCAM_ISP_NAME, pdev->id);
+    snprintf(ispdev_name, 16, "%s.%d", VVCAM_ISP_NAME, isp_dev->id);
 
     isp_dev->miscdev.minor = MISC_DYNAMIC_MINOR;
     isp_dev->miscdev.name  = ispdev_name;

@@ -40,6 +40,7 @@ struct syna_drm_private {
 
 	VPP_MEM_LIST *mem_list;
 	vpp_config_params vpp_config_param;
+	bool modeset_enabled;
 };
 
 struct syna_plane {
@@ -93,6 +94,8 @@ void syna_crtc_set_vblank_enabled(struct drm_crtc *crtc, bool enable);
 void syna_crtc_irq_handler(struct drm_crtc *crtc);
 
 struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev);
+void syna_hdmi_add_debugfs_entry(struct drm_connector *connector);
+void syna_hdmi_remove_debugfs_entry(struct drm_connector *connector);
 struct drm_connector *syna_dsi_connector_create(struct drm_device *dev);
 struct drm_connector *syna_lcdc_connector_create(struct drm_device *dev);
 
@@ -101,6 +104,7 @@ void drm_syna_encoder_suspend(struct syna_drm_private *dev_priv,
 
 int syna_modeset_early_init(struct syna_drm_private *dev_priv);
 int syna_modeset_late_init(struct syna_drm_private *dev_priv);
+void syna_modeset_early_cleanup(struct syna_drm_private *dev_priv);
 void syna_modeset_late_cleanup(struct syna_drm_private *dev_priv);
 int syna_modeset_createEntries(struct syna_drm_private *dev_priv);
 void syna_read_config_priv(vpp_config_params *p_vpp_config_param);

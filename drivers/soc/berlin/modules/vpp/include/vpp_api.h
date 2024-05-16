@@ -28,6 +28,9 @@
 
 #define VPP_CA_INIT_MAGIC_NUM 0xFACE
 
+#define HDMI_MAX_RES_ENABLED_60_30  61
+#define HDMI_MAX_RES_ENABLED_50_25  59
+
 /*Enable the macro when planes other than GFX is used for display with fastlogo.ta*/
 //#define VPP_ENABLE_USE_SET_STILL_PICTURE
 

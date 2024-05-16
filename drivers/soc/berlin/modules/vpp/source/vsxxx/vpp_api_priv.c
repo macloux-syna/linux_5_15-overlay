@@ -298,15 +298,18 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 
 	wrap_MV_VPPOBJ_SetDispOutParams(&dispParams, CPCB_1);
 
-	/* temporary workaround till dynamic format setting is working,
-	   query to check if sink supports 4K, if it supports full-4K,
-	   configure bootup resolution to be 4K30, else 1080p
-	 */
 	res = wrap_MV_VPPOBJ_GetHDMISinkCaps(&sinkCaps);
 	if (res == MV_VPP_OK) {
-		if (sinkCaps &
-		    ((1<<VPP_HDMI_SINKCAP_BITMASK_FULL4K)|(1<<VPP_HDMI_SINKCAP_BITMASK_4K30))) {
-			dispParams.uiResId = RES_4Kx2K30;
+		// Keep bootup mode matching fixedModeSetting configuration
+		if (sinkCaps & ((1<<VPP_HDMI_SINKCAP_BITMASK_FULL4K)|(1<<VPP_HDMI_SINKCAP_BITMASK_4K30))) {
+			dispParams.uiResId = (sinkCaps & (1<<VPP_HDMI_SINKCAP_BITMASK_PREF50FPS)) ?
+				HDMI_MAX_RES_ENABLED_50_25:HDMI_MAX_RES_ENABLED_60_30;
+		} else if ((dispParams.uiResId == RES_1080P60) && (sinkCaps & (1<<VPP_HDMI_SINKCAP_BITMASK_FHD))) {
+			dispParams.uiResId = (sinkCaps & (1<<VPP_HDMI_SINKCAP_BITMASK_PREF50FPS)) ?
+				RES_1080P50:RES_1080P60;
+		} else {
+			dispParams.uiResId = (sinkCaps & (1<<VPP_HDMI_SINKCAP_BITMASK_PREF50FPS)) ?
+				RES_720P50:RES_720P60;
 		}
 	}
 	pr_info("hdmi bootup to resId:%d colorfmt:%d bidepth:%d sinkcaps:%d\n",

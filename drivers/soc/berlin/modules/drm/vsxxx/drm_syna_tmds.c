@@ -58,11 +58,16 @@ syna_tmds_encoder_helper_mode_set(struct drm_encoder *encoder,
 	VPP_DISP_OUT_PARAMS dispParams;
 	int res_id;
 	int cpcb = CPCB_1;
+	struct syna_drm_private *dev_priv = encoder->dev->dev_private;
 
 	// Always use CPCB_1 for correct displaymode
 	MV_VPP_GetDispOutParams(cpcb, &dispParams);
 
 	if (encoder->encoder_type == DRM_MODE_ENCODER_TMDS) {
+		if (dev_priv->modeset_enabled == false) {
+			DRM_ERROR("skip hdmi modeset to (%d), handled internally\n",res_id);
+			return;
+		}
 		res_id = MV_VPP_GetResIndex(mode->hdisplay, mode->vdisplay,
 				mode->flags & DRM_MODE_FLAG_INTERLACE, mode->clock,
 				drm_mode_vrefresh(mode));

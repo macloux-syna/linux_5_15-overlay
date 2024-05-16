@@ -167,11 +167,15 @@ static int syna_late_load(struct drm_device *dev)
 static void syna_early_unload(struct drm_device *dev)
 {
 	int crtc_index;
+	struct syna_drm_private *dev_priv;
 
 	for (crtc_index=0; crtc_index < MAX_CRTC; crtc_index++) {
 		if (thread[crtc_index])
 			kthread_stop(thread[crtc_index]);
 	}
+
+	dev_priv = dev->dev_private;
+	syna_modeset_early_cleanup(dev_priv);
 }
 
 static void syna_late_unload(struct drm_device *dev)

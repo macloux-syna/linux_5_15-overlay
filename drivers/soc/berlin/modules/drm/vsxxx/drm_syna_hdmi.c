@@ -21,13 +21,71 @@
 #define MAX_EDID_BLOCKS 8 //Max EDID blocks supported by syna driver
 
 static char preferred_mode_name[DRM_DISPLAY_MODE_LEN] = "\0";
+static char max_supported_mode[DRM_DISPLAY_MODE_LEN] = "\0";
 
 module_param_string(hdmi_preferred_mode,
 			preferred_mode_name, DRM_DISPLAY_MODE_LEN, 0444);
-
 MODULE_PARM_DESC(hdmi_preferred_mode,
 		 "Specify the preferred mode (if supported), e.g. 1280x1024.");
+
+module_param_string(hdmi_fixed_4K_mode,
+			max_supported_mode, DRM_DISPLAY_MODE_LEN, 0444);
+MODULE_PARM_DESC(hdmi_fixed_4K_mode,
+		"When on fixed mode from driver, select max 4K mode. eg:4K60/4K30");
+
 MODULE_LICENSE("Dual MIT/GPL");
+
+static int hpd_handle_state_get(void *data, u64 *val)
+{
+	struct drm_connector *connector = data;
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
+
+	*val = syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.hpdHandlingEnabled;
+	return 0;
+}
+
+static int hpd_handle_state_set(void *data, u64 val)
+{
+	struct drm_connector *connector = data;
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
+
+	if (val) {
+		syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.hpdHandlingEnabled = true;
+	} else {
+		syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.hpdHandlingEnabled = false;
+	}
+
+	DRM_DEBUG_DRIVER("%s notification of HPD via drm core\n", val?"enabling":"disabling");
+	return 0;
+}
+DEFINE_DEBUGFS_ATTRIBUTE(hpd_handle_fops, hpd_handle_state_get, hpd_handle_state_set, "%llu\n");
+
+static int res_handle_state_get(void *data, u64 *val)
+{
+	struct drm_connector *connector = data;
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
+
+	*val = syna_hdmi->drm_priv->modeset_enabled;
+	return 0;
+}
+
+static int res_handle_state_set(void *data, u64 val)
+{
+	struct drm_connector *connector = data;
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
+	if (val) {
+		DRM_DEBUG_DRIVER("enabling resolution change support!\n");
+		syna_hdmi->drm_priv->modeset_enabled = true;
+		syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.fixedModeSet = false;
+	} else {
+		DRM_DEBUG_DRIVER("use fixed output mode!\n");
+		syna_hdmi->drm_priv->modeset_enabled = false;
+		syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.fixedModeSet = true;
+	}
+	/* takes effect on next HPD*/
+	return 0;
+}
+DEFINE_DEBUGFS_ATTRIBUTE(res_handle_fops, res_handle_state_get, res_handle_state_set, "%llu\n");
 
 static int syna_hdmi_get_edid (void *data, u8 *buf, unsigned int block, size_t len)
 {
@@ -205,9 +263,61 @@ static enum drm_connector_status syna_hdmi_hotplug_detect(
 					connector_status_disconnected);
 }
 
+static int syna_configure_def_res(void)
+{
+	VPP_HDMI_SINK_CAPS sinkCaps;
+	int retVal;
+	VPP_DISP_OUT_PARAMS dispParams;
+	int len = strlen(max_supported_mode);
+
+	MV_VPP_GetDispOutParams(CPCB_1, &dispParams);
+
+	/*configure the default resolution set on HDMI connection*/
+	retVal = wrap_MV_VPPOBJ_GetHDMISinkCaps(&sinkCaps);
+	if ((retVal == MV_VPP_OK)) {
+
+		/*Fixed mode only: Hardcode resolution to 4K30 on 4K TV, otherwise to 1080p60*/
+		if (sinkCaps & ((1<<VPP_HDMI_SINKCAP_BITMASK_FULL4K)|(1<<VPP_HDMI_SINKCAP_BITMASK_4K30))) {
+			dispParams.uiResId = (sinkCaps & (1<<VPP_HDMI_SINKCAP_BITMASK_PREF50FPS)) ?
+				HDMI_MAX_RES_ENABLED_50_25:HDMI_MAX_RES_ENABLED_60_30;
+			if (len) {
+				if (!strcmp("4K60", max_supported_mode))
+					dispParams.uiResId = RES_4Kx2K60;
+				else if (!strcmp("4K50", max_supported_mode))
+					dispParams.uiResId = RES_4Kx2K50;
+				else if (!strcmp("4K30", max_supported_mode))
+					dispParams.uiResId = RES_4Kx2K30;
+				else
+					dispParams.uiResId = RES_1080P60;
+
+				DRM_DEBUG_DRIVER("select resIndex:%d from user config\n", dispParams.uiResId);
+			}
+		} else if (sinkCaps & ((1<<VPP_HDMI_SINKCAP_BITMASK_FHD)))
+			dispParams.uiResId = (sinkCaps & (1<<VPP_HDMI_SINKCAP_BITMASK_PREF50FPS)) ?
+				RES_1080P50:RES_1080P60;
+		else
+			dispParams.uiResId = (sinkCaps & (1<<VPP_HDMI_SINKCAP_BITMASK_PREF50FPS)) ?
+				RES_720P50:RES_720P60;
+
+		DRM_DEBUG_DRIVER("HDMI_HPD detected, setting res to resId:%d colorfmt:%d bidepth:%d sinkcaps:%d\n",
+				dispParams.uiResId,dispParams.uiColorFmt,dispParams.uiBitDepth,
+				(retVal)?-1:sinkCaps);
+
+		//Set the display resolution
+		retVal = MV_VPP_SetDisplayResolution(CPCB_1, dispParams, 1);
+		if (retVal != MV_VPP_OK)
+			DRM_DEBUG_DRIVER("%s:%d: MV_VPP_SetDisplayResolution FAILED, error: 0x%x\n",
+					__func__, __LINE__, retVal);
+			/* don't handle error */
+	}
+
+	return retVal;
+}
+
 static int syna_hdmi_hpd_monitor(void *param)
 {
 	struct drm_connector *connector = (struct drm_connector *)param;
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
 	struct drm_device *dev = connector->dev;
 	unsigned char activeHpdStatus;
 	unsigned char hpdStatus;
@@ -216,17 +326,25 @@ static int syna_hdmi_hpd_monitor(void *param)
 	connector->status = syna_hdmi_hotplug_detect(connector, false);
 	activeHpdStatus = (connector->status == connector_status_connected) ? true : false;
 	DRM_DEBUG_DRIVER("startup HDMI connection state : %d\n", activeHpdStatus);
+	if (activeHpdStatus)
+		syna_configure_def_res();
 
 	while (!kthread_should_stop()) {
 		retVal = wrap_MV_VPP_WaitHdmiConnChange(&hpdStatus);
 		if (retVal != 0)
 			continue;
 
-		if (hpdStatus != activeHpdStatus) {
-			DRM_DEBUG_DRIVER("HDMI connection state changed to : %d\n", hpdStatus);
+		if ((hpdStatus != activeHpdStatus) &&
+			syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.hpdHandlingEnabled) {
+			DRM_INFO("HDMI connection state changed to : %d\n", hpdStatus);
 			activeHpdStatus = hpdStatus;
 			connector->status = hpdStatus ? connector_status_connected :
 							connector_status_disconnected;
+
+			if (syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.fixedModeSet
+				       && (hpdStatus==connector_status_connected))
+				syna_configure_def_res();
+
 			drm_kms_helper_hotplug_event(dev);
 		}
 	}
@@ -264,6 +382,10 @@ struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev)
 	if (retVal)
 		return ERR_PTR(retVal);
 
+	syna_hdmi->drm_priv = dev->dev_private;
+	syna_hdmi->drm_priv->modeset_enabled =
+		syna_hdmi->syna_hdmi_conf.hdmiTxConfigFields.fixedModeSet ? false : true;
+
 	connector = &syna_hdmi->base;
 	drm_connector_init(dev, connector, &syna_hdmi_connector_funcs,
 				DRM_MODE_CONNECTOR_HDMIA);
@@ -289,4 +411,26 @@ struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev)
 			 connector->name);
 
 	return connector;
+}
+
+void syna_hdmi_add_debugfs_entry(struct drm_connector *connector)
+{
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
+	struct dentry *root = connector->debugfs_entry;
+
+	/* control HPD handling */
+	syna_hdmi->debugfs_hpd_node = debugfs_create_file("enable_hpd_handle", S_IRUGO | S_IWUSR, root, connector,
+			&hpd_handle_fops);
+
+	/* control fixedModeset */
+	syna_hdmi->debugfs_res_node = debugfs_create_file("enable_res_config", S_IRUGO | S_IWUSR, root, connector,
+			&res_handle_fops);
+}
+
+void syna_hdmi_remove_debugfs_entry(struct drm_connector *connector)
+{
+	struct syna_conn_hdmi *syna_hdmi = to_syna_conn_hdmi(connector);
+
+	debugfs_remove(syna_hdmi->debugfs_hpd_node);
+	debugfs_remove(syna_hdmi->debugfs_res_node);
 }

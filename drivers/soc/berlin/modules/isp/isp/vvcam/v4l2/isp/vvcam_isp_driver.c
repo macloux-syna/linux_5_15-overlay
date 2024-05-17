@@ -78,12 +78,14 @@
 #include "vvcam_isp_platform.h"
 #endif
 
-#ifdef VVCAM_SUBDEV_PLATFORM_REGISTER
 #define VVCAM_ISP_DEFAULT_SENSOR        "imx258"
 #define VVCAM_ISP_DEFAULT_SENSOR_MODE   0
-#define VVCAM_ISP_DEFAULT_SENSOR_XML    "IMX258_30fps_1920_1080.xml"
-#define VVCAM_ISP_DEFAULT_SENSOR_MANU_JSON    "ISP8000_V6.1.1.Manual_ext.json"
-#define VVCAM_ISP_DEFAULT_SENSOR_AUTO_JSON    "ISP8000L_V5.0.0.Auto.json"
+#define VVCAM_ISP_DEFAULT_SENSOR_XML    "IMX258.xml"
+#define VVCAM_ISP_DEFAULT_SENSOR_MANU_JSON    "ISP_Manual.json"
+#define VVCAM_ISP_DEFAULT_SENSOR_AUTO_JSON    "ISP_Auto.json"
+#ifdef DOLPHIN
+#define VVCAM_ISP_DEFAULT_I2C_BUS_ID   3
+#define VVCAM_ISP_DEFAULT_MIPI_ID   0
 #endif
 
 struct vvcam_isp_mbus_fmt vvcam_isp_mp_fmts[] = {
@@ -732,7 +734,6 @@ static int vvcam_isp_parse_params(struct vvcam_isp_dev *isp_dev,
                         struct platform_device *pdev)
 {
 
-#ifdef VVCAM_SUBDEV_PLATFORM_REGISTER
     int port = 0;
     isp_dev->id  = pdev->id;
     for (port = 0; port < VVCAM_ISP_CHN_MAX; port++) {
@@ -745,11 +746,13 @@ static int vvcam_isp_parse_params(struct vvcam_isp_dev *isp_dev,
             strlen(VVCAM_ISP_DEFAULT_SENSOR_MANU_JSON));
         strncpy(isp_dev->sensor_info[port].auto_json, VVCAM_ISP_DEFAULT_SENSOR_AUTO_JSON,
             strlen(VVCAM_ISP_DEFAULT_SENSOR_AUTO_JSON));
+#ifdef DOLPHIN
+        isp_dev->sensor_info[port].i2c_bus_id = VVCAM_ISP_DEFAULT_I2C_BUS_ID;
+        isp_dev->sensor_info[port].mipi_id = VVCAM_ISP_DEFAULT_MIPI_ID;
+#endif
     }
-#else
     fwnode_property_read_u32(of_fwnode_handle(pdev->dev.of_node),
 			"id", &isp_dev->id);
-#endif
     return 0;
 }
 

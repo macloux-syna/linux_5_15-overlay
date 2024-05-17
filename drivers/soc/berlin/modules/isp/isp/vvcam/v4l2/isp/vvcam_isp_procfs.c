@@ -89,12 +89,16 @@ static int vvcam_isp_procfs_info_show(struct seq_file *sfile, void *offset)
 
         if (pad && (port != (pad_idx / VVCAM_ISP_CHN_MAX))) {
             port = pad_idx / VVCAM_ISP_CHN_MAX;
-            seq_printf(sfile, "isp%d port%d:\n", isp_dev->id, port);
-            seq_printf(sfile, "sensor   : %s\n", isp_dev->sensor_info[port].sensor);
-            seq_printf(sfile, "mode     : %d\n", isp_dev->sensor_info[port].mode);
-            seq_printf(sfile, "xml      : %s\n", isp_dev->sensor_info[port].xml);
-            seq_printf(sfile, "manu_json: %s\n", isp_dev->sensor_info[port].manu_json);
-            seq_printf(sfile, "auto_json: %s\n", isp_dev->sensor_info[port].auto_json);
+            seq_printf(sfile, "isp%d port%d :\n", isp_dev->id, port);
+            seq_printf(sfile, "sensor    : %s\n", isp_dev->sensor_info[port].sensor);
+            seq_printf(sfile, "mode      : %d\n", isp_dev->sensor_info[port].mode);
+            seq_printf(sfile, "xml       : %s\n", isp_dev->sensor_info[port].xml);
+            seq_printf(sfile, "manu_json : %s\n", isp_dev->sensor_info[port].manu_json);
+            seq_printf(sfile, "auto_json : %s\n", isp_dev->sensor_info[port].auto_json);
+#ifdef DOLPHIN
+            seq_printf(sfile, "i2c_bus_id: %d\n", isp_dev->sensor_info[port].i2c_bus_id);
+            seq_printf(sfile, "mipi_id   : %d\n", isp_dev->sensor_info[port].mipi_id);
+#endif
         }
     }
 
@@ -173,6 +177,19 @@ static int32_t vvcam_isp_proc_process(struct seq_file *sfile,
                     strncpy(isp_dev->sensor_info[port].auto_json, val, strlen(val));
                 }
             }
+#ifdef DOLPHIN
+            else if (strcmp(val, "i2c_bus_id") == 0) {
+                val = strsep(&kv_cur, kv_delim);
+                if (val && isdigit(*val)) {
+                    isp_dev->sensor_info[port].i2c_bus_id = (uint32_t)simple_strtoul(val, &end, 0);
+                }
+            } else if (strcmp(val, "mipi_id") == 0) {
+                val = strsep(&kv_cur, kv_delim);
+                if (val && isdigit(*val)) {
+                    isp_dev->sensor_info[port].mipi_id = (uint32_t)simple_strtoul(val, &end, 0);
+                }
+            }
+#endif
         }
     }
 

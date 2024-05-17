@@ -121,6 +121,10 @@ struct vvcam_isp_sensor_info {
 	char xml[64];
 	char manu_json[128];
 	char auto_json[128];
+#ifdef DOLPHIN
+	uint8_t i2c_bus_id;
+	uint8_t mipi_id;
+#endif
 };
 
 struct vvcam_isp_dev {

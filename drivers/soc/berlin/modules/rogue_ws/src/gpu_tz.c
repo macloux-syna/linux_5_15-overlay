@@ -56,8 +56,12 @@ static phys_addr_t                     fw_src_phy_addr;
 static phys_addr_t                     fw_phy_addr;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+static struct dma_heap *fw_nonsecure_dma_heap;
+static struct dma_heap *fw_secure_dma_heap;
 static struct dma_buf_attachment       *fw_src_buf_attach;
+static struct dma_buf_attachment       *fw_buf_attach;
 static struct sg_table                 *fw_src_table;
+static struct sg_table                 *fw_table;
 
 phys_addr_t getFWSecureHeapPaddr(struct sg_table *fw_table)
 {
@@ -68,11 +72,7 @@ phys_addr_t getFWSecureHeapPaddr(struct sg_table *fw_table)
 
 static PVRSRV_ERROR allocateFWAddress(void *pvOSDevice)
 {
-	struct dma_heap *fw_nonsecure_dma_heap;
-	struct dma_heap *fw_secure_dma_heap;
 	struct device *dev;
-	struct dma_buf_attachment       *fw_buf_attach;
-	struct sg_table *fw_table;
 
 	dev = (struct device *)pvOSDevice;
 	fw_nonsecure_dma_heap = dma_heap_find("reserved");
@@ -359,6 +359,28 @@ cleanupContext:
 	return res;
 }
 
+void deinit_tz()
+{
+	if(fw_dma_buf != NULL) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+		dma_buf_unmap_attachment(fw_buf_attach, fw_table, DMA_BIDIRECTIONAL);
+		dma_buf_detach(fw_dma_buf, fw_buf_attach);
+#endif
+		dma_heap_buffer_free(fw_dma_buf);
+		dma_heap_put(fw_secure_dma_heap);
+		fw_dma_buf = NULL;
+	}
+	if(fw_src_dma_buf != NULL) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 15, 0))
+		dma_buf_unmap_attachment(fw_src_buf_attach, fw_src_table, DMA_FROM_DEVICE);
+		dma_buf_detach(fw_src_dma_buf, fw_src_buf_attach);
+#endif
+		dma_heap_buffer_free(fw_src_dma_buf);
+		dma_heap_put(fw_nonsecure_dma_heap);
+		fw_src_dma_buf = NULL;
+	}
+}
+
 PVRSRV_ERROR syna_PFN_TD_SEND_FW_IMAGE(IMG_HANDLE hSysData, PVRSRV_TD_FW_PARAMS *psTDFWParams)
 {
 	TEEC_Operation operation;
@@ -395,6 +417,7 @@ PVRSRV_ERROR syna_PFN_TD_SEND_FW_IMAGE(IMG_HANDLE hSysData, PVRSRV_TD_FW_PARAMS 
 		dma_buf_unmap_attachment(fw_src_buf_attach, fw_src_table, DMA_FROM_DEVICE);
 		dma_buf_detach(fw_src_dma_buf, fw_src_buf_attach);
 		dma_heap_buffer_free(fw_src_dma_buf);
+		dma_heap_put(fw_nonsecure_dma_heap);
 		return PVRSRV_ERROR_DEVICEMEM_MAP_FAILED;
 	}
 	memcpy(fw_src_data.vaddr, psTDFWParams->pvFirmware, psTDFWParams->ui32FirmwareSize);
@@ -453,6 +476,7 @@ PVRSRV_ERROR syna_PFN_TD_SEND_FW_IMAGE(IMG_HANDLE hSysData, PVRSRV_TD_FW_PARAMS 
 		dma_buf_detach(fw_src_dma_buf, fw_src_buf_attach);
 #endif
 		dma_heap_buffer_free(fw_src_dma_buf);
+		dma_heap_put(fw_nonsecure_dma_heap);
 		fw_src_dma_buf = NULL;
 	}
 

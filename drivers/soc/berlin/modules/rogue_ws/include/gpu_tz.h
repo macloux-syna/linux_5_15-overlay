@@ -24,6 +24,7 @@ PVRSRV_ERROR syna_PFN_TD_RGXSTART(IMG_HANDLE hSysData);
 PVRSRV_ERROR syna_PFN_TD_RGXSTOP(IMG_HANDLE hSysData);
 PVRSRV_ERROR syna_TD_SET_GFX_CORE_CLOCK(unsigned int value);
 PVRSRV_ERROR init_tz(void *pvOSDevice);
+void deinit_tz(void);
 phys_addr_t getSecureHeapPaddr (void);
 #endif
 #endif

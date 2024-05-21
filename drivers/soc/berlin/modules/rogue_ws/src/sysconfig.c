@@ -244,7 +244,7 @@ PVRSRV_ERROR SysDevInit(void *pvOSDevice, PVRSRV_DEVICE_CONFIG **ppsDevConfig)
 #if defined(SUPPORT_TRUSTED_DEVICE)
 	eError = init_tz(pvOSDevice);
 	if (eError != PVRSRV_OK) {
-		return PVRSRV_ERROR_INVALID_DEVICE;
+		return eError;
 	}
 #endif
 
@@ -270,14 +270,20 @@ PVRSRV_ERROR SysDevInit(void *pvOSDevice, PVRSRV_DEVICE_CONFIG **ppsDevConfig)
 	pGfxAxiClk  = devm_clk_get_optional(&pPlatformDev->dev, "gfxaxi");
 	if (IS_ERR(pSysClk) || IS_ERR(pCoreClk) || IS_ERR(pGfxAxiClk)) {
 		printk(KERN_ERR "pvr: get clock from DTS failed.\n");
-		return PVRSRV_ERROR_INVALID_DEVICE;
+		if (IS_ERR_PROBE_DEFER(pSysClk) || IS_ERR_PROBE_DEFER(pCoreClk) ||
+					IS_ERR_PROBE_DEFER(pGfxAxiClk))
+			i32Status = PVRSRV_ERROR_PROBE_DEFER;
+		else
+			i32Status = PVRSRV_ERROR_INVALID_DEVICE;
+		goto DEINIT_TZ;
 	}
 
 	ui64ClockSpeed = clk_get_rate(pCoreClk);
 
 	if (!ui64ClockSpeed) {
 		printk(KERN_ERR "pvr: get clockspeed from DTS failed.\n");
-		return PVRSRV_ERROR_INVALID_DEVICE;
+		i32Status = PVRSRV_ERROR_INVALID_DEVICE;
+		goto DEINIT_TZ;
 	} else {
 		printk(KERN_ERR "pvr: ui64ClockSpeed=%lld.\n", ui64ClockSpeed);
 	}
@@ -451,6 +457,10 @@ DEINIT:
 #endif
 REMOVE_DEVICE:
 	gsDevices[0].pvOSDevice = NULL;
+DEINIT_TZ:
+#if defined(SUPPORT_TRUSTED_DEVICE)
+	deinit_tz();
+#endif
 	return i32Status;
 }
 
@@ -473,6 +483,10 @@ void SysDevDeInit(PVRSRV_DEVICE_CONFIG *psDevConfig)
 			devm_iounmap(&pSysData->pPlatformDev->dev, pSysData->resetReg);
 		}
 	}
+
+#if defined(SUPPORT_TRUSTED_DEVICE)
+	deinit_tz();
+#endif
 
 	psDevConfig->pvOSDevice = NULL;
 }

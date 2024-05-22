@@ -50,6 +50,7 @@ AVIO_INC_PATH += -I$(BERLIN_INC)/avio/
 AVIO_INC_PATH += -I$(BERLIN_INC)/avio/dhub
 AVIO_INC_PATH += -I$(BERLIN_INC)/avio/dhub/include
 AVIO_INC_PATH += -I$(BERLIN_INC)/avio/fastcall/include
+AVIO_INC_PATH += -I$(BERLIN_INC)/avio/mipi/include
 
 ###############################################################################
 #

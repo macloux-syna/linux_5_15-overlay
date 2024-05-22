@@ -7,6 +7,7 @@
 #include "hal_vpp_wrap.h"
 #include "avio_sub_module.h"
 #include "vpp_res_info.h"
+#include "hal_mipi_wrap.h"
 
 static mrvl_frame_size curr_input_frame_size[MAX_NUM_PLANES];
 static VPP_DISP_OUT_PARAMS curr_disp_res_params[MAX_NUM_CPCBS];
@@ -208,6 +209,17 @@ int __weak wrap_VPP_Init_Recovery(VPP_MEM_LIST *vpp_shm_list,
 	return 0;
 }
 
+int __weak wrap_mipi_initialize(struct device *dev,
+				vpp_config_params vpp_config_param)
+{
+	return 0;
+}
+
+void __weak wrap_mipi_deinit(void)
+{
+	return;
+}
+
 int MV_VPP_Init(VPP_MEM_LIST *shm_list, vpp_config_params vpp_config_params)
 {
 	int res = 0;
@@ -223,6 +235,9 @@ int MV_VPP_Init(VPP_MEM_LIST *shm_list, vpp_config_params vpp_config_params)
 		VPP_EnableDhubInterrupt(true);
 
 		res = wrap_VPP_Init_Recovery(shm_list, is_ampless_boot(), vpp_config_params);
+
+		if (!res)
+			res = wrap_mipi_initialize(shm_list->dev, vpp_config_params);
 
 		if (!res)
 			VPP_CreateISRTask();
@@ -241,6 +256,8 @@ void MV_VPP_Deinit(void)
 	wrap_MV_VPPOBJ_Destroy();
 	if (VPP_Is_Recovery_Mode())
 		VPP_StopISRTask();
+
+	wrap_mipi_deinit();
 	wrap_MV_VPP_DeInit();
 }
 

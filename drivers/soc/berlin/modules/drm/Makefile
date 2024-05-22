@@ -16,6 +16,7 @@ ifneq ($(filter y, $(CONFIG_AVIO_PLATYPUS) $(CONFIG_AVIO_DOLPHIN) $(CONFIG_AVIO_
     SYNA_DRM_TYPE = vsxxx
 else ifneq ($(filter y, $(CONFIG_AVIO_MYNA2) $(CONFIG_AVIO_AS470)), )
     SYNA_DRM_TYPE = asxxx
+    HEADER_PATH += -I$(srctree)/drivers/soc/berlin/modules/avio/mipi/include
 endif
 
 SYNA_DRM_DRV_ABS_PATH = $(DRM_ABS_PATH)/$(SYNA_DRM_TYPE)

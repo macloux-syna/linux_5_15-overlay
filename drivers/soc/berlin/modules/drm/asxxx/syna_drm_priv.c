@@ -11,6 +11,7 @@
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_atomic_helper.h>
 #include "syna_vpp.h"
+#include "hal_mipi_wrap.h"
 
 static const ENUM_PLANE_ID syna_primary_plane_id[MAX_CRTC] = {
 	PLANE_GFX0,
@@ -106,5 +107,5 @@ int syna_vpp_get_bm_details(struct dma_buf *dma_buf,
 
 int syna_dsi_panel_send_cmd (unsigned int cmdsize, unsigned char *pcmd)
 {
-	return 0;
+	return wrap_mipi_send_panel_cmd(cmdsize, pcmd);
 }

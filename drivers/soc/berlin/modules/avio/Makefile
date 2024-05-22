@@ -24,7 +24,7 @@ endif
 AVIO_FASTCALL_API_OBJS := fastcall/hal_dhub_fastcall_wrap.o
 AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/fastcall/include
 
-ifeq ($(CONFIG_OPTEE),y)
+ifneq ($(filter y m, $(CONFIG_OPTEE)),)
 AVIO_INC_PATH += -I$(srctree)/drivers/soc/berlin/modules/vpp/include
 else
 AVIO_INC_PATH += -I$(srctree)/drivers/soc/berlin/modules/tzd/tee/client_api \
@@ -105,7 +105,7 @@ endif
 ###############################################################################
 ifeq ($(USE_VPP_TA), 1)
 AVIO_VPP_API_OBJS := vpp/drv_vpp.o
-ifeq ($(CONFIG_OPTEE),y)
+ifneq ($(filter y m, $(CONFIG_OPTEE)),)
 AVIO_VPP_API_OBJS += vpp/ca/source/tee_ca_vpp_optee.o
 else
 AVIO_VPP_API_OBJS += vpp/ca/source/tee_ca_vpp.o
@@ -117,6 +117,12 @@ endif
 ###############################################################################
 # VPP : code specific to ntz version
 ###############################################################################
+ifneq ($(filter y m, $(CONFIG_AVIO_MYNA2)),)
+USE_MIPI_DSI_TA := 1
+else
+USE_MIPI_DSI_TA := 0
+endif
+
 ifeq ($(USE_VPP_TA), 0)
 
 include $(AVIO_ABS_PATH)/lcdc/lcdc.mak
@@ -128,6 +134,22 @@ AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/vpp/ca/include/asxxx
 AVIO_VPP_API_OBJS += vpp/ca/source/hal_vpp_ntz.o
 AVIO_VPP_API_OBJS += vpp/common/source/bcmbuf.o
 AVIO_VPP_API_OBJS += vpp/common/source/framequeue.o
+
+AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/mipi/include
+AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/mipi/tz
+AVIO_INC_PATH += -I$(AVIO_ABS_PATH)/mipi/ntz
+AVIO_VPP_API_OBJS += mipi/hal_mipi_wrap.o
+
+ifeq ($(USE_MIPI_DSI_TA), 1)
+ifneq ($(filter y m, $(CONFIG_OPTEE)),)
+AVIO_VPP_API_OBJS += mipi/tz/ca/tee_ca_mipi_optee.o
+else
+AVIO_VPP_API_OBJS += mipi/tz/ca/tee_ca_mipi.o
+endif
+else
+AVIO_VPP_API_OBJS += mipi/ntz/mipi_ntz.o
+endif
+
 endif
 
 ###############################################################################
@@ -152,7 +174,7 @@ AVIO_DHUB_API_OBJS := dhub/drv_dhub.o
 AVIO_DHUB_API_OBJS += dhub/avio_dhub_drv.o
 AVIO_DHUB_API_OBJS += dhub/hal/hal_dhub_wrap.o
 AVIO_DHUB_API_OBJS += dhub/hal/hal_dhub.o
-ifeq ($(CONFIG_OPTEE),y)
+ifneq ($(filter y m, $(CONFIG_OPTEE)),)
 AVIO_DHUB_API_OBJS += dhub/ca/tee_ca_dhub_optee.o
 else
 AVIO_DHUB_API_OBJS += dhub/ca/tee_ca_dhub.o

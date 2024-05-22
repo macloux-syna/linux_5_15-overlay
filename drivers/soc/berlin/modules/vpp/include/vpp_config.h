@@ -4,6 +4,8 @@
 #ifndef _VPP_CFG_H_
 #define _VPP_CFG_H_
 
+#include "vpp_mem.h"
+
 typedef void (*CallbackHandler)(void* data);
 
 typedef struct vpp_config_params {

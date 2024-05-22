@@ -90,8 +90,12 @@ syna_encoder_helper_mode_set(struct drm_encoder *encoder,
 	lcdcConfig.upper_margin = mode->vtotal - mode->vsync_end; //BP
 	lcdcConfig.pixclock = mode->clock ;
 
-	lcdcConfig.rgb_swap = lcdc_rgb_swap;
-	VPP_Clock_Set_Rate(PIXEL_CLOCK_RATE(lcdcConfig.pixclock));
+	if (encoder->index) {
+		VPP_Clock_Set_Rate_Ext(PIXEL_CLOCK_RATE(lcdcConfig.pixclock));
+	} else {
+		lcdcConfig.rgb_swap = lcdc_rgb_swap;
+		VPP_Clock_Set_Rate(PIXEL_CLOCK_RATE(lcdcConfig.pixclock));
+	}
 
 	if(dev_priv->connector[encoder->index] && dev_priv->panel[encoder->index])
 		drm_panel_prepare(dev_priv->panel[encoder->index]);

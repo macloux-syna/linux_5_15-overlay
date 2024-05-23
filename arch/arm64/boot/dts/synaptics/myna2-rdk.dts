@@ -222,14 +222,6 @@
 	};
 };
 
-&i2c3 {
-	status = "okay";
-	clock-frequency = <100000>;
-	pinctrl-0 = <&i2c3_pmux>;
-	pinctrl-names = "default";
-
-};
-
 &pinctrl {
 	gmac0_pmux: gmac0-pmux {
 		groups = "RGMIITXC", "RGMIITD0", "RGMIITD1", "RGMIITD2", "RGMIITD3", "RGMIITXCTL", "RGMIIRXC", "RGMIIRD0", "RGMIIRD1", "RGMIIRD2", "RGMIIRD3", "RGMIIRXCTL", "RGMII_CLK_OUT";
@@ -264,12 +256,6 @@
 	i2c2_pmux: i2c2-pmux {
 		groups = "TW2_SCL", "TW2_SDA";
 		function = "tw2";
-		drive-strength = <7>;
-	};
-
-	i2c3_pmux: i2c3-pmux {
-		groups = "TW3_SCL", "TW3_SDA";
-		function = "tw3";
 		drive-strength = <7>;
 	};
 

@@ -1057,7 +1057,7 @@ int VPP_CA_SemOper(int cmd_id, int sem_id, int *pParam)
 
 	memset(param, 0, sizeof(param));
 	param[0].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT;
-	param[1].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT;
+	param[1].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT;
 
 	param[0].u.value.a = cmd_id;
 	param[0].u.value.b = sem_id;
@@ -1088,7 +1088,7 @@ int VPP_CA_EnableHdmiAudioFmt(int enable)
 	pSession = &(TAVPPInstance[index].session);
 
 	memset(param, 0, sizeof(param));
-	param[0].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INPUT;
+	param[0].attr = TEE_IOCTL_PARAM_ATTR_TYPE_VALUE_INOUT;
 
 	param[0].u.value.a = enable;
 	/* clear result */

@@ -667,13 +667,13 @@
 		   FixedModeset - 1:Enable mode config from within drm driver(on HPD), disable modeset interface to user
 				  0:Expose user interface to set mode, don't control from within drm driver
 		 */
-		hdtx-core-config = /bits/ 8 <0 1>;
+		hdtx-core-config = /bits/ 8 <1 1>;
 		/* Select format IDs enabled for profile. enter number of entries (inclusive) followed by entries <size, n1, n2..>
 		   ID to res mapping as below
 		   1280x720P30=10 1280x720P60=13
 		   1920x1080P24=22 1920x1080P25=21 1920x1080P30=19 1920x1080P50=26 1920x1080P59.94=25 1920x1080P60=24
 		   3840x2160P24=57 3840x2160P25=59 3840x2160P30=61 3840x2160P50=62 3840x2160P59.94=63 3840x2160P60=64 */
-		hdtx-supported-formats = /bits/ 8 <9 10 13 22 21 19 26 25 24>;
+		hdtx-supported-formats = /bits/ 8 <12 10 13 22 21 19 26 25 24 61 62 64>;
 	};
 };
 

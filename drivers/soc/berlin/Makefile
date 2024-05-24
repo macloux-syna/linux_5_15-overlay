@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: GPL-2.0-only
-obj-$(CONFIG_BERLIN_CHIPID) += berlin-chipid.o
 obj-$(CONFIG_BERLIN_TZD) += modules/tzd/
 obj-$(CONFIG_BERLIN_SHM) += modules/shm/
 obj-$(CONFIG_BERLIN_CC)  += modules/cc/

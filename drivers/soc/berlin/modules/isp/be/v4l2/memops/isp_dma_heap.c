@@ -31,7 +31,6 @@ struct isp_dma_buf {
 	void                        *paddr_pt;//Physical address page table
 	unsigned long               size;
 	void                        *cookie;
-	dma_addr_t                  dma_addr;
 	unsigned long               attrs;
 	enum dma_data_direction     dma_dir;
 	struct sg_table             *dma_sgt;
@@ -237,16 +236,13 @@ static void isp_dma_heap_free(void *buf_priv)
 	if (!refcount_dec_and_test(&buf->refcount))
 		return;
 
-	if (buf->mem_type == SHM_NONSECURE_CONTIG) {
-		/* The map is already mapped which needs to be removed */
-		if (buf->vaddr)
-			dma_buf_vunmap(buf->cookie, buf->map);
+	if (buf->vaddr)
+		dma_buf_vunmap(buf->cookie, buf->map);
 
-		if (buf->db_attach) {
-			dma_buf_unmap_attachment(buf->db_attach, buf->dma_sgt, DMA_BIDIRECTIONAL);
-			dma_buf_detach(buf->cookie, buf->db_attach);
-			buf->db_attach = NULL;
-		}
+	if (buf->db_attach) {
+		dma_buf_unmap_attachment(buf->db_attach, buf->dma_sgt, DMA_BIDIRECTIONAL);
+		dma_buf_detach(buf->cookie, buf->db_attach);
+		buf->db_attach = NULL;
 	}
 
 	if (buf->cookie)
@@ -297,59 +293,50 @@ static void *get_isp_dma_heap_alloc(struct isp_dma_heap_dev *memdev,
 	pr_debug("The name of DMA buf %s\n", ((struct dma_buf *)(buf->cookie))->exp_name);
 	buf->mem_type = memdev->mem_type;
 
-	if (memdev->mem_type == SHM_NONSECURE_CONTIG) {
+	buf->db_attach = dma_buf_attach(buf->cookie, dev);
+	if (IS_ERR(buf->db_attach)) {
+		pr_err("%s:dma attach failed\n",  __func__);
+		ret = PTR_ERR(buf->db_attach);
+		goto failed_attach;
+	}
 
-		buf->db_attach = dma_buf_attach(buf->cookie, dev);
-		if (IS_ERR_OR_NULL(buf->db_attach)) {
-			pr_err("%s:dma attach failed\n",  __func__);
-			ret = -ENOMEM;
-			goto failed_attach;
-		}
+	buf->dma_sgt = dma_buf_map_attachment(buf->db_attach, DMA_BIDIRECTIONAL);
+	if (IS_ERR(buf->dma_sgt)) {
+		pr_err("%s: dma map attachment failed for sgt\n", __func__);
+		ret = PTR_ERR(buf->dma_sgt);
+		goto failed_attachment;
+	}
 
-		buf->dma_sgt = dma_buf_map_attachment(buf->db_attach, DMA_BIDIRECTIONAL);
-		if (IS_ERR_OR_NULL(buf->dma_sgt)) {
-			pr_err("%s: dma map attachment failed for sgt\n", __func__);
-			ret = -ENOMEM;
-			goto failed_attachment;
-		}
+	ret = dma_buf_begin_cpu_access(buf->cookie, DMA_BIDIRECTIONAL);
+	if (ret != 0) {
+		pr_err("%s: dma_buf_begin_cpu_access failed\n", __func__);
+		goto failed_cpu_access;
+	}
 
-		if (dma_buf_begin_cpu_access(buf->cookie, DMA_BIDIRECTIONAL) != 0) {
-			pr_err("%s: dma_buf_begin_cpu_access failed\n", __func__);
-			ret = -ENOMEM;
-			goto failed_cpu_access;
-		}
-
-		ret = dma_buf_vmap(buf->db_attach->dmabuf, buf->map);
-		buf->dma_addr = (dma_addr_t) buf->map->vaddr;
-		if (buf->dma_addr == (dma_addr_t) NULL) {
-			pr_err("%s: dma_buf_vmap failed\n", __func__);
-			ret = -ENOMEM;
-			goto failed_vmap;
-		}
-
-		pr_debug("The new mapped Kaddr %llx and cookie %lx\n",
-				buf->dma_addr, (unsigned long)buf->cookie);
-
-		if ((buf->attrs & DMA_ATTR_NO_KERNEL_MAPPING) == 0)
-			buf->vaddr = (void *) buf->dma_addr;
-
-		//Get the physical address of the memory
-		buf->paddr = (void *)sg_dma_address(buf->dma_sgt->sgl);
-
-	} else if (memdev->mem_type == SHM_NONSECURE_NON_CONTIG) {
-
+	if (memdev->mem_type == SHM_NONSECURE_NON_CONTIG) {
 		/* bm will attach buffer */
 		fb_param.fb_type = SHM_MMU_GENERIC;
 		ret = bm_create_pt(buf->cookie, 0, &fb_param, &buf->pt_param);
 		if (ret) {
 			pr_err("bm refuse to register: %d\n", ret);
-			ret = -ENOMEM;
-			goto failed_attach;
+			goto failed_cpu_access;
 		}
 
 		buf->paddr_pt = (void *)buf->pt_param.phy_addr;
-		buf->vaddr = NULL;
+	} else if (memdev->mem_type == SHM_NONSECURE_CONTIG) {
+
+		ret = dma_buf_vmap(buf->db_attach->dmabuf, buf->map);
+		if (!ret && buf->map->vaddr) {
+			buf->vaddr = buf->map->vaddr;
+		} else {
+			pr_err("%s: dma_buf_vmap failed\n", __func__);
+			goto failed_vmap;
+		}
+
+		/* get the physical address of the memory */
+		buf->paddr = (void *)sg_dma_address(buf->dma_sgt->sgl);
 	}
+
 	/* Prevent the device from being released while the buffer is used */
 	buf->dev = get_device(dev);
 	buf->size = size;
@@ -366,7 +353,6 @@ static void *get_isp_dma_heap_alloc(struct isp_dma_heap_dev *memdev,
 
 	return buf;
 failed_vmap:
-	dma_buf_vunmap(buf->cookie, buf->map);
 	dma_buf_end_cpu_access(buf->cookie, DMA_BIDIRECTIONAL);
 failed_cpu_access:
 	dma_buf_unmap_attachment(buf->db_attach, buf->dma_sgt, DMA_BIDIRECTIONAL);
@@ -400,8 +386,6 @@ static void *vb2_isp_dma_heap_alloc(struct vb2_buffer *vb, struct device *dev,
 	}
 
 	buf->attrs = vb->vb2_queue->dma_attrs;
-	if ((buf->attrs & DMA_ATTR_NO_KERNEL_MAPPING) == 0)
-		buf->vaddr = (void *) buf->dma_addr;
 
 	/* Prevent the device from being released while the buffer is used */
 	buf->dma_dir = vb->vb2_queue->dma_dir;
@@ -497,19 +481,13 @@ static int vb2_dma_heap_dmabuf_ops_vmap(struct dma_buf *dbuf,
 	int ret = 0;
 
 	if (!buf->vaddr) {
-		buf->db_attach = dma_buf_attach(buf->cookie, buf->dev);
-		if (IS_ERR_OR_NULL(buf->db_attach)) {
-			pr_err("%s:dma attach failed\n",  __func__);
-			ret = -ENOMEM;
-			goto failed_attach;
-		}
-
+		WARN_ON(!buf->db_attach);
 		ret = dma_buf_vmap(buf->db_attach->dmabuf, buf->map);
 
-		buf->dma_addr = (dma_addr_t) buf->map->vaddr;
-		if (buf->dma_addr == (dma_addr_t) NULL) {
+		if (!ret && buf->map->vaddr) {
+			buf->vaddr = buf->map->vaddr;
+		} else {
 			pr_err("%s: dma_buf_vmap failed\n", __func__);
-			ret = -ENOMEM;
 			goto failed_vmap;
 		}
 		memcpy(map, buf->map, sizeof(struct dma_buf_map));
@@ -519,8 +497,6 @@ static int vb2_dma_heap_dmabuf_ops_vmap(struct dma_buf *dbuf,
 
 	return 0;
 failed_vmap:
-	dma_buf_vunmap(buf->cookie, buf->map);
-failed_attach:
 	return ret;
 }
 
@@ -529,10 +505,9 @@ static void vb2_dma_heap_dmabuf_ops_vunmap(struct dma_buf *dbuf,
 {
 	struct isp_dma_buf *buf = dbuf->priv;
 
-	if (!buf->vaddr &&  buf->db_attach) {
+	if (buf->vaddr &&  buf->db_attach) {
 		dma_buf_vunmap(buf->db_attach->dmabuf, map);
-		dma_buf_detach(buf->cookie, buf->db_attach);
-		buf->db_attach = NULL;
+		buf->vaddr = NULL;
 	}
 }
 

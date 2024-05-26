@@ -65,6 +65,7 @@ static const struct of_device_id isp_match[] = {
 	{.compatible = "syna,dolphin-isp"},
 	{},
 };
+MODULE_DEVICE_TABLE(of, isp_match);
 
 #define isp_module_fops_iter(fops_func)					\
 static int isp_invoke_mod_##fops_func(isp_device *isp_dev,		\

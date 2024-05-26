@@ -535,14 +535,13 @@ static int ovp_drv_probe(struct platform_device *pdev)
 	}
 
 	hOvpCtx->ovp_clk = devm_clk_get(ovp_device.dev, OVP_MODULE_CLK);
-	if (!IS_ERR(hOvpCtx->ovp_clk)) {
-		ret = clk_prepare_enable(hOvpCtx->ovp_clk);
-		if (ret < 0) {
-			ovp_error("%s prepare failed..!\n", OVP_MODULE_CLK);
-			goto err_fail2;
-		}
-	} else {
-		ovp_error("failed to get %s ...!\n", OVP_MODULE_CLK);
+	if (IS_ERR(hOvpCtx->ovp_clk))
+		return PTR_ERR(hOvpCtx->ovp_clk);
+
+	ret = clk_prepare_enable(hOvpCtx->ovp_clk);
+	if (ret < 0) {
+		ovp_error("%s prepare failed..!\n", OVP_MODULE_CLK);
+		goto err_fail2;
 	}
 
 	ret = alloc_chrdev_region(&pedev, 0, OVP_MAX_DEVS, OVP_DEVICE_NAME);

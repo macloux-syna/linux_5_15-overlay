@@ -914,6 +914,7 @@ static const struct of_device_id shm_match[] = {
 	{.compatible = "syna,berlin-shm",},
 	{},
 };
+MODULE_DEVICE_TABLE(of, shm_match);
 
 static struct platform_driver shm_driver = {
 	.probe = shm_probe,

@@ -58,6 +58,8 @@ typedef enum PVRSRV_ERROR_TAG
 
 } PVRSRV_ERROR;
 
+#define IS_ERR_PROBE_DEFER(x) (PTR_ERR(x) == -EPROBE_DEFER)
+
 /*!
  * @Function PVRSRVIsRetryError
  * @Description Checks if error code is one of the errors that require retry

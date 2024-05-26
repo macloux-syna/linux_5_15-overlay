@@ -202,8 +202,3 @@ int syna_panel_dsi_init(struct platform_device *pdev)
 
 	return err;
 }
-
-void syna_panel_dsi_deinit (void)
-{
-	kfree(synaPanelInfo.cmd);
-}

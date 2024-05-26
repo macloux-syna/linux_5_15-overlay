@@ -1634,14 +1634,12 @@ static int drv_aout_config(struct platform_device *pdev)
 			continue;
 		irq = platform_get_irq_byname(pdev, name);
 
-		if (irq < 0) {
-			aout_error("fail to get irq(%s) for node %s\n",
-				   name, pdev->name);
-		} else {
-			aout_trace("irq(%s) = %d\n", name, irq);
-			aout_trace("irqd_to_hwirq(irq_get_irq_data(%d)) = %d\n",
-				irq, (u32)irqd_to_hwirq(irq_get_irq_data(irq)));
-		}
+		if (irq < 0)
+			return irq;
+
+		aout_trace("irq(%s) = %d\n", name, irq);
+		aout_trace("irqd_to_hwirq(irq_get_irq_data(%d)) = %d\n",
+			   irq, (u32)irqd_to_hwirq(irq_get_irq_data(irq)));
 		aout->ap[i].irq = irq;
 	}
 

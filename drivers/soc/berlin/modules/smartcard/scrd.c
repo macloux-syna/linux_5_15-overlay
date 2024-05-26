@@ -592,6 +592,7 @@ static const struct of_device_id scrd_match[] = {
 	{.compatible = "syna,berlin-scrd",},
 	{},
 };
+MODULE_DEVICE_TABLE(of, scrd_match);
 
 static SIMPLE_DEV_PM_OPS(scrd_pmops, scrd_suspend,
 			scrd_resume);

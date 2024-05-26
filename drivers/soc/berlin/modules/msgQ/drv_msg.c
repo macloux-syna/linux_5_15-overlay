@@ -8,6 +8,7 @@
  */
 
 #include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/mm.h>
 #include <linux/slab.h>
 #include "drv_msg.h"
@@ -154,3 +155,5 @@ void AMPMsgQ_Post(AMPMsgQ_t * pMsgQ, int id)
 	AMPMsgQ_Add(pMsgQ, &msg);
 }
 EXPORT_SYMBOL(AMPMsgQ_Post);
+
+MODULE_LICENSE("GPL v2");

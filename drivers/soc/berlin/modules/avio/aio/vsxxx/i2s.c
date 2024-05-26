@@ -324,6 +324,7 @@ int aio_set_xfeed_mode(void *hd, s32 i2sid, u32 lrclk, u32 bclk)
 
 	return 0;
 }
+EXPORT_SYMBOL(aio_set_xfeed_mode);
 
 static void aio_set_prisrc(void *hd, u32 src, u8 *map_val)
 {
@@ -628,6 +629,7 @@ int aio_configure_loopback(void *hd, u32 id, u8 chan_num, u8 dummy_data)
 	}
 	return ret;
 }
+EXPORT_SYMBOL(aio_configure_loopback);
 
 int aio_setspdif_en(void *hd, bool enable)
 {

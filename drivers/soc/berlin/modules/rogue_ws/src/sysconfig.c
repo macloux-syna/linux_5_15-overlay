@@ -241,6 +241,20 @@ PVRSRV_ERROR SysDevInit(void *pvOSDevice, PVRSRV_DEVICE_CONFIG **ppsDevConfig)
 		return PVRSRV_ERROR_INVALID_DEVICE;
 	}
 
+	/* Get sys/core clock */
+	pSysClk     = devm_clk_get_optional(&pPlatformDev->dev, "gfx3dsys");
+	pCoreClk    = devm_clk_get(&pPlatformDev->dev, "gfx3dcore");
+	pGfxAxiClk  = devm_clk_get_optional(&pPlatformDev->dev, "gfxaxi");
+	if (IS_ERR(pSysClk) || IS_ERR(pCoreClk) || IS_ERR(pGfxAxiClk)) {
+		if (IS_ERR_PROBE_DEFER(pSysClk) || IS_ERR_PROBE_DEFER(pCoreClk) ||
+					IS_ERR_PROBE_DEFER(pGfxAxiClk)) {
+			return PVRSRV_ERROR_PROBE_DEFER;
+		} else {
+			printk(KERN_ERR "pvr: get clock from DTS failed.\n");
+			return PVRSRV_ERROR_INVALID_DEVICE;
+		}
+	}
+
 #if defined(SUPPORT_TRUSTED_DEVICE)
 	eError = init_tz(pvOSDevice);
 	if (eError != PVRSRV_OK) {
@@ -264,20 +278,6 @@ PVRSRV_ERROR SysDevInit(void *pvOSDevice, PVRSRV_DEVICE_CONFIG **ppsDevConfig)
 	/*
 	 * Setup RGX specific timing data
 	 */
-	/* Get sys/core clock */
-	pSysClk     = devm_clk_get_optional(&pPlatformDev->dev, "gfx3dsys");
-	pCoreClk    = devm_clk_get(&pPlatformDev->dev, "gfx3dcore");
-	pGfxAxiClk  = devm_clk_get_optional(&pPlatformDev->dev, "gfxaxi");
-	if (IS_ERR(pSysClk) || IS_ERR(pCoreClk) || IS_ERR(pGfxAxiClk)) {
-		printk(KERN_ERR "pvr: get clock from DTS failed.\n");
-		if (IS_ERR_PROBE_DEFER(pSysClk) || IS_ERR_PROBE_DEFER(pCoreClk) ||
-					IS_ERR_PROBE_DEFER(pGfxAxiClk))
-			i32Status = PVRSRV_ERROR_PROBE_DEFER;
-		else
-			i32Status = PVRSRV_ERROR_INVALID_DEVICE;
-		goto DEINIT_TZ;
-	}
-
 	ui64ClockSpeed = clk_get_rate(pCoreClk);
 
 	if (!ui64ClockSpeed) {

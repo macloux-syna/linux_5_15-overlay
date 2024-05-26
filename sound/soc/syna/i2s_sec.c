@@ -412,6 +412,8 @@ static int i2s_sec_probe(struct platform_device *pdev)
 					      &i2s_sec_dai, 1);
 	if (ret) {
 		snd_printk("failed to register DAI: %d\n", ret);
+		close_aio(sec->aio_handle);
+		sec->aio_handle = NULL;
 		return ret;
 	}
 	snd_printd("%s: done irq %d chid %d\n", __func__, sec->irq, sec->chid);

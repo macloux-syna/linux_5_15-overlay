@@ -594,6 +594,8 @@ static int i2s_mic1_probe(struct platform_device *pdev)
 					      &i2s_mic1_dai, 1);
 	if (ret) {
 		snd_printk("failed to register DAI: %d\n", ret);
+		close_aio(mic1->aio_handle);
+		mic1->aio_handle = NULL;
 		return ret;
 	}
 	snd_printd("%s: done irqc %d\n", __func__, mic1->irqc);

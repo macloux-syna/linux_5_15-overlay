@@ -887,8 +887,10 @@ static int syna_i2s_soc_dai_probe(struct platform_device *pdev)
 	aio_enable_audio_timer(soc_dai->aio_handle, true);
 
 	irq = platform_get_irq_byname(pdev, "tx");
-	if (irq < 0)
-		return irq;
+	if (irq < 0) {
+		ret = irq;
+		goto err;
+	}
 
 	soc_dai->mode |= I2SO_MODE;
 	i2s_tx->i2s_irq = irq;
@@ -898,8 +900,10 @@ static int syna_i2s_soc_dai_probe(struct platform_device *pdev)
 	snd_printd("tx irq %d irq_child %d for node %s\n", irq, i2s_tx->i2s_chid, pdev->name);
 
 	irq = platform_get_irq_byname(pdev, "rx");
-	if (irq < 0)
-		return irq;
+	if (irq < 0) {
+		ret = irq;
+		goto err;
+	}
 
 	soc_dai->mode |= I2SI_MODE;
 	i2s_rx->i2s_irq = irq;
@@ -964,12 +968,13 @@ static int syna_i2s_soc_dai_probe(struct platform_device *pdev)
 					      &syna_play_dai, 1);
 	} else {
 		snd_printk("non valid irq found in dts\n");
-		return -EINVAL;
+		ret = -EINVAL;
+		goto err;
 	}
 
 	if (ret) {
 		snd_printk("failed to register DAI: %d\n", ret);
-		return ret;
+		goto err;
 	}
 
 	soc_dai->rxDataMode = AIO_I2S_RX_DATA_IN_PAD;
@@ -987,6 +992,10 @@ static int syna_i2s_soc_dai_probe(struct platform_device *pdev)
 	snd_printd("%s: done i2s tx chid %d rx chid %d\n", __func__,
 		   i2s_tx->i2s_chid, i2s_rx->i2s_chid);
 	return 0;
+err:
+	close_aio(soc_dai->aio_handle);
+	soc_dai->aio_handle = NULL;
+	return ret;
 }
 
 static int syna_i2s_soc_dai_remove(struct platform_device *pdev)

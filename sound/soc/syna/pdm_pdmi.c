@@ -218,6 +218,8 @@ static int pdm_pdmi_probe(struct platform_device *pdev)
 					      &pdm_pdmi_dai, 1);
 	if (ret) {
 		snd_printk("failed to register DAI: %d\n", ret);
+		close_aio(pdmi->aio_handle);
+		pdmi->aio_handle = NULL;
 		return ret;
 	}
 

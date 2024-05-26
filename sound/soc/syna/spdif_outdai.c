@@ -198,6 +198,10 @@ static int spdif_outdai_probe(struct platform_device *pdev)
 	outdai->dev_name = dev_name(dev);
 	outdai->dev = dev;
 
+	irq = platform_get_irq_byname(pdev, "spdifo");
+	if (irq < 0)
+		return irq;
+
 	/*open aio handle for alsa*/
 	outdai->aio_handle = open_aio(outdai->dev_name);
 	if (unlikely(outdai->aio_handle == NULL)) {
@@ -205,10 +209,6 @@ static int spdif_outdai_probe(struct platform_device *pdev)
 		return -EBUSY;
 	}
 	dev_set_drvdata(dev, outdai);
-
-	irq = platform_get_irq_byname(pdev, "spdifo");
-	if (irq < 0)
-		return irq;
 
 	outdai->mode |= SPDIFO_MODE;
 	outdai->spdif_irq = irq;
@@ -220,6 +220,8 @@ static int spdif_outdai_probe(struct platform_device *pdev)
 					      &berlin_outdai_dai, 1);
 	if (ret) {
 		snd_printk("failed to register DAI: %d\n", ret);
+		close_aio(outdai->aio_handle);
+		outdai->aio_handle = NULL;
 		return ret;
 	}
 	snd_printd("spdif [%d %d]\n", outdai->spdif_irq, outdai->spdif_chid);

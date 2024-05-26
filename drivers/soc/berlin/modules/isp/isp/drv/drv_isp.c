@@ -83,20 +83,12 @@ void isp_drv_core_clear_intr(int intr_num, int *status, void *mod_base)
 
 static int isp_drv_core_probe(isp_device *isp_dev, isp_module_ctx *mod_ctx)
 {
-	struct resource *r;
 	ISP_CORE_CTX *hCoreCtx = (ISP_CORE_CTX *)mod_ctx->mod_prv;
 	struct platform_device *pdev = to_platform_device(isp_dev->dev);
 
-	r = platform_get_resource_byname(pdev,
-			IORESOURCE_IRQ, ISP_CORE_SUB_MODULE);
-
-	if (!r) {
-		ispcore_error(
-			"Failed to get interrupt for ISP Core Sub Module\n");
-		return -EINVAL;
-	}
-
-	hCoreCtx->irq_num = r->start;
+	hCoreCtx->irq_num = platform_get_irq_byname(pdev, ISP_CORE_SUB_MODULE);
+	if (hCoreCtx->irq_num < 0)
+		return hCoreCtx->irq_num;
 
 	return 0;
 }

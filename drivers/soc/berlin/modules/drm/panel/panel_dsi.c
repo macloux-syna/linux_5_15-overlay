@@ -123,7 +123,7 @@ int syna_panel_dsi_init(struct platform_device *pdev)
 	int err = 0;
 	struct device *mipi_dev;
 
-	mipi_dev = kmalloc(sizeof(struct device), GFP_KERNEL);
+	mipi_dev = devm_kmalloc(&pdev->dev, sizeof(struct device), GFP_KERNEL);
 	mipi_dev->of_node = of_find_compatible_node(NULL, NULL, "syna,drm-dsi");
 
 	if (!mipi_dev->of_node) {

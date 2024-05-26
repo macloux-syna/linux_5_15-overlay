@@ -921,12 +921,16 @@ static struct platform_driver tzd_driver = {
 		.owner	= THIS_MODULE,
 	},
 };
-module_platform_driver(tzd_driver);
 
 static int __init tzd_platdev_init(void)
 {
-	return PTR_ERR_OR_ZERO(platform_device_register_simple("berlin-tzd",
-				-1, NULL, 0));
+	struct platform_device *pdev;
+
+	pdev = platform_device_register_simple("berlin-tzd", -1, NULL, 0);
+	if (IS_ERR(pdev))
+		return PTR_ERR(pdev);
+
+	return platform_driver_register(&tzd_driver);
 }
 device_initcall_sync(tzd_platdev_init);
 

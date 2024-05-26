@@ -935,6 +935,7 @@ static const struct of_device_id tsp_match[] = {
 	{.compatible = "marvell,berlin-tsp",},
 	{},
 };
+MODULE_DEVICE_TABLE(of, tsp_match);
 
 static SIMPLE_DEV_PM_OPS(berlin_tsp_pmops, berlin_tsp_suspend,
 			 berlin_tsp_resume);

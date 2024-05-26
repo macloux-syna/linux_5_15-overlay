@@ -478,9 +478,8 @@ static int syna_dsp_probe(struct platform_device *pdev)
 
 	/* Get IRQ */
 	p_dsp_drv->irq_num = platform_get_irq_byname(pdev, "dsp2acpu");
-	if (p_dsp_drv->irq_num <= 0) {
-		dev_err(p_dsp_drv->dev, "failed to get irq resource\n");
-		err = -ENXIO;
+	if (p_dsp_drv->irq_num < 0) {
+		err = p_dsp_drv->irq_num;
 		goto free_ida;
 	}
 

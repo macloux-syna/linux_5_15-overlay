@@ -452,6 +452,7 @@ static const struct of_device_id cec_match[] = {
 	{.compatible = "syna,berlin-cec",},
 	{},
 };
+MODULE_DEVICE_TABLE(of, cec_match);
 
 static SIMPLE_DEV_PM_OPS(cec_pmops, cec_suspend,
 			 cec_resume);

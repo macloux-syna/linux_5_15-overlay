@@ -478,7 +478,7 @@ static int ovp_drv_read_cfg(OVP_CTX *hOvpCtx,
 
 	if (hOvpCtx->irq_num <= 0) {
 		ovp_error("Failed to get irq(%s) for OVP\n", OVP_INTR_NAME);
-		return -EINVAL;
+		return hOvpCtx->irq_num;
 	}
 
 	ovp_trace("%s:%d: irq - %s:%x\n",

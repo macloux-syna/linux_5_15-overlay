@@ -183,14 +183,34 @@ int syna_panel_dsi_init(struct platform_device *pdev)
 									"mipirst", 0,
 									of_fwnode_handle(mipi_dev->of_node),
 									GPIOD_OUT_HIGH, "mipi");
+	/* FIXME
+	 * In theory, if the mipirst gpio is not optional, we need to
+	 * return if above call fails, but the mipirst gpio is gotten
+	 * in three places(avio:drv_vpp_cfg.c, drm:panel_dsi.c and
+	 * drm:syna_vpp_config.c). So I only check the -EPROBE_DEFER for
+	 * modularization. Fix it once VPP people get a conclusion which
+	 * component will take the gpio responsibility.
+	 */
+	if (IS_ERR(synaPanelInfo.mipirst)) {
+		if (PTR_ERR(synaPanelInfo.mipirst) == -EPROBE_DEFER) {
+			return -EPROBE_DEFER;
+		} else {
+			pr_err("MIPI Rst GPIO not found \n");
+			synaPanelInfo.mipirst = NULL;
+		}
+	}
 
 	synaPanelInfo.mipibl = devm_fwnode_get_index_gpiod_from_child(&pdev->dev,
 									"mipibl", 0,
 									of_fwnode_handle(mipi_dev->of_node),
 									GPIOD_OUT_HIGH, "mipibl");
-
-	if (IS_ERR(synaPanelInfo.mipirst))
-		pr_err("MIPI Rst GPIO not found \n");
+	if (IS_ERR(synaPanelInfo.mipibl)) {
+		/* Ignore the error other than probe defer */
+		if (PTR_ERR(synaPanelInfo.mipibl) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		else
+			synaPanelInfo.mipibl = NULL;
+	}
 
 	gpiod_set_value_cansleep(synaPanelInfo.mipirst, 0);
 	gpiod_set_value_cansleep(synaPanelInfo.mipibl, 1);

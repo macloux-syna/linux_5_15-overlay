@@ -37,6 +37,21 @@ int syna_encoder_parse_dsi_dt(struct syna_drm_private *dev_priv, vpp_config_para
 		DRM_DEBUG_DRIVER("DSI node found\n");
 	}
 
+	mipirst = devm_fwnode_get_index_gpiod_from_child(&pdev->dev,
+					"mipirst", 0,
+					of_fwnode_handle(dsi_node),
+					GPIOD_OUT_LOW, "mipi");
+	/* FIXME
+	 * In theory, if the mipirst gpio is not optional, we need to
+	 * return if above call fails, but the mipirst gpio is gotten
+	 * in three places(avio:drv_vpp_cfg.c, drm:panel_dsi.c and
+	 * drm:syna_vpp_config.c). So I only check the -EPROBE_DEFER for
+	 * modularization. Fix it once VPP people get a conclusion which
+	 * component will take the gpio responsibility.
+	 */
+	if (IS_ERR(mipirst) && PTR_ERR(mipirst) == -EPROBE_DEFER)
+		return -EPROBE_DEFER;
+
 	pMipiConfig->vpp_resinfo_shm_handle.size = sizeof(VPP_MIPI_CONFIG_PARAMS);
 	ret = VPP_MEM_AllocateMemory(dev_priv->mem_list, VPP_MEM_TYPE_DMA,
 			&pMipiConfig->vpp_resinfo_shm_handle, 0);
@@ -144,10 +159,6 @@ int syna_encoder_parse_dsi_dt(struct syna_drm_private *dev_priv, vpp_config_para
 	VPP_MEM_FlushCache(dev_priv->mem_list, &pMipiConfig->vpp_resinfo_shm_handle, 0);
 	VPP_MEM_FlushCache(dev_priv->mem_list, &pMipiConfig->vpp_cmdinfo_shm_handle, 0);
 
-	mipirst = devm_fwnode_get_index_gpiod_from_child(&pdev->dev,
-					"mipirst", 0,
-					of_fwnode_handle(dsi_node),
-					GPIOD_OUT_LOW, "mipi");
 	gpiod_set_value_cansleep(mipirst, 0);
 	of_node_put(dsi_node);
 

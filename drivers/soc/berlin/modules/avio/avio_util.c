@@ -41,6 +41,7 @@ long avio_util_ioctl_unlocked(struct file *filp, unsigned int cmd, unsigned long
 int avio_util_get_quiescent_flag(void) {
 	return is_bootup_quiescent;
 }
+EXPORT_SYMBOL(avio_util_get_quiescent_flag);
 #if 0
 #ifdef CONFIG_BOOT_CONFIG
 static int __init bootup_quiescent_setup(char *str)

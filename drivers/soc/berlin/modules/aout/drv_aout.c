@@ -1899,6 +1899,7 @@ static const struct of_device_id aout_match[] = {
 	},
 	{},
 };
+MODULE_DEVICE_TABLE(of, aout_match);
 
 static SIMPLE_DEV_PM_OPS(aout_pmops, drv_aout_suspend,
 			 drv_aout_resume);

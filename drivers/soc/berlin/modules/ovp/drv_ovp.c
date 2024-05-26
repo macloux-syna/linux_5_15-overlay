@@ -385,6 +385,7 @@ static const struct of_device_id ovp_match[] = {
 	},
 	{},
 };
+MODULE_DEVICE_TABLE(of, ovp_match);
 
 static int ovp_drv_init(struct ovp_device_t *ovp_device)
 {

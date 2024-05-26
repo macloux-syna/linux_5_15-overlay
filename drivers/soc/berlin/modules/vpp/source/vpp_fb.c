@@ -296,6 +296,7 @@ void MV_VPP_FB_Deinit(void) {
 
 	destroy_global_desc_array();
 }
+EXPORT_SYMBOL(MV_VPP_FB_Deinit);
 
 int MV_VPP_FB_Init(VPP_MEM_LIST *mem_list) {
 	int res;
@@ -319,6 +320,7 @@ EXIT_DESTROY:
 	MV_VPP_Deinit();
 	return res;
 }
+EXPORT_SYMBOL(MV_VPP_FB_Init);
 
 void MV_VPP_FB_ConfigParams(vpp_config_params *param)
 {
@@ -336,6 +338,7 @@ void MV_VPP_FB_ConfigParams(vpp_config_params *param)
 	MV_VPP_SetInputFrameSize(uiPlaneId, frameSize[vpp_config_param.frame_size_ndx].width,
 							frameSize[vpp_config_param.frame_size_ndx].height);
 }
+EXPORT_SYMBOL(MV_VPP_FB_ConfigParams);
 
 void MV_VPP_FB_DisplayFrame(VPP_MEM *shm_handle, int x,
 			int y, int w, int h, int stride)
@@ -361,6 +364,7 @@ void MV_VPP_FB_DisplayFrame(VPP_MEM *shm_handle, int x,
 		MV_VPP_DisplayFrame(uiPlaneId, 0, pVbufInfo);
 	}
 }
+EXPORT_SYMBOL(MV_VPP_FB_DisplayFrame);
 
 void MV_VPP_FB_GetInputFrameSize(int *width, int *height)
 {
@@ -368,6 +372,7 @@ void MV_VPP_FB_GetInputFrameSize(int *width, int *height)
 
 	MV_VPP_GetInputFrameSize(uiPlaneId, width, height);
 }
+EXPORT_SYMBOL(MV_VPP_FB_GetInputFrameSize);
 
 int MV_VPP_FB_Config(void)
 {
@@ -376,3 +381,4 @@ int MV_VPP_FB_Config(void)
 
 	return MV_VPP_Config(cpcbID, uiPlaneId, 0);
 }
+EXPORT_SYMBOL(MV_VPP_FB_Config);

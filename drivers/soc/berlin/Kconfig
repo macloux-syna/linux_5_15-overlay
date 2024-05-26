@@ -150,7 +150,7 @@ config BERLIN_BM
 	 AMP buffer meta data management module
 
 config SYNAPTICS_BT_DEVICE
-	bool "BT Device support"
+	tristate "BT Device support"
 	depends on BT && RFKILL
 	default n
 	help

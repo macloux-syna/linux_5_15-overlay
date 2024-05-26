@@ -876,6 +876,9 @@ static int berlin_tsp_probe(struct platform_device *pdev)
 	dev_t dev;
 
 	tsp_irq = platform_get_irq(pdev, 0);
+	if (tsp_irq < 0)
+		return tsp_irq;
+
 	pTspRes = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	tsp_virt_addr = devm_ioremap_resource(&pdev->dev, pTspRes);
 	if (IS_ERR(tsp_virt_addr)) {

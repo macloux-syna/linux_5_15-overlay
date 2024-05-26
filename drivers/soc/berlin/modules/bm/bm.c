@@ -745,6 +745,7 @@ static const struct of_device_id bm_match[] = {
 	{.compatible = "syna,berlin-bm",},
 	{},
 };
+MODULE_DEVICE_TABLE(of, bm_match);
 
 static struct platform_driver bm_driver = {
 	.probe = bm_probe,

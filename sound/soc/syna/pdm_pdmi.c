@@ -191,11 +191,8 @@ static int pdm_pdmi_probe(struct platform_device *pdev)
 	}
 	for (i = 0; i < pdmi->irqc; i++) {
 		pdmi->irq[i] = platform_get_irq(pdev, i);
-		if (pdmi->irq[i] <= 0) {
-			snd_printk("fail to get irq %d for %s\n",
-				   pdmi->irq[i], pdev->name);
-			return -EINVAL;
-		}
+		if (pdmi->irq[i] < 0)
+			return pdmi->irq[i];
 		pdmi->chid[i] = irqd_to_hwirq(irq_get_irq_data(pdmi->irq[i]));
 		if (pdmi->chid[i] < 0) {
 			snd_printk("got invalid dhub chid %d\n", pdmi->chid[i]);

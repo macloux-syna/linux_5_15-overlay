@@ -442,10 +442,8 @@ static int i2s_mic2_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	irq = platform_get_irq(pdev, 0);
-	if (irq <= 0) {
-		snd_printk("fail to get irq for node %s\n", pdev->name);
+	if (irq < 0)
 		return irq;
-	}
 	mic2->irq = irq;
 	mic2->chid = irqd_to_hwirq(irq_get_irq_data(irq));
 	if (mic2->chid < 0) {

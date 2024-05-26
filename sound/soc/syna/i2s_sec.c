@@ -385,10 +385,8 @@ static int i2s_sec_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	irq = platform_get_irq(pdev, 0);
-	if (irq <= 0) {
-		snd_printk("fail to get irq for node %s\n", pdev->name);
-		return -EINVAL;
-	}
+	if (irq < 0)
+		return irq;
 
 	sec->irq = irq;
 	sec->chid = irqd_to_hwirq(irq_get_irq_data(irq));

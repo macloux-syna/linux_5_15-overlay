@@ -212,11 +212,8 @@ static int spdifi_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	spdifi->irq = platform_get_irq(pdev, 0);
-	if (spdifi->irq <= 0) {
-		snd_printk("fail to get irq %d for %s\n",
-			   spdifi->irq, pdev->name);
-		return -EINVAL;
-	}
+	if (spdifi->irq < 0)
+		return spdifi->irq;
 	spdifi->chid = irqd_to_hwirq(irq_get_irq_data(spdifi->irq));
 	if (spdifi->chid < 0) {
 		snd_printk("got invalid dhub chid %d\n", spdifi->chid);

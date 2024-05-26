@@ -442,18 +442,13 @@ static int i2s_outdai_probe(struct platform_device *pdev)
 	dev_set_drvdata(dev, outdai);
 
 	irq = platform_get_irq_byname(pdev, "pri");
-	if (irq >= 0) {
-		outdai->mode |= I2SO_MODE;
-		outdai->i2s_irq = irq;
-		outdai->i2s_chid = irqd_to_hwirq(irq_get_irq_data(irq));
-		snd_printd("get pri irq %d for node %s\n",
-			   irq, pdev->name);
-	}
+	if (irq < 0)
+		return irq;
 
-	if (outdai->mode == 0) {
-		snd_printk("non valid irq found in dts\n");
-		return -EINVAL;
-	}
+	outdai->mode |= I2SO_MODE;
+	outdai->i2s_irq = irq;
+	outdai->i2s_chid = irqd_to_hwirq(irq_get_irq_data(irq));
+	snd_printd("get pri irq %d for node %s\n", irq, pdev->name);
 
 	outdai->output_mclk = of_property_read_bool(np, "output-mclk");
 	outdai->ctrl.islframe = of_property_read_bool(np, "long-frame");

@@ -533,11 +533,8 @@ static int dmic_pdm_probe(struct platform_device *pdev)
 	}
 	for (i = 0; i < dmic->irqc; i++) {
 		dmic->irq[i] = platform_get_irq(pdev, i);
-		if (dmic->irq[i] <= 0) {
-			snd_printk("%s: fail to get irq %d for %s\n",
-				   __func__, dmic->irq[i], pdev->name);
-			return -EINVAL;
-		}
+		if (dmic->irq[i] < 0)
+			return dmic->irq[i];
 		dmic->chid[i] = irqd_to_hwirq(irq_get_irq_data(dmic->irq[i]));
 		if (dmic->chid[i] < 0) {
 			snd_printk("%s: got invalid dhub chid %d\n", __func__, dmic->chid[i]);

@@ -887,24 +887,26 @@ static int syna_i2s_soc_dai_probe(struct platform_device *pdev)
 	aio_enable_audio_timer(soc_dai->aio_handle, true);
 
 	irq = platform_get_irq_byname(pdev, "tx");
-	if (irq >= 0) {
-		soc_dai->mode |= I2SO_MODE;
-		i2s_tx->i2s_irq = irq;
-		i2s_tx->i2s_chid = irqd_to_hwirq(irq_get_irq_data(irq));
-		soc_dai->nodeClkId = map_aio_clkId(i2s_tx->i2s_chid);
-		soc_dai->xFeedClkCfg = aio_get_bclk_xfeed_mode(soc_dai->aio_handle, i2s_tx->i2s_chid);
-		snd_printd("tx irq %d irq_child %d for node %s\n", irq, i2s_tx->i2s_chid, pdev->name);
-	}
+	if (irq < 0)
+		return irq;
+
+	soc_dai->mode |= I2SO_MODE;
+	i2s_tx->i2s_irq = irq;
+	i2s_tx->i2s_chid = irqd_to_hwirq(irq_get_irq_data(irq));
+	soc_dai->nodeClkId = map_aio_clkId(i2s_tx->i2s_chid);
+	soc_dai->xFeedClkCfg = aio_get_bclk_xfeed_mode(soc_dai->aio_handle, i2s_tx->i2s_chid);
+	snd_printd("tx irq %d irq_child %d for node %s\n", irq, i2s_tx->i2s_chid, pdev->name);
 
 	irq = platform_get_irq_byname(pdev, "rx");
-	if (irq >= 0) {
-		soc_dai->mode |= I2SI_MODE;
-		i2s_rx->i2s_irq = irq;
-		i2s_rx->i2s_chid = irqd_to_hwirq(irq_get_irq_data(irq));
-		soc_dai->nodeClkId = map_aio_clkId(i2s_rx->i2s_chid);
-		soc_dai->xFeedClkCfg = aio_get_bclk_xfeed_mode(soc_dai->aio_handle, i2s_rx->i2s_chid);
-		snd_printd("rx irq %d irq_child %d for node %s\n", irq, i2s_rx->i2s_chid, pdev->name);
-	}
+	if (irq < 0)
+		return irq;
+
+	soc_dai->mode |= I2SI_MODE;
+	i2s_rx->i2s_irq = irq;
+	i2s_rx->i2s_chid = irqd_to_hwirq(irq_get_irq_data(irq));
+	soc_dai->nodeClkId = map_aio_clkId(i2s_rx->i2s_chid);
+	soc_dai->xFeedClkCfg = aio_get_bclk_xfeed_mode(soc_dai->aio_handle, i2s_rx->i2s_chid);
+	snd_printd("rx irq %d irq_child %d for node %s\n", irq, i2s_rx->i2s_chid, pdev->name);
 
 	ret = of_property_read_string(np, I2S_CLK_SRC_KCONTROL_NAME, &prop_val);
 	if (!ret) {

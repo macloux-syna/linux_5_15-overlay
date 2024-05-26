@@ -1002,12 +1002,12 @@ static int hdmi_outdai_probe(struct platform_device *pdev)
 	dev_set_drvdata(dev, outdai);
 
 	irq = platform_get_irq_byname(pdev, "hdmi");
-	if (irq > 0) {
-		outdai->irq = irq;
-		outdai->chid = irqd_to_hwirq(irq_get_irq_data(irq));
-		snd_printd("get hdmi irq %d for node %s\n",
-			   irq, pdev->name);
-	}
+	if (irq < 0)
+		return irq;
+
+	outdai->irq = irq;
+	outdai->chid = irqd_to_hwirq(irq_get_irq_data(irq));
+	snd_printd("get hdmi irq %d for node %s\n", irq, pdev->name);
 
 	ret = devm_snd_soc_register_component(dev,
 						  &berlin_outdai_component,

@@ -207,18 +207,13 @@ static int spdif_outdai_probe(struct platform_device *pdev)
 	dev_set_drvdata(dev, outdai);
 
 	irq = platform_get_irq_byname(pdev, "spdifo");
-	if (irq >= 0) {
-		outdai->mode |= SPDIFO_MODE;
-		outdai->spdif_irq = irq;
-		outdai->spdif_chid = irqd_to_hwirq(irq_get_irq_data(irq));
-		snd_printd("get spdif irq %d for node %s\n",
-			   irq, pdev->name);
-	}
+	if (irq < 0)
+		return irq;
 
-	if (outdai->mode == 0) {
-		snd_printk("non valid irq found in dts\n");
-		return -EINVAL;
-	}
+	outdai->mode |= SPDIFO_MODE;
+	outdai->spdif_irq = irq;
+	outdai->spdif_chid = irqd_to_hwirq(irq_get_irq_data(irq));
+	snd_printd("get spdif irq %d for node %s\n", irq, pdev->name);
 
 	ret = devm_snd_soc_register_component(dev,
 					      &berlin_outdai_component,

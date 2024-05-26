@@ -563,11 +563,8 @@ static int i2s_mic1_probe(struct platform_device *pdev)
 
 	for (i = 0; i < mic1->irqc; i++) {
 		mic1->irq[i] = platform_get_irq(pdev, i);
-		if (mic1->irq[i] <= 0) {
-			snd_printk("fail to get irq %d for %s\n",
-				   mic1->irq[i], pdev->name);
-			return -EINVAL;
-		}
+		if (mic1->irq[i] < 0)
+			return mic1->irq[i];
 		mic1->chid[i] = irqd_to_hwirq(irq_get_irq_data(mic1->irq[i]));
 		if (mic1->chid[i] < 0) {
 			snd_printk("got invalid dhub chid[%d] %d\n",

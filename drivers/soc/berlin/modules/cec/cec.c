@@ -409,6 +409,9 @@ static int cec_probe(struct platform_device *pdev)
 	struct cec_context *pCecCtx = &(cec_dev.CecCtx);
 
 	pCecCtx->cec_irq = platform_get_irq(pdev, 0);
+	if (pCecCtx->cec_irq < 0)
+		return pCecCtx->cec_irq;
+
 	pCecCtx->pCecRes = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	cec_dev.cec_virt_addr = devm_ioremap_resource(&pdev->dev, pCecCtx->pCecRes);
 	if (IS_ERR(cec_dev.cec_virt_addr)){

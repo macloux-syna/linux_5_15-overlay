@@ -816,10 +816,10 @@ static int vdec_fmt_from_cur_seq_fmt(struct syna_vcodec_ctx *ctx,
 	pix_mp->num_planes = 2;
 
 	sizeimage = ctrl->seq_desc.meta_luma_size;
-	pix_mp->plane_fmt[2].sizeimage = sizeimage;
+	pix_mp->plane_fmt[2].sizeimage = ALIGN(sizeimage, PAGE_SIZE);
 
 	sizeimage = ctrl->seq_desc.meta_chroma_size;
-	pix_mp->plane_fmt[3].sizeimage = sizeimage;
+	pix_mp->plane_fmt[3].sizeimage = ALIGN(sizeimage, PAGE_SIZE);
 	if (sizeimage)
 		pix_mp->num_planes += 2;
 

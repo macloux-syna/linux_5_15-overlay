@@ -504,12 +504,6 @@ static int isp_probe(struct platform_device *pdev)
 
 	reset_control_deassert(rst);
 
-	ret = isp_device_init(isp_dev);
-	if (ret <  0) {
-		isp_error(dev, "character device registration failed...!\n");
-		return ret;
-	}
-
 	isp_clks = devm_kzalloc(dev,
 		sizeof(struct clk *) * ARRAY_SIZE(isp_clock_list), GFP_KERNEL);
 	if (IS_ERR(isp_clks)) {
@@ -534,7 +528,7 @@ static int isp_probe(struct platform_device *pdev)
 			if (!i2c) {
 				dev_err(dev, "failed to find i2c adapter\n");
 				of_node_put(np);
-				return -ENODEV;
+				return -EPROBE_DEFER;
 			}
 
 			isp_dev->i2c = i2c;
@@ -576,6 +570,11 @@ static int isp_probe(struct platform_device *pdev)
 		}
 	}
 
+	ret = isp_device_init(isp_dev);
+	if (ret <  0) {
+		isp_error(dev, "character device registration failed...!\n");
+		return ret;
+	}
 	ret = isp_fetch_clocks(dev, isp_clks);
 	if (ret) {
 		isp_error(dev, "isp clock fetch failed...!\n");

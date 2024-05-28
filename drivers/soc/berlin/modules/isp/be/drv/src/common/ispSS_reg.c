@@ -21,10 +21,14 @@ isp_module_ctx *gModeCtx;
 #define IRQ_dmaIntrTSB_0                         0x74
 #define ISP_DHUB_AFFINITY                        0x1
 
-UNSG32 ispss_create_iomap(void)
+SIGN32 ispss_create_iomap(void)
 {
 	gModeCtx = isp_dhub_get_mode_ctx();
-	return isp_dhub_mod_open(NULL, gModeCtx);
+
+	if (gModeCtx)
+		return isp_dhub_mod_open(NULL, gModeCtx);
+	else
+		return -EINVAL;
 }
 
 UNSG32 ispss_destroy_iomap(void)

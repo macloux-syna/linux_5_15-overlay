@@ -66,7 +66,10 @@ HRESULT scaler_api_init(void)
 	result = ISPBE_CA_Initialize();
 	if (result) {
 		pr_err("%s(): CA initialize failed!!\n", __func__);
-		result = FAILURE;
+		if (result == -EINVAL)
+			result = -EPROBE_DEFER;
+		else
+			result = FAILURE;
 		goto err_CA_fail;
 	}
 

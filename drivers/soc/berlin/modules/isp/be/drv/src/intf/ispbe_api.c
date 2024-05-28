@@ -177,6 +177,12 @@ INT ISPBE_CA_Initialize(void)
 	static int is_created;
 	int module;
 
+	/* Create memory mapping - isp dev open and then DHUB-Init */
+	if (ispss_create_iomap() == -EINVAL) {
+		Ret = -EINVAL;
+		goto error1;
+	}
+
 	if (!is_created)
 		memset(&g_ispbe_ca_ctx, 0, sizeof(struct ISPBE_CA_CTX));
 
@@ -187,9 +193,6 @@ INT ISPBE_CA_Initialize(void)
 		is_created = 1;
 		g_ispbe_ca_ctx.is_created = 1;
 	}
-
-	/* Create memory mapping - isp dev open and then DHUB-Init */
-	ispss_create_iomap();
 
 	/* Initialize DHUB */
 	ispss_dhub_init();

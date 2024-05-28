@@ -42,7 +42,7 @@
 
 #define CPCB_1 0
 
-UNSG32 ispss_create_iomap(void);
+SIGN32 ispss_create_iomap(void);
 UNSG32 ispss_destroy_iomap(void);
 UNSG64 ispss_devmem_phy_to_virt(UNSG32 uPhyAddr);
 UNSG32 ispss_read_phys_reg(UNSG32 uPhyAddr);

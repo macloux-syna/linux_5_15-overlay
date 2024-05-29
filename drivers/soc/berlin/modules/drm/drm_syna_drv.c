@@ -356,7 +356,6 @@ static const struct of_device_id drm_match[] = {
 	{.compatible = "syna,berlin-drm",},
 	{},
 };
-MODULE_DEVICE_TABLE(of, drm_match);
 
 static struct platform_driver syna_platform_driver = {
 	.probe = syna_probe,

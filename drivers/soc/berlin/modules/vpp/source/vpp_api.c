@@ -209,6 +209,11 @@ int __weak wrap_VPP_Init_Recovery(VPP_MEM_LIST *vpp_shm_list,
 	return 0;
 }
 
+void __weak wrap_VPP_DeInit_Recovery(void)
+{
+	return;
+}
+
 int __weak wrap_mipi_initialize(struct device *dev,
 				vpp_config_params vpp_config_param)
 {
@@ -254,8 +259,10 @@ void MV_VPP_Deinit(void)
 	if (VPP_Is_Recovery_Mode())
 		VPP_EnableDhubInterrupt(false);
 	wrap_MV_VPPOBJ_Destroy();
-	if (VPP_Is_Recovery_Mode())
+	if (VPP_Is_Recovery_Mode()) {
 		VPP_StopISRTask();
+		wrap_VPP_DeInit_Recovery();
+	}
 
 	wrap_mipi_deinit();
 	wrap_MV_VPP_DeInit();

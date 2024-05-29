@@ -10,6 +10,9 @@
 #include "hal_vpp_wrap.h"
 #include "avio_sub_module.h"
 
+static VPP_MEM vpp_shm_handle;
+static VPP_MEM_LIST *vpp_heap_shm_list;
+
 const int m_vinport_config[] = {
 	/* PLANE_MAIN   */ CHAN_MAIN,
 	/* PLANE_PIP	*/ CHAN_PIP,
@@ -74,23 +77,24 @@ static int VPP_Init_Recovery_fastlogo_ta(VPP_MEM_LIST *vpp_shm_list,
 	VPP_DISP_OUT_PARAMS pdispParams[MAX_NUM_CPCBS];
 	VPP_DISP_OUT_PARAMS dispParams;
 	VPP_RESOLUTION_DESCRIPTION  ResDesc;
-	VPP_MEM shm_handle;
 	const int feature_cfg[MAX_NUM_FEATURE_CFG] = {VPP_FEATURE_HDMITX};
 
 	//Allocate memory for TA heap memory manager
-	shm_handle.size = SHM_SHARE_SZ;
+	vpp_shm_handle.size = SHM_SHARE_SZ;
 	res = VPP_MEM_AllocateMemory(vpp_shm_list, VPP_MEM_TYPE_NS_NC,
-				&shm_handle, GFP_KERNEL | __GFP_NOWARN);
+				&vpp_shm_handle, GFP_KERNEL | __GFP_NOWARN);
 	if (res != VPP_MEM_ERROR_TYPE_OK) {
 		pr_info("VPP internal memory allocation: Not enough memory!!!!!!!!\n");
 		return -ENOMEM;
 	}
 
+	vpp_heap_shm_list = vpp_shm_list;
+
 	//Initialize fastlogo TA
 	vpp_init_parm.iHDMIEnable = 1;  //Set zero to disable flushcache in VPP TA
 	vpp_init_parm.iVdacEnable = 0;
 	vpp_init_parm.uiShmSize = SHM_SHARE_SZ;
-	vpp_init_parm.uiShmPA = (uintptr_t)shm_handle.p_addr;
+	vpp_init_parm.uiShmPA = (uintptr_t)vpp_shm_handle.p_addr;
 
 	res = wrap_MV_VPP_InitVPPS(TA_UUID_FASTLOGO, fl_init_param);
 	if (res != MV_VPP_OK) {
@@ -207,7 +211,7 @@ EXIT_DESTROY:
 	wrap_MV_VPPOBJ_Destroy();
 EXIT:
 	wrap_MV_VPP_DeInit();
-	VPP_MEM_FreeMemory(vpp_shm_list, VPP_MEM_TYPE_NS_NC, &shm_handle);
+	VPP_MEM_FreeMemory(vpp_shm_list, VPP_MEM_TYPE_NS_NC, &vpp_shm_handle);
 
 	pr_err("MV_VPP_Init:Error: (libfastlogo.ta) - %d\n", res);
 
@@ -228,25 +232,25 @@ static int VPP_Init_Recovery_vpp_ta(VPP_MEM_LIST *vpp_shm_list,
 	int res = 0;
 	int planeID = PLANE_GFX1;
 	VPP_DISP_OUT_PARAMS dispParams;
-	VPP_MEM shm_handle;
 	const int feature_cfg[MAX_NUM_FEATURE_CFG] = {VPP_FEATURE_HDMITX};
 	VPP_HDMI_SINK_CAPS sinkCaps;
 
 	//Allocate memory for TA heap memory manager
-	shm_handle.size = SHM_SHARE_SZ;
+	vpp_shm_handle.size = SHM_SHARE_SZ;
 	res = VPP_MEM_AllocateMemory(vpp_shm_list, VPP_MEM_TYPE_DMA,
-				&shm_handle, GFP_KERNEL | __GFP_NOWARN);
+				&vpp_shm_handle, GFP_KERNEL | __GFP_NOWARN);
 	if (res != VPP_MEM_ERROR_TYPE_OK) {
 		pr_info("VPP internal memory allocation: Not enough memory!!!!!!!!\n");
 		return -ENOMEM;
 	}
+	vpp_heap_shm_list = vpp_shm_list;
 
 	//Initialize VPP TA
 	vpp_init_parm.dev = vpp_shm_list->dev;
 	vpp_init_parm.iHDMIEnable = 1;  //Set zero to disable flushcache in VPP TA
 	vpp_init_parm.iVdacEnable = 0;
 	vpp_init_parm.uiShmSize = SHM_SHARE_SZ;
-	vpp_init_parm.uiShmPA = (uintptr_t)shm_handle.p_addr;
+	vpp_init_parm.uiShmPA = (uintptr_t)vpp_shm_handle.p_addr;
 
 	dispParams.uiResId = (vpp_config_param.disp1_res_id == -1 ?
 						 DEFAULT_CPCB_1_RESOLUTION_ID : vpp_config_param.disp1_res_id);
@@ -389,7 +393,7 @@ EXIT_DESTROY:
 	wrap_MV_VPPOBJ_Destroy();
 EXIT:
 	wrap_MV_VPP_DeInit();
-	VPP_MEM_FreeMemory(vpp_shm_list, VPP_MEM_TYPE_DMA, &shm_handle);
+	VPP_MEM_FreeMemory(vpp_shm_list, VPP_MEM_TYPE_DMA, &vpp_shm_handle);
 
 	pr_err("MV_VPP_Init:Error: (libfastlogo.ta) - %d\n", res);
 
@@ -409,4 +413,16 @@ int wrap_VPP_Init_Recovery(VPP_MEM_LIST *shm_list,
 	}
 
 	return res;
+}
+
+void wrap_VPP_DeInit_Recovery(void)
+{
+	VPP_MEM_TYPE shm_type;
+
+	if (wrap_MV_VPP_iSTeeEnabled()) {
+		shm_type = is_ampless_boot() ? VPP_MEM_TYPE_DMA : VPP_MEM_TYPE_NS_NC;
+
+		if (vpp_heap_shm_list)
+			VPP_MEM_FreeMemory(vpp_heap_shm_list, shm_type, &vpp_shm_handle);
+	}
 }

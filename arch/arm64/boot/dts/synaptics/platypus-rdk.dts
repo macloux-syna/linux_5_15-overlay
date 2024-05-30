@@ -664,8 +664,10 @@
 		status= "okay";
 		/* HDMI_Tx core config array with fields as in below order -
 		   HPD handling - 1:enable sink hotplug handling 0:disable sink hotplug handling
-		   HDCP control - 1:enable HDCP (selects max HDCP format supported by sink) 0:disable HDCP */
-		hdtx-core-config = /bits/ 8 <0 0>;
+		   FixedModeset - 1:Enable mode config from within drm driver(on HPD), disable modeset interface to user
+				  0:Expose user interface to set mode, don't control from within drm driver
+		 */
+		hdtx-core-config = /bits/ 8 <0 1>;
 		/* Select format IDs enabled for profile. enter number of entries (inclusive) followed by entries <size, n1, n2..>
 		   ID to res mapping as below
 		   1280x720P30=10 1280x720P60=13

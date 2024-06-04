@@ -27,7 +27,7 @@ macaddr=00:90:4c:12:d0:01
 jtag_irw=38
 
 #Regulatory specific
-ccode=0
+ccode=XZ
 regrev=0
 
 # Board specific
@@ -150,12 +150,12 @@ pa6ga0=-23,6912,-766,-155,5989,-748,-131,6381,-743,-112,7301,-826,-112,7301,-826
 pa6ga1=-107,7052,-821,-120,6872,-801,-158,6458,-775,-119,7469,-858,-119,7469,-858,-119,7469,-858
 
 # Max power and offsets
-maxp2ga0=86
-maxp2ga1=86
-maxp5ga0=74,74,72,74
-maxp5ga1=76,76,74,76
-maxp6ga0=70,70,70,70,70,70
-maxp6ga1=70,70,70,70,70,70
+maxp2ga0=74
+maxp2ga1=74
+maxp5ga0=54,54,54,54
+maxp5ga1=54,54,54,54
+maxp6ga0=50,50,50,50,50,50
+maxp6ga1=50,50,50,50,50,50
 subband5gver=0x4
 paparambwver=3
 cckpwroffset0=-4

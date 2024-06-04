@@ -713,6 +713,9 @@ static int m2m_scaler_g_fmt_mp(struct file *file, void *fh, struct v4l2_format *
 	pix_mp->height = frame->height;
 	pix_mp->field = frame->field;
 
+	pix_mp->width = ALIGN(pix_mp->width, MTR_ACTIVE_WIDTH_ALIGNMENT);
+	pix_mp->height = ALIGN(pix_mp->height, MTR_ACTIVE_HEIGHT_ALIGNMENT);
+
 	orig_width = pix_mp->width;
 	orig_height = pix_mp->height;
 
@@ -781,6 +784,9 @@ static int m2m_scaler_try_fmt_out_mp(struct file *file, void *fh, struct v4l2_fo
 	if (frame == NULL)
 		return -EINVAL;
 
+	pix_mp->width = ALIGN(pix_mp->width, MTR_ACTIVE_WIDTH_ALIGNMENT);
+	pix_mp->height = ALIGN(pix_mp->height, MTR_ACTIVE_HEIGHT_ALIGNMENT);
+
 	if (ctx->io_mmu_buffer_output) {
 		orig_width = pix_mp->width;
 		orig_height = pix_mp->height;
@@ -827,6 +833,9 @@ static int m2m_scaler_try_fmt_cap_mp(struct file *file, void *fh, struct v4l2_fo
 	frame  =  &ctx->dst;
 	if (frame == NULL)
 		return -EINVAL;
+
+	pix_mp->width = ALIGN(pix_mp->width, MTR_ACTIVE_WIDTH_ALIGNMENT);
+	pix_mp->height = ALIGN(pix_mp->height, MTR_ACTIVE_HEIGHT_ALIGNMENT);
 
 	if (ctx->io_mmu_buffer_capture) {
 		orig_width = pix_mp->width;

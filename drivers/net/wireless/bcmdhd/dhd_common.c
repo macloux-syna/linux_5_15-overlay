@@ -175,7 +175,10 @@ int dhd_log_level = DHD_ERROR_VAL | DHD_EVENT_VAL
 		| DHD_PKT_MON_VAL | DHD_FWLOG_VAL | DHD_IOVAR_MEM_VAL;
 #else
 /* For CUSTOMER_HW4/Hikey do not enable DHD_ERROR_MEM_VAL by default */
-int dhd_msg_level = DHD_ERROR_VAL | DHD_FWLOG_VAL | DHD_EVENT_VAL
+int dhd_msg_level = DHD_ERROR_VAL
+#if 0
+	| DHD_FWLOG_VAL | DHD_EVENT_VAL
+#endif
 	/* For CUSTOMER_HW4 do not enable DHD_IOVAR_MEM_VAL by default */
 #if 0 //!defined(BOARD_HIKEY)
 	| DHD_IOVAR_MEM_VAL
@@ -183,7 +186,7 @@ int dhd_msg_level = DHD_ERROR_VAL | DHD_FWLOG_VAL | DHD_EVENT_VAL
 #ifndef OEM_ANDROID
 	| DHD_MSGTRACE_VAL
 #endif /* OEM_ANDROID */
-	| DHD_PKT_MON_VAL;
+;
 
 int dhd_log_level = DHD_ERROR_VAL | DHD_FWLOG_VAL | DHD_EVENT_VAL
 	/* For CUSTOMER_HW4 do not enable DHD_IOVAR_MEM_VAL by default */

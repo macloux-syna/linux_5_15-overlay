@@ -5934,7 +5934,7 @@ dhdsdio_rxglom(dhd_bus_t *bus, uint8 rxseq)
 
 		/* Check window for sanity */
 		if ((uint8)(txmax - bus->tx_seq) > 0x70) {
-			DHD_ERROR(("%s: got unlikely tx max %d with tx_seq %d\n",
+			DHD_INFO(("%s: got unlikely tx max %d with tx_seq %d\n",
 			           __FUNCTION__, txmax, bus->tx_seq));
 			txmax = bus->tx_max;
 		}
@@ -6540,7 +6540,7 @@ dhdsdio_readframes(dhd_bus_t *bus, uint maxframes, bool *finished)
 					txmax = bus->tx_seq + 2;
 				} else {
 #endif /* BCMSPI */
-					DHD_ERROR(("%s: got unlikely tx max %d with tx_seq %d\n",
+					DHD_INFO(("%s: got unlikely tx max %d with tx_seq %d\n",
 						__FUNCTION__, txmax, bus->tx_seq));
 					txmax = bus->tx_max;
 #ifdef BCMSPI
@@ -6701,7 +6701,7 @@ dhdsdio_readframes(dhd_bus_t *bus, uint maxframes, bool *finished)
 
 		/* Check window for sanity */
 		if ((uint8)(txmax - bus->tx_seq) > 0x70) {
-			DHD_ERROR(("%s: got unlikely tx max %d with tx_seq %d\n",
+			DHD_INFO(("%s: got unlikely tx max %d with tx_seq %d\n",
 			           __FUNCTION__, txmax, bus->tx_seq));
 			txmax = bus->tx_max;
 		}

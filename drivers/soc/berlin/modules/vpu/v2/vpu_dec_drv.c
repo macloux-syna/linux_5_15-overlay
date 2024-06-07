@@ -2058,6 +2058,94 @@ static int vdec_job_ready(void *priv)
 	return !vpu_srv_push_to_pending(ctx->vpu->srv, ctx);
 }
 
+static int syna_vdec_fast_update_pop_status(struct syna_vcodec_ctx *ctx)
+{
+	struct syna_vpu_dev *vpu = ctx->vpu;
+	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
+	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
+	struct vb2_queue *dst_vq;
+	struct vb2_v4l2_buffer *dst_buf;
+	struct vb2_buffer *dst_vb;
+	struct syna_vpu_tz_buf *vpu_buf;
+	u32 idx, i, j;
+	u32 mtr_flags;
+
+	dst_vq = v4l2_m2m_get_dst_vq(m2m_ctx);
+
+	for (i = 0; i < ctrl->dbuf.pop; i++) {
+		idx = idx_queue_pop(&ctrl->dbuf, i);
+		if (idx > VB2_MAX_FRAME) {
+			vdpu_err(vpu, "buf %d is out of CAPTURE range\n", idx);
+			goto out_of_range;
+		}
+
+		dst_vb = dst_vq->bufs[idx];
+		if (!dst_vb) {
+			vdpu_err(vpu, "buf %d is not in CAPTURE queue\n", idx);
+			goto out_of_range;
+		}
+		dst_buf = to_vb2_v4l2_buffer(dst_vb);
+
+		if (test_bit(SYNA_VPU_DEC_POST_PROCESSING, &ctx->status))
+			/* postproc mode */
+			vpu_buf = ctx->aux_pool;
+		else
+			/* tile mode */
+			vpu_buf = ctx->output_pool;
+
+		vpu_buf += dst_vb->index;
+
+		if (vpu_buf->flags & BERLIN_BUF_FLAG_ERROR) {
+			v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_ERROR);
+			continue;
+		}
+
+		if (!(vpu_buf->flags & BERLIN_BUF_FLAG_DONE)) {
+			v4l2_m2m_buf_queue(m2m_ctx, dst_buf);
+			continue;
+		}
+
+		/* handle normal buffer */
+		for (j = 0; j < dst_vb->num_planes; j++)
+			vb2_set_plane_payload(dst_vb, j, vpu_buf->bytesused[j]);
+
+		dst_buf->sequence = ctx->sequence_cap++;
+		dst_buf->vb2_buf.timestamp = vpu_buf->timestamp;
+		dst_buf->field = vpu_buf->field;
+
+		/**
+		 * mtr_flags
+		 * bit 0: MTR/compression enabled
+		 * bit 1: mmu enabled
+		 */
+		mtr_flags = 0;
+		if (ctrl->v4g_ext_cfg.mmu.en)
+			mtr_flags |= 0x2;
+		if (vpu_buf->flags & BERLIN_BUF_FLAG_COMPRESSED)
+			mtr_flags |= 0x1;
+		vb2_syna_fill_mtr_meta(dst_vb, 0, &vpu_buf->mtr_cfg0[0],
+				       mtr_flags);
+		vb2_syna_fill_mtr_meta(dst_vb, 1, &vpu_buf->mtr_cfg1[0],
+				       mtr_flags);
+
+		v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_DONE);
+	}
+
+	/**
+	 * those buffers are not used by hardware as the reference buffer
+	 * now, we could reuse them if they are in the queue and their
+	 * state are not done(not used for display or have not been enqueued
+	 * from the userspace)
+	 */
+	for (i = 0; i < ctrl->rbuf.pop; i++)
+		clear_bit(idx_queue_pop(&ctrl->rbuf, i), &ctx->ref_slots);
+
+	return 0;
+
+out_of_range:
+	return -EINVAL;
+}
+
 static void set_last_buf_done(struct syna_vcodec_ctx *ctx,
 			 struct syna_vpu_tz_buf *vpu_buf,
 			 struct vb2_buffer *dst_vb)
@@ -2286,6 +2374,22 @@ decoding:
 	if (ret) {
 		v4l2_m2m_buf_done(src_buf, VB2_BUF_STATE_ERROR);
 		goto bail;
+	}
+
+	if (ctrl->status.flags & BERLIN_VPU_STATUS_POP_BREAK) {
+		ret = syna_vdec_fast_update_pop_status(ctx);
+		if (ret)
+			goto bail;
+
+		/* clear status */
+		memset(&ctrl->status, 0, sizeof(ctrl->status));
+		set_mask_bits(&ctx->status, SYNA_VPU_STATUS_WAIT_MASK, 0);
+
+		idx_queue_clear(&ctrl->rbuf);
+		idx_queue_clear(&ctrl->dbuf);
+
+		syna_record_free_ref_display_buf(ctx);
+		goto decoding;
 	}
 
 	if (ctrl->status.flags & BERLIN_VPU_STATUS_WAIT_INTERRUPTER) {

@@ -51,7 +51,7 @@ typedef unsigned long long u64;
  * the FW bi-state events
  */
 #define BERLIN_VPU_STATUS_PROC_END_SAFE		BIT(3)
-
+#define BERLIN_VPU_STATUS_POP_BREAK		BIT(4)
 #define BERLIN_VPU_STATUS_NEW_SEQUENCE		BIT(5)
 #define BERLIN_VPU_STATUS_WAIT_INPUT_BUF	BIT(7)
 #define BERLIN_VPU_STATUS_WAIT_OUTPUT_BUF	BIT(8)

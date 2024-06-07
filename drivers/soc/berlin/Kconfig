@@ -45,7 +45,6 @@ config BERLIN_AVIO
 	tristate "Support AVIO"
 	default n
 	select BERLIN_MSGQ
-	select BERLIN_TZD
 	help
 	  Enable support for AVIO
 
@@ -84,6 +83,7 @@ config BERLIN_TSP
 	tristate "Support BERLIN TSP"
 	default n
 	select BERLIN_MSGQ
+	select BERLIN_TZD
 	help
 	  Enable support for TSP
 
@@ -133,6 +133,7 @@ config HIFI_DSP
 	tristate "Support HIFI DSP"
 	default n
 	depends on BERLIN_MSGQ
+	select BERLIN_TZD
 	help
 	  DSP support
 

@@ -284,6 +284,11 @@
 		function = "pwm";
 	};
 
+	pwm3_pmux: pwm3-pmux {
+		groups = "PWM3";
+		function = "pwm";
+	};
+
 	uart1_pmux: uart1-pmux {
 		groups = "TW3_SCL", "TW3_SDA", "URT1_RXD", "URT1_TXD";
 		function = "urt1a";
@@ -481,8 +486,8 @@
 
 &pwm0 {
 	status = "okay";
-	pinctrl-0 = <&pwm0_pmux>;
-	pinctrl-names = "default";
+	pinctrl-0 = <&pwm0_pmux>, <&pwm3_pmux>;
+	pinctrl-names = "default", "default";
 };
 
 &avio {

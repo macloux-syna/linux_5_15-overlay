@@ -97,7 +97,31 @@ struct vvcam_isp_mbus_fmt vvcam_isp_mp_fmts[] = {
     },
     {
         .code = MEDIA_BUS_FMT_YUYV8_1X16,  /*YUYV*/
-    }
+    },
+    {
+        .code = MEDIA_BUS_FMT_SRGGB10_1X10,  /*SRGGB10*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SGBRG10_1X10,  /*SGBRG10*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SBGGR10_1X10,  /*SBGGR10*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SGRBG10_1X10,  /*SGRBG10*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SRGGB12_1X12,  /*SRGGB12*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SGBRG12_1X12,  /*SGBRG12*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SBGGR12_1X12,  /*SBGGR12*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SGRBG12_1X12,  /*SGRBG12*/
+    },
 };
 
 struct vvcam_isp_mbus_fmt vvcam_isp_sp_fmts[] = {
@@ -109,7 +133,31 @@ struct vvcam_isp_mbus_fmt vvcam_isp_sp_fmts[] = {
     },
     {
         .code = MEDIA_BUS_FMT_YUYV8_1X16,  /*YUYV*/
-    }
+    },
+    {
+        .code = MEDIA_BUS_FMT_SRGGB10_1X10,  /*SRGGB10*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SGBRG10_1X10,  /*SGBRG10*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SBGGR10_1X10,  /*SBGGR10*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SGRBG10_1X10,  /*SGRBG10*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SRGGB12_1X12,  /*SRGGB12*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SGBRG12_1X12,  /*SGBRG12*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SBGGR12_1X12,  /*SBGGR12*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_SGRBG12_1X12,  /*SGRBG12*/
+    },
 };
 
 static int vvcam_isp_querycap(struct v4l2_subdev *sd, void *arg)

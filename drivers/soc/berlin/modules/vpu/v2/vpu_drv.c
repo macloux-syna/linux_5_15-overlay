@@ -36,6 +36,9 @@
 #include "vpu_dec_drv.h"
 #include "vpu_enc_drv.h"
 #include <vpu_mfd.h>
+#if IS_ENABLED(CONFIG_OPTEE)
+#include "h1_irq.h"
+#endif // CONFIG_OPTEE
 
 
 static irqreturn_t syna_vpu_isr(int irq, void *dev_id)
@@ -173,7 +176,14 @@ static int syna_vpu_v4l2_probe(struct syna_vpu_auxiliary_device *auxdev,
 		goto failed_ctx_buf;
 	}
 
-	/*
+#if IS_ENABLED(CONFIG_OPTEE)
+	if (variant->hw_type == VPU_H1_0 && h1_irq_init(vpu_dev->srv)) {
+		dev_err(dev, "fail to init h1 irq\n");
+		goto failed_ctx_buf;
+	}
+#endif // CONFIG_OPTEE
+
+        /*
 	 * NOTE: a comment from amp vcodec
 	 * "need enable H1 clock before open, otherwise board will hang"
 	 * I just enable the device clock and power for any variant
@@ -236,6 +246,9 @@ static void syna_vpu_v4l2_remove(struct syna_vpu_auxiliary_device *auxdev)
 		break;
 	case VPU_H1_0:
 		syna_vepu_h1_finalize(vpu_dev);
+#if IS_ENABLED(CONFIG_OPTEE)
+		h1_irq_destroy();
+#endif // CONFIG_OPTEE
 		break;
 	default:
 		break;

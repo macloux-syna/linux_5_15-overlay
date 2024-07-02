@@ -14,6 +14,7 @@ vpu-$(CONFIG_BERLIN_VPU_V4L2) += v2/vpu_drv.o v2/vpu_srv.o \
 			v2/vpu_enc_ctrls.o
 ifeq ($(CONFIG_OPTEE),y)
 vpu-$(CONFIG_BERLIN_VPU_V4L2) += v2/vpu_fw_optee.o
+vpu-$(CONFIG_BERLIN_VPU_V4L2) += v2/h1_irq.o
 else
 vpu-$(CONFIG_BERLIN_VPU_V4L2) += v2/vpu_fw_tzk.o
 endif

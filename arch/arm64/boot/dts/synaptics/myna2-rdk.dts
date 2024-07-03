@@ -355,6 +355,11 @@
 
 &sdhci0 {
 	status = "okay";
+	sdclkdl-dc = /bits/ 8 <26>;
+	mmc-ddr-1_8v;
+	mmc-hs200-1_8v;
+	mmc-hs400-1_8v;
+	dll-calibration;
 };
 
 &sdhci1 {

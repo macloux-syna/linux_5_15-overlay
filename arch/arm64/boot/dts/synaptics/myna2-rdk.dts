@@ -68,6 +68,12 @@
 		pool-attributes = <0x00000105 0x00000F3A 0x00000102 0x00000F3D>;
 	};
 
+	sdhci1_pwrseq: sdhci1-pwrseq {
+		compatible = "mmc-pwrseq-simple";
+		reset-gpios = <&expander1 2 GPIO_ACTIVE_LOW>;
+		post-power-on-delay-ms = <50>;
+	};
+
 	regulators {
 		compatible = "simple-bus";
 		#address-cells = <1>;
@@ -116,12 +122,6 @@
 		compatible = "syna,bluesleep";
 		bt-dev-wake-gpio = <&expander1 3 GPIO_ACTIVE_HIGH>;
 	};
-
-	brcm_wlan_sdio: brcm_wlan_sdio {
-		compatible = "android,bcmdhd_wlan";
-		wl_reg_on = <&expander1 2 GPIO_ACTIVE_LOW>;
-	};
-
 };
 
 &i2c0 {
@@ -373,6 +373,7 @@
 	no-sd;
 	no-mmc;
 	non-removable;
+	mmc-pwrseq = <&sdhci1_pwrseq>;
 	mode1-tune;
 };
 

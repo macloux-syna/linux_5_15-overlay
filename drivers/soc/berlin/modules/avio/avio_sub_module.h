@@ -76,7 +76,7 @@ typedef struct AVIO_MODULE_FUNC_TABLE_T {
 		struct proc_dir_entry *dev_procdir);
 
 	int (*init)(void *h_ctx_data);
-	void (*config)(void *h_ctx_data, void *dev);
+	int (*config)(void *h_ctx_data, void *dev);
 	int (*open)(void *h_ctx_data);
 	void (*close)(void *h_ctx_data);
 	void (*enable_irq)(void *h_ctx_data);

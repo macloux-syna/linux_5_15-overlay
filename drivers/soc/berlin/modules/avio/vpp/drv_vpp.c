@@ -55,7 +55,7 @@ static struct proc_dir_entry *avio_driver_detail;
 static VPP_CTX vpp_ctx;
 static bool bIsDisplayModeSwitchSignal;
 
-void __weak drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev) { }
+int __weak drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev) { return 0; }
 static int drv_vpp_init(void *h_vpp_ctx);
 
 static HRESULT wait_vpp_primary_vsync(int Id) {
@@ -127,8 +127,10 @@ static VPP_CLOCK *avio_devices_get_clk(VPP_CTX *hVppCtx, VPP_CLK_ID clk_id)
 
 	for (i = 0; i < hVppCtx->clk_list_count; i++) {
 		if (clk_id == hVppCtx->clk_list[i].clk_id &&
-			  !IS_ERR(hVppCtx->clk_list[i].vpp_clk))
-			vpp_clk = &hVppCtx->clk_list[clk_id];
+			  !IS_ERR(hVppCtx->clk_list[i].vpp_clk)) {
+			vpp_clk = &hVppCtx->clk_list[i];
+			break;
+		}
 	}
 
 	return vpp_clk;
@@ -399,16 +401,21 @@ int avio_devices_vpp_isr(UNSG32 intrMask, void *pArgs)
 	return IRQ_HANDLED;
 }
 
-static void drv_vpp_config(void *h_vpp_ctx, void *dev)
+static int drv_vpp_config(void *h_vpp_ctx, void *dev)
 {
+	int ret;
 	VPP_CTX *hVppCtx = (VPP_CTX *)h_vpp_ctx;
 
 	avio_trace("%s:%d:\n", __func__, __LINE__);
 
 	//Read VPP cfg to hVppCtx
-	drv_vpp_read_vpp_cfg(hVppCtx, dev);
+	ret = drv_vpp_read_vpp_cfg(hVppCtx, dev);
+	if (ret < 0)
+		return ret;
 
 	avio_devices_vpp_enable_clocks(hVppCtx);
+
+	return 0;
 }
 
 static int drv_vpp_open(void *h_vpp_ctx)
@@ -654,7 +661,7 @@ static int drv_vpp_ioctl_unlocked(void *h_vpp_ctx, unsigned int cmd,
 				VPP_MODULE_RETURN_WITH_EFAULT();
 
 			vpp_clk = avio_devices_get_clk(hVppCtx, clk_en_info.clk_id);
-			if (!IS_ERR(vpp_clk)) {
+			if (vpp_clk) {
 				avio_trace("vpp enable clk :%s -> %x\n",
 					vpp_clk->clk_name, clk_en_info.enable);
 				if (clk_en_info.enable)
@@ -679,7 +686,7 @@ static int drv_vpp_ioctl_unlocked(void *h_vpp_ctx, unsigned int cmd,
 				VPP_MODULE_RETURN_WITH_EFAULT();
 
 			vpp_clk = avio_devices_get_clk(hVppCtx, clk_rate_info.clk_id);
-			if (!IS_ERR(vpp_clk)) {
+			if (vpp_clk) {
 				clk_rate_info.clk_rate_in_hz = clk_get_rate(vpp_clk->vpp_clk);
 				avio_trace("vpp get clk :%s -> %x\n",
 					vpp_clk->clk_name, clk_rate_info.clk_rate_in_hz);
@@ -706,7 +713,7 @@ static int drv_vpp_ioctl_unlocked(void *h_vpp_ctx, unsigned int cmd,
 				VPP_MODULE_RETURN_WITH_EFAULT();
 
 			vpp_clk = avio_devices_get_clk(hVppCtx, clk_rate_info.clk_id);
-			if (!IS_ERR(vpp_clk)) {
+			if (vpp_clk) {
 				avio_trace("vpp set clk :%s -> %x\n",
 					vpp_clk->clk_name, clk_rate_info.clk_rate_in_hz);
 				clk_set_rate(vpp_clk->vpp_clk, clk_rate_info.clk_rate_in_hz);
@@ -948,9 +955,10 @@ static void drv_vpp_remove_proc_file(void *h_vpp_ctx,
 }
 
 
-void drv_vpp_add_vpp_clock(VPP_CTX *hVppCtx, struct device_node *np,
+int drv_vpp_add_vpp_clock(VPP_CTX *hVppCtx, struct device_node *np,
 		VPP_CLK_ID clk_id, char *clk_name)
 {
+	struct device *dev = hVppCtx->dev;
 	avio_debug("%s:%d:VPP_CLK[%d] : %d = %s\n",
 			__func__, __LINE__, hVppCtx->clk_list_count,
 				clk_id, clk_name);
@@ -961,9 +969,16 @@ void drv_vpp_add_vpp_clock(VPP_CTX *hVppCtx, struct device_node *np,
 		hVppCtx->clk_list[ndx].clk_id = clk_id;
 		hVppCtx->clk_list[ndx].clk_name = clk_name;
 		hVppCtx->clk_list[ndx].vpp_clk =
-			of_clk_get_by_name(np, hVppCtx->clk_list[ndx].clk_name);
-		hVppCtx->clk_list_count++;
+			devm_get_clk_from_child(dev, np, hVppCtx->clk_list[ndx].clk_name);
+		if (IS_ERR(hVppCtx->clk_list[ndx].vpp_clk)) {
+			if (PTR_ERR(hVppCtx->clk_list[ndx].vpp_clk) == -EPROBE_DEFER)
+				return -EPROBE_DEFER;
+		} else {
+			hVppCtx->clk_list_count++;
+		}
 	}
+
+	return 0;
 }
 
 void drv_vpp_add_vpp_interrupt_num(VPP_CTX *hVppCtx,

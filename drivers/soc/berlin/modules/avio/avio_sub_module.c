@@ -157,8 +157,11 @@ int avio_sub_module_config(struct platform_device *pdev)
 	for (i = 0; i < AVIO_MODULE_TYPE_MAX; i++) {
 		AVIO_MODULE_FUNC_TABLE *fops = &g_avio_module[i].func;
 
-		if (fops->config)
-			(*fops->config)(g_avio_module[i].pCtxData, pdev);
+		if (fops->config) {
+			err = (*fops->config)(g_avio_module[i].pCtxData, pdev);
+			if (err)
+				return err;
+		}
 	}
 
 	return err;

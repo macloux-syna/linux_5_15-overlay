@@ -21,46 +21,71 @@ static VPP_CLOCK vpp_clocks[MAX_VPP_CLOCKS] = {
 	{.clk_id = VPP_CLK_ID_ESMCLK,   .clk_name = "avio_hdmirxrefclk"},
 };
 
-static void drv_vpp_read_clk_cfg(VPP_CTX *hVppCtx, struct device_node *np)
+static int drv_vpp_read_clk_cfg(VPP_CTX *hVppCtx, struct device_node *np)
 {
-	int i;
+	int i, ret;
 
+	hVppCtx->clk_list_count = 0;
 	for (i = 0; i < MAX_VPP_CLOCKS; i++) {
-		drv_vpp_add_vpp_clock(hVppCtx, np,
+		ret = drv_vpp_add_vpp_clock(hVppCtx, np,
 			vpp_clocks[i].clk_id, vpp_clocks[i].clk_name);
+		if (ret < 0)
+			return ret;
 	}
+
+	return 0;
 }
 
-static void drv_vpp_get_hdmi_5V(VPP_CTX *hVppCtx, struct device_node *np)
+static int drv_vpp_get_hdmi_5V(VPP_CTX *hVppCtx, struct device_node *np)
 {
-	struct device *dev;
-	dev = hVppCtx->dev;
+	struct device *dev = hVppCtx->dev;
+	int ret = 0;
 
 	hVppCtx->gpio_hdmitx_5v = devm_fwnode_get_index_gpiod_from_child(dev, "hdtx5v", 0,
 						 &np->fwnode, GPIOD_OUT_HIGH, "hdmitx5v");
-	if (IS_ERR_OR_NULL(hVppCtx->gpio_hdmitx_5v)) {
-		avio_trace("could not get hdmitx 5v gpio, err : %ld\n",
-				PTR_ERR(hVppCtx->gpio_hdmitx_5v));
+	if (IS_ERR(hVppCtx->gpio_hdmitx_5v)) {
+		ret = PTR_ERR(hVppCtx->gpio_hdmitx_5v);
+		if (ret != -EPROBE_DEFER)
+			avio_trace("could not get hdmitx 5v gpio, err : %d\n", ret);
 	}
+
+	return ret;
 }
 
-static void drv_vpp_get_mipi_rst(VPP_CTX *hVppCtx, struct device_node *np)
+static int drv_vpp_get_mipi_rst(VPP_CTX *hVppCtx, struct device_node *np)
 {
+	int ret = 0;
 	hVppCtx->gpio_mipirst = devm_fwnode_get_index_gpiod_from_child(hVppCtx->dev, "mipirst", 0,
 										&np->fwnode, GPIOD_OUT_LOW, "mipi");
 
-	if (IS_ERR_OR_NULL(hVppCtx->gpio_mipirst)) {
-		avio_trace("%s:%d Gpio desc Fail ERR[%ld]\n", __func__,
-					__LINE__, PTR_ERR(hVppCtx->gpio_mipirst));
+	/* FIXME
+	 * In theory, if the mipirst gpio is not optional, we need to
+	 * return if above call fails, but the mipirst gpio is gotten
+	 * in three places(avio:drv_vpp_cfg.c, drm:panel_dsi.c and
+	 * drm:syna_vpp_config.c). So I only check the -EPROBE_DEFER for
+	 * modularization. Fix it once VPP people get a conclusion which
+	 * component will take the gpio responsibility.
+	 */
+	if (IS_ERR(hVppCtx->gpio_mipirst)) {
+		ret = PTR_ERR(hVppCtx->gpio_mipirst);
+		if (ret == -EPROBE_DEFER) {
+			return ret;
+		} else {
+			avio_trace("%s:%d Gpio desc Fail ERR[%d]\n", __func__, __LINE__, ret);
+			hVppCtx->gpio_mipirst = NULL;
+			ret = 0;
+		}
 	}
+
+	return ret;
 }
 
-void drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev)
+int drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev)
 {
 	struct device_node *np, *iter;
 	const char *vpp_node_name = "syna,berlin-vpp";
 	struct platform_device *pdev = (struct platform_device *)dev;
-	int nodeFound = 0;
+	int ret, nodeFound = 0;
 
 	np = pdev->dev.of_node;
 	if (np) {
@@ -75,11 +100,18 @@ void drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev)
 	if (nodeFound) {
 		np = iter;
 		//enumerate vpp clocks
-		drv_vpp_read_clk_cfg(hVppCtx, np);
-		drv_vpp_get_hdmi_5V(hVppCtx, np);
+		ret = drv_vpp_read_clk_cfg(hVppCtx, np);
+		if (ret < 0)
+			return ret;
+
+		ret = drv_vpp_get_hdmi_5V(hVppCtx, np);
+		if (ret < 0)
+			return ret;
 
 		/* Configure Mipi*/
-		drv_vpp_get_mipi_rst(hVppCtx, np);
+		ret = drv_vpp_get_mipi_rst(hVppCtx, np);
+		if (ret < 0)
+			return ret;
 	}
 
 	avio_trace("%s:%d - start\n", __func__, __LINE__);
@@ -108,4 +140,6 @@ void drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev)
 	drv_vpp_add_vpp_interrupt_num(hVppCtx, avioDhubSemMap_vpp128b_vpp_inr10, VPP_INTR_TYPE_HDMI_RX);
 
 	drv_hdmitx_init(hVppCtx);
+
+	return 0;
 }

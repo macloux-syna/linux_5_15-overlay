@@ -6,5 +6,5 @@
 #include "avio_debug.h"
 #include "avio_ioctl.h"
 
-void drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev);
+int drv_vpp_read_vpp_cfg(VPP_CTX *hVppCtx, void *dev);
 

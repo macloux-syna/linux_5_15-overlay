@@ -84,11 +84,12 @@ static int drv_dhub_get_dhub_cfg(DHUB_CTX *hDhubCtx, void *dev)
 	return ret;
 }
 
-static void drv_dhub_config(void *h_dhub_ctx, void *dev)
+static int drv_dhub_config(void *h_dhub_ctx, void *dev)
 {
 	DHUB_CTX *hDhubCtx = (DHUB_CTX *)h_dhub_ctx;
 
 	drv_dhub_get_dhub_cfg(hDhubCtx, dev);
+	return 0;
 }
 
 static int drv_dhub_ioctl_unlocked(void *h_dhub_ctx,

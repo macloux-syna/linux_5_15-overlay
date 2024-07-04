@@ -129,7 +129,7 @@ static int drv_aio_get_clk(struct aio_priv *aio, struct device_node *np)
 		"audio0_clk", "audio1_clk", "aio_sysclk"};
 	unsigned long default_rate[AIO_CLK_MAX] = {
 		DEFAULT_APLL0_RATE, DEFAULT_APLL1_RATE, 0};
-	int i, j;
+	int i, j, ret;
 	struct clk *l_clk;
 
 	for (i = 0; i < AIO_CLK_MAX; i++) {
@@ -137,6 +137,7 @@ static int drv_aio_get_clk(struct aio_priv *aio, struct device_node *np)
 		if (IS_ERR(l_clk)) {
 			pr_err("%s, error in getting clk(%d) handle\n",
 				   __func__, i);
+			ret = PTR_ERR(l_clk);
 			goto err_probe_clk;
 		}
 		if (of_property_read_u32_index(np, "clock-rates", i,
@@ -155,10 +156,10 @@ err_probe_clk:
 		aio->a_clk[j] = NULL;
 	}
 
-	return -EINVAL;
+	return ret;
 }
 
-static void avio_module_drv_aio_config(void *h_aio_ctx, void *p)
+static int avio_module_drv_aio_config(void *h_aio_ctx, void *p)
 {
 	struct device_node *np, *iter;
 	const char *aio_node_name = "syna,berlin-aio";
@@ -181,7 +182,7 @@ static void avio_module_drv_aio_config(void *h_aio_ctx, void *p)
 	if (!nodeFound) {
 		avio_trace("%s:%d: Node not found %s!\n",
 					__func__, __LINE__, aio_node_name);
-		return;
+		return -ENODEV;
 	}
 
 	np = iter;
@@ -201,8 +202,10 @@ static void avio_module_drv_aio_config(void *h_aio_ctx, void *p)
 	}
 
 	ret = drv_aio_get_clk(aio, np);
-	if (ret < 0)
+	if (ret < 0 && ret != -EPROBE_DEFER)
 		dev_err(aio->dev, "Failed to get clk handle");
+
+	return ret;
 }
 
 static int avio_module_drv_aio_suspend(void *h_aio_ctx)

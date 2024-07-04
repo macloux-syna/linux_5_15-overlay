@@ -129,7 +129,7 @@ typedef struct _VPP_CONTEXT_ {
 } VPP_CTX;
 
 
-void drv_vpp_add_vpp_clock(VPP_CTX *hVppCtx, struct device_node *np,
+int drv_vpp_add_vpp_clock(VPP_CTX *hVppCtx, struct device_node *np,
 		VPP_CLK_ID clk_id, char *clk_name);
 void drv_vpp_add_vpp_interrupt_num(VPP_CTX *hVppCtx, int intr_num,
 			int intr_type);

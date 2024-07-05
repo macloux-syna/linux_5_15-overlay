@@ -212,6 +212,7 @@ struct syna_vcodec_ctx {
 	void *input_pool;
 	void *output_pool;
 	void *aux_pool;
+	void *ds_pool;
 
 	u32 input_pool_num;
 	u32 output_pool_num;

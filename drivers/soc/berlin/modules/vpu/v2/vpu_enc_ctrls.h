@@ -58,6 +58,9 @@ struct vpu_enc_ctrls {
 	u32 multi_slice_mode;
 	u32 multi_slice_max_mb;
 	u32 cyclic_intra_refresh_mb;
+	u32 syna_h1_ds_w;
+	u32 syna_h1_ds_h;
+	bool syna_h1_simulcast;
 };
 
 int vpu_enc_ctrls_init(struct v4l2_ctrl_handler *handler);

@@ -52,5 +52,6 @@ int syna_venc_encode_stream(struct syna_vcodec_ctx *ctx);
 int syna_venc_push_video_buf(struct syna_vcodec_ctx *ctx, uint32_t index);
 int syna_venc_push_es_buf(struct syna_vcodec_ctx *ctx, uint32_t index);
 int syna_venc_push_ref_buf(struct syna_vcodec_ctx *ctx, uint32_t index);
+int syna_venc_push_ds_buf(struct syna_vcodec_ctx *ctx, uint32_t index);
 
 #endif //end of __VPU_FIRMWARE_H__

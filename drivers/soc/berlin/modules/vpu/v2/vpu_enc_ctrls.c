@@ -21,6 +21,10 @@ extern int vepu_debug;
 #define vepu_info(vpu, fmt, arg...) v4l2_info(&vpu->v4l2_dev, fmt, ##arg)
 #define vepu_err(vpu, fmt, arg...) v4l2_err(&vpu->v4l2_dev, fmt, ##arg)
 
+#define SYNA_V4L2_CID_H1_DS_W (V4L2_CID_USER_BASE + 0x1170)
+#define SYNA_V4L2_CID_H1_DS_H (V4L2_CID_USER_BASE + 0x1171)
+#define SYNA_V4L2_CID_H1_SIMULCAST (V4L2_CID_USER_BASE + 0x1172)
+
 #define SYNA_LTR_MAX_CNT 6
 #define SYNA_MAX_MB_NUM ((H1_MAX_W * H1_MAX_H) >> 8)
 #define MBs(x) ((x + 15) / 16)
@@ -315,6 +319,28 @@ static int vidioc_venc_s_ctrl(struct v4l2_ctrl *ctrl)
 		venc_ctrls->ltr_ctrls.use_id = id;
 		venc_ctrls->apply_dyna_ctrls = true;
 		break;
+	case SYNA_V4L2_CID_H1_DS_W:
+		vepu_dbg(2, "SYNA_V4L2_CID_H1_DS_W val = %d", ctrl->val);
+		if (ctx->enc_params->frm_width &&
+		    ctrl->val >= ctx->enc_params->frm_width) {
+			ret = -EINVAL;
+			break;
+		}
+		venc_ctrls->syna_h1_ds_w = ctrl->val;
+		break;
+	case SYNA_V4L2_CID_H1_DS_H:
+		vepu_dbg(2, "SYNA_V4L2_CID_H1_DS_H val = %d", ctrl->val);
+		if (ctx->enc_params->frm_height &&
+		    ctrl->val >= ctx->enc_params->frm_height) {
+			ret = -EINVAL;
+			break;
+		}
+		venc_ctrls->syna_h1_ds_h = ctrl->val;
+		break;
+	case SYNA_V4L2_CID_H1_SIMULCAST:
+		vepu_dbg(2, "SYNA_V4L2_CID_H1_SIMULCAST val = %d", ctrl->val);
+		venc_ctrls->syna_h1_simulcast = ctrl->val;
+		break;
 	default:
 		vepu_dbg(2, "unknown ctrl id = %d(%s)\n", ctrl->id,
 			 v4l2_ctrl_get_name(ctrl->id));
@@ -334,11 +360,44 @@ static const struct v4l2_ctrl_ops vpu_enc_ctrl_ops = {
 	.s_ctrl = vidioc_venc_s_ctrl,
 };
 
+static const struct v4l2_ctrl_config h1_ds_w_cfg = {
+	.ops = &vpu_enc_ctrl_ops,
+	.id = SYNA_V4L2_CID_H1_DS_W,
+	.name = "Width of SYNA H1 downscale output",
+	.type = V4L2_CTRL_TYPE_INTEGER,
+	.min = 0,
+	.max = H1_MAX_W,
+	.step = MB_DIM,
+	.def = 0,
+};
+
+static const struct v4l2_ctrl_config h1_ds_h_cfg = {
+	.ops = &vpu_enc_ctrl_ops,
+	.id = SYNA_V4L2_CID_H1_DS_H,
+	.name = "Height of SYNA H1 downscale output",
+	.type = V4L2_CTRL_TYPE_INTEGER,
+	.min = 0,
+	.max = H1_MAX_H,
+	.step = MB_DIM,
+	.def = 0,
+};
+
+static const struct v4l2_ctrl_config h1_simulcast_cfg = {
+	.ops = &vpu_enc_ctrl_ops,
+	.id = SYNA_V4L2_CID_H1_SIMULCAST,
+	.name = "SYNA H1 simulcast output",
+	.type = V4L2_CTRL_TYPE_BOOLEAN,
+	.min = 0,
+	.max = 1,
+	.step = 1,
+	.def = 0,
+};
+
 int vpu_enc_ctrls_init(struct v4l2_ctrl_handler *handler)
 {
 	const struct v4l2_ctrl_ops *ops = &vpu_enc_ctrl_ops;
 
-	v4l2_ctrl_handler_init(handler, 28);
+	v4l2_ctrl_handler_init(handler, 31);
 
 	v4l2_ctrl_new_std(handler, ops, V4L2_CID_MIN_BUFFERS_FOR_OUTPUT, 1, 1,
 			  1, 1);
@@ -420,6 +479,10 @@ int vpu_enc_ctrls_init(struct v4l2_ctrl_handler *handler)
 	v4l2_ctrl_new_std_menu(handler, ops, V4L2_CID_MPEG_VIDEO_VP8_PROFILE,
 			       V4L2_MPEG_VIDEO_VP8_PROFILE_0, 0,
 			       V4L2_MPEG_VIDEO_VP8_PROFILE_0);
+
+	v4l2_ctrl_new_custom(handler, &h1_ds_w_cfg, NULL);
+	v4l2_ctrl_new_custom(handler, &h1_ds_h_cfg, NULL);
+	v4l2_ctrl_new_custom(handler, &h1_simulcast_cfg, NULL);
 
 	if (handler->error)
 		return handler->error;
@@ -556,6 +619,12 @@ static int v4l2_ctrls_to_h1_strm_config(struct vpu_enc_ctrls *enc_ctrls,
 		config->qpMin = enc_ctrls->vpx_min_qp;
 		config->qpMax = enc_ctrls->vpx_max_qp;
 		config->profile_idc = enc_ctrls->vp8_profile;
+	}
+
+	if (enc_ctrls->syna_h1_ds_w && enc_ctrls->syna_h1_ds_h) {
+		config->ds_width = enc_ctrls->syna_h1_ds_w;
+		config->ds_height = enc_ctrls->syna_h1_ds_h;
+		config->simulcast = enc_ctrls->syna_h1_simulcast;
 	}
 
 	enc_ctrls->apply_dyna_ctrls = false;

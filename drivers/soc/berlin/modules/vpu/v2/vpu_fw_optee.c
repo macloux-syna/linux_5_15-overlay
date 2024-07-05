@@ -569,3 +569,9 @@ int syna_venc_push_ref_buf(struct syna_vcodec_ctx *ctx, uint32_t index)
 	return tz_vpu_buffer_cmd(VENC_PUSH_BUFFER_V2, ctx,
 			SYNA_VPU_FW_VENC_RECON, index);
 }
+
+int syna_venc_push_ds_buf(struct syna_vcodec_ctx *ctx, uint32_t index)
+{
+	return tz_vpu_buffer_cmd(VENC_PUSH_BUFFER_V2, ctx,
+				 SYNA_VPU_FW_VENC_DS, index);
+}

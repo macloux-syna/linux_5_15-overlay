@@ -56,11 +56,12 @@ typedef unsigned long long u64;
 #define BERLIN_VPU_STATUS_WAIT_INPUT_BUF	BIT(7)
 #define BERLIN_VPU_STATUS_WAIT_OUTPUT_BUF	BIT(8)
 #define BERLIN_VPU_STATUS_WAIT_AUX_BUF		BIT(9)
-#define BERLIN_VPU_STATUS_PUSH_INPUT_BUFS	BIT(10)
-#define BERLIN_VPU_STATUS_PUSH_OUTPUT_BUFS	BIT(11)
-#define BERLIN_VPU_STATUS_PUSH_AUX_BUFS		BIT(12)
+#define BERLIN_VPU_STATUS_WAIT_DS_BUF		BIT(10)
+#define BERLIN_VPU_STATUS_PUSH_INPUT_BUFS	BIT(11)
+#define BERLIN_VPU_STATUS_PUSH_OUTPUT_BUFS	BIT(12)
+#define BERLIN_VPU_STATUS_PUSH_AUX_BUFS		BIT(13)
 /* legacy API */
-#define BERLIN_VPU_STATUS_LEGACY_UD_ERROR	BIT(13)
+#define BERLIN_VPU_STATUS_LEGACY_UD_ERROR	BIT(14)
 
 #define BERLIN_VPU_CFG_LEGACY_API_ENABLED	BIT(0)
 #define BERLIN_VPU_CFG_AUX_POOL_ENABLED		BIT(1)
@@ -177,6 +178,8 @@ enum syna_vpu_fw_enc_buf {
 	SYNA_VPU_FW_VENC_STRM,
 	/* reconstruction queue */
 	SYNA_VPU_FW_VENC_RECON,
+	/* downscale queue */
+	SYNA_VPU_FW_VENC_DS,
 };
 
 /* It would use the same value as enum v4l2_field */
@@ -190,7 +193,7 @@ enum syna_frame_field {
 };
 
 /* ***VPU firmware APIs begins here*** */
-/* VPU Firmware version: 34540 */
+/* VPU Firmware version: 34632 */
 #ifdef __KERNEL__
 enum syna_dec_channel
 {
@@ -668,6 +671,8 @@ struct syna_vpu_ctrl {
 	 */
 	struct idx_queue rbuf;
 
+	struct idx_queue dsbuf;
+
 	struct syna_vpu_tz_buf inbufs[32];
 	/* tile(ref) bufs for decoder */
 	struct syna_vpu_tz_buf outbufs[32];
@@ -676,6 +681,7 @@ struct syna_vpu_ctrl {
 		struct syna_vpu_tz_buf auxbufs[32];
 		struct syna_vpu_tz_buf p_dispbufs[32];
 	};
+	struct syna_vpu_tz_buf dsbufs[32];
 
 	/* self */
 	struct syna_tz_generic_buf ctrl_buf;

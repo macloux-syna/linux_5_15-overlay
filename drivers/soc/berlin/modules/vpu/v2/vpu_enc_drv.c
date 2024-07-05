@@ -418,8 +418,36 @@ static int vidioc_venc_g_parm(struct file *file, void *priv,
 	return 0;
 }
 
-static int hantro_try_fmt_cap(struct v4l2_pix_format_mplane *pix_mp)
+static int hantro_try_fmt_ds(struct syna_vcodec_ctx *ctx,
+			     struct v4l2_pix_format_mplane *pix_mp)
 {
+	int ret;
+	int i;
+	struct v4l2_pix_format_mplane ds_pix_mp;
+	unsigned int sizeimage = 0;
+
+	ret = v4l2_fill_pixfmt_mp(&ds_pix_mp, V4L2_PIX_FMT_YUV422P,
+				  ctx->v4l2_ctrls.syna_h1_ds_w,
+				  ctx->v4l2_ctrls.syna_h1_ds_h);
+	if (ret)
+		return ret;
+
+	for (i = 0; i < ds_pix_mp.num_planes; ++i)
+		sizeimage += ds_pix_mp.plane_fmt[i].sizeimage;
+
+	sizeimage = ALIGN(sizeimage, SZ_4K);
+
+	++pix_mp->num_planes;
+	pix_mp->plane_fmt[pix_mp->num_planes - 1].sizeimage = sizeimage;
+
+	return 0;
+}
+
+static int hantro_try_fmt_cap(struct syna_vcodec_ctx *ctx,
+			      struct v4l2_pix_format_mplane *pix_mp)
+{
+	int ret;
+
 	pix_mp->field = V4L2_FIELD_NONE;
 	pix_mp->num_planes = 1;
 	pix_mp->plane_fmt[0].bytesperline = 0;
@@ -430,6 +458,12 @@ static int hantro_try_fmt_cap(struct v4l2_pix_format_mplane *pix_mp)
 
 	pix_mp->plane_fmt[0].sizeimage =
 		ALIGN(pix_mp->plane_fmt[0].sizeimage, SZ_4K);
+
+	if (ctx->v4l2_ctrls.syna_h1_ds_w && ctx->v4l2_ctrls.syna_h1_ds_h) {
+		ret = hantro_try_fmt_ds(ctx, pix_mp);
+		if (ret)
+			return ret;
+	}
 
 	return 0;
 }
@@ -490,7 +524,7 @@ static int vidioc_venc_s_fmt_cap(struct file *file, void *priv,
 	}
 
 	p->format = fmt->enc_fmt;
-	hantro_try_fmt_cap(pix_mp);
+	hantro_try_fmt_cap(ctx, pix_mp);
 	switch (pix_mp->pixelformat) {
 	case V4L2_PIX_FMT_VP8:
 		p->vp8_strm_mode = 2;
@@ -581,7 +615,7 @@ static int vidioc_venc_g_fmt(struct file *file, void *priv,
 static int vidioc_try_fmt_vid_cap_mplane(struct file *file, void *priv,
 					 struct v4l2_format *f)
 {
-	return hantro_try_fmt_cap(&f->fmt.pix_mp);
+	return hantro_try_fmt_cap(fh_to_ctx(priv), &f->fmt.pix_mp);
 }
 
 static int vidioc_try_fmt_vid_out_mplane(struct file *file, void *priv,
@@ -782,12 +816,12 @@ static int vb2ops_syna_vpu_buf_init(struct vb2_buffer *vb)
 	struct syna_vcodec_ctx *ctx = vb2_get_drv_priv(vb->vb2_queue);
 	struct syna_vpu_dev *vpu = ctx->vpu;
 	struct vb2_queue *vq = vb->vb2_queue;
-	struct syna_vpu_ctrl *ctrl;
 	struct syna_vpu_tz_buf *vpu_buf;
 	dma_addr_t memid;
 	u32 i, idx;
 	enum syna_vpu_fw_enc_buf buftype;
 	int ret;
+	int num_planes;
 
 	idx = vb->index;
 
@@ -799,16 +833,17 @@ static int vb2ops_syna_vpu_buf_init(struct vb2_buffer *vb)
 		vpu_buf->planes[0].gfp_flags = BERLIN_GFP_FLAG_NO_MAPPING;
 		vpu_buf->planes[1].gfp_flags = BERLIN_GFP_FLAG_NO_MAPPING;
 		vpu_buf->planes[2].gfp_flags = BERLIN_GFP_FLAG_NO_MAPPING;
+		num_planes = vb->num_planes;
 	} else {
 		vpu_buf = ctx->output_pool;
 		vpu_buf += idx;
 		vpu_buf->buf_type = ENCODER_STREAM;
 		buftype = SYNA_VPU_FW_VENC_STRM;
+		num_planes = 1;
 	}
-	ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
 
 	memset(vpu_buf->planes, 0, sizeof(struct syna_tz_generic_buf) << 2);
-	for (i = 0; i < vb->num_planes; i++) {
+	for (i = 0; i < num_planes; i++) {
 		memid = syna_vpu_bm_dh_plane_memid(vb, i);
 
 		vpu_buf->planes[i].type = CONTIGUOUS_MEM;
@@ -820,6 +855,25 @@ static int vb2ops_syna_vpu_buf_init(struct vb2_buffer *vb)
 	if (ret) {
 		vepu_err(vpu, "can't register buffer: 0x%08x\n", ret);
 		return -EINVAL;
+	}
+
+	if (!V4L2_TYPE_IS_OUTPUT(vq->type) && vb->num_planes == 2) {
+		vpu_buf = ctx->ds_pool;
+		vpu_buf += idx;
+		vpu_buf->buf_type = ENCODER_PICTURE;
+		buftype = SYNA_VPU_FW_VENC_DS;
+
+		memid = syna_vpu_bm_dh_plane_memid(vb, 1);
+
+		vpu_buf->planes[0].type = CONTIGUOUS_MEM;
+		vpu_buf->planes[0].memid = memid;
+		vpu_buf->planes[0].size = vb2_plane_size(vb, 1);
+
+		ret = syna_vpu_register_buf(ctx, buftype, idx);
+		if (ret) {
+			vepu_err(vpu, "reg ds buf fail: 0x%08x\n", ret);
+			return ret;
+		}
 	}
 
 	return 0;
@@ -888,6 +942,14 @@ static void vb2ops_syna_vpu_buf_cleanup(struct vb2_buffer *vb)
 	ret = syna_vpu_unregister_buf(ctx, buftype, i);
 	if (ret)
 		vepu_err(vpu, "failed to unregister buffer: 0x%08x\n", ret);
+
+	if (!V4L2_TYPE_IS_OUTPUT(vq->type) && vb->num_planes == 2) {
+		buftype = SYNA_VPU_FW_VENC_DS;
+
+		ret = syna_vpu_unregister_buf(ctx, buftype, i);
+		if (ret)
+			vepu_err(vpu, "unreg ds buf fail: 0x%08x\n", ret);
+	}
 }
 
 static int syna_vepu_push_queued_cap(struct syna_vcodec_ctx *ctx)
@@ -1015,6 +1077,13 @@ static void vb2ops_venc_buf_queue(struct vb2_buffer *vb)
 		vpu_buf += vb->index;
 
 		if (syna_venc_push_es_buf(ctx, vb->index))
+			return;
+
+		++ctx->input_es_seq;
+
+		if (ctx->v4l2_ctrls.syna_h1_ds_w &&
+		    ctx->v4l2_ctrls.syna_h1_ds_h && ctx->input_es_seq > 1 &&
+		    syna_venc_push_ds_buf(ctx, vb->index))
 			return;
 	}
 
@@ -1161,6 +1230,15 @@ retry:
 		vpu_buf += idx;
 		vb2_set_plane_payload(&dst_buf->vb2_buf, 0,
 				      vpu_buf->bytesused[0]);
+		if (ctrl->dsbuf.pop) {
+			if (vpu_buf->flags & BERLIN_BUF_FLAG_SEQ_HEADER) {
+				vb2_set_plane_payload(&dst_buf->vb2_buf, 1, 0);
+			} else {
+				vb2_set_plane_payload(
+					&dst_buf->vb2_buf, 1,
+					ctx->dst_fmt.plane_fmt[1].sizeimage);
+			}
+		}
 		dst_buf->sequence = ctx->sequence_cap++;
 		dst_buf->field = V4L2_FIELD_NONE;
 		/* FIXME: better timestamp assignment mechanism */
@@ -1337,6 +1415,7 @@ static int vepu_driver_open(struct file *filp)
 	ctx->input_pool = &ctrl->inbufs;
 	ctx->output_pool = &ctrl->outbufs;
 	ctx->aux_pool = &ctrl->auxbufs;
+	ctx->ds_pool = &ctrl->dsbufs;
 
 	init_completion(&ctx->work_done);
 

@@ -17,10 +17,39 @@
 #include "syna_drm.h"
 #include "drm_syna_port.h"
 
+static int syna_gem_prime_vmap(struct drm_gem_object *obj, struct dma_buf_map *map)
+{
+	struct syna_gem_object *syna_obj = to_syna_obj(obj);
+
+	if (!syna_obj) {
+		DRM_ERROR("%s %d  syna obj is NULL!!\n", __func__, __LINE__);
+		return -EINVAL;
+	}
+
+	if (!syna_obj->kernel_vir_addr) {
+		DRM_ERROR("%s %d  syna obj->kernel_vir_addr is NULL!!\n", __func__, __LINE__);
+		return -EINVAL;
+	}
+
+	DRM_DEBUG_PRIME("Mapping to virtual address : %p/%llx\n",
+		syna_obj->kernel_vir_addr, (long long int)syna_obj->kernel_vir_addr);
+
+	dma_buf_map_set_vaddr(map, syna_obj->kernel_vir_addr);
+
+	return 0;
+}
+
+static void syna_gem_prime_vunmap(struct drm_gem_object *obj, struct dma_buf_map *map)
+{
+	/* Nothing to do if allocated by DMA mapping API. */
+}
+
 static const struct drm_gem_object_funcs syna_gem_object_funcs = {
 	.free = syna_gem_object_free_priv,
 	SYNA_DRM_DRIVER_GEM_VM_OPS_GEM_OBJ_INTERFAES()
 	.get_sg_table = syna_gem_prime_get_sg_table,
+	.vmap = syna_gem_prime_vmap,
+	.vunmap	= syna_gem_prime_vunmap,
 };
 
 int syna_gem_init(struct drm_device *dev)

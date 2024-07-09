@@ -14,6 +14,7 @@
 
 #include <drm/drmP.h>
 #include <drm/drm_gem.h>
+#include <drm/drm_fb_helper.h>
 #include <drm/drm_atomic_helper.h>
 
 #include "drm_syna_drv.h"
@@ -321,6 +322,8 @@ static int syna_probe(struct platform_device *pdev)
 	ret = sysfs_create_file(&pdev->dev.kobj, &dev_attr_suspend.attr);
 	if(ret)
 		DRM_ERROR("Sysfs suspend entry not created %d",ret);
+
+	drm_fbdev_generic_setup(ddev, 32);
 
 	return 0;
 

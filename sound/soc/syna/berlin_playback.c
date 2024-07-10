@@ -700,7 +700,7 @@ int berlin_playback_hw_params(struct snd_pcm_substream *ss,
 		   params_period_bytes(p), params_buffer_bytes(p));
 	if (bp->sample_format == SNDRV_PCM_FORMAT_S16_LE)
 		bp->pcm_ratio *= 2;
-	if (params_width(p)/8 == 3) {
+	if ((params_width(p) >> 3) == 3) {
 		bp->pcm_ratio *= 4;
 		bp->pcm_ratio_div = 3;
 	}
@@ -733,6 +733,10 @@ int berlin_playback_hw_params(struct snd_pcm_substream *ss,
 		else if (bp->channel_num > 2) {
 			bp->hdmi_ratio = 8;
 			bp->hdmi_ratio_denominator = bp->channel_num;
+		}
+		if ((params_width(p) >> 3) == 3) {
+			bp->hdmi_ratio *= 4;
+			bp->hdmi_ratio_denominator *= 3;
 		}
 	}
 

@@ -191,6 +191,7 @@ void syna_modeset_late_cleanup(struct syna_drm_private *dev_priv)
 {
 	drm_mode_config_cleanup(dev_priv->dev);
 	syna_panel_lcdc_deinit( );
+	syna_panel_dsi_deinit();
 
 	DRM_DEBUG_DRIVER("cleaned up\n");
 }

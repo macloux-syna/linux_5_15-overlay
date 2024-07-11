@@ -35,15 +35,15 @@ typedef struct panel_timing_info_t {
 } PANEL_TIMING_INFO;
 
 typedef struct panel_desc_t {
-	PANEL_TIMING_INFO   panel_timing;
-	int                 outformat;
-	int                 bpp;
-	int                 byteclock;
-	int                 cmdsize;
-	unsigned char		*cmd;
-
-	struct gpio_desc 	*mipirst;
-	struct gpio_desc 	*mipibl;
+	PANEL_TIMING_INFO	panel_timing;
+	int	outformat;
+	int	bpp;
+	int	byteclock;
+	int	cmdsize;
+	unsigned char	*cmd;
+	struct gpio_desc	*mipirst;
+	struct gpio_desc	*mipibl;
+	struct regulator	*supply;
 } SYNA_PANEL_DESC;
 
 static struct display_timing synaPanelTimings;
@@ -60,6 +60,32 @@ static int syna_panel_dsi_get_timings (struct drm_panel *panel, unsigned int num
 			   struct display_timing *dptimings)
 {
 	memcpy(dptimings, &synaPanelTimings, sizeof(struct display_timing));
+
+	return 0;
+}
+
+static int syna_panel_dsi_enable(struct drm_panel *panel)
+{
+	int err;
+
+	if (synaPanelInfo.supply) {
+		err = regulator_enable(synaPanelInfo.supply);
+		if (err < 0)
+			pr_info("failed to enable supply: %d\n", err);
+	}
+
+	return 0;
+}
+
+static int syna_panel_dsi_disable(struct drm_panel *panel)
+{
+	int err;
+
+	if (synaPanelInfo.supply) {
+		err = regulator_disable(synaPanelInfo.supply);
+		if (err < 0)
+			pr_info("failed to disable supply: %d\n", err);
+	}
 
 	return 0;
 }
@@ -114,6 +140,8 @@ static int syna_panel_dsi_get_modes(struct drm_panel *panel, struct drm_connecto
 static const struct drm_panel_funcs syna_panel_dsi_funcs = {
 	.prepare = syna_panel_dsi_prepare,
 	.unprepare = syna_panel_dsi_unprepare,
+	.enable = syna_panel_dsi_enable,
+	.disable = syna_panel_dsi_disable,
 	.get_timings = syna_panel_dsi_get_timings,
 	.get_modes = syna_panel_dsi_get_modes,
 };
@@ -122,6 +150,7 @@ int syna_panel_dsi_init(struct platform_device *pdev)
 {
 	int err = 0;
 	struct device *mipi_dev;
+	struct device_node *np;
 
 	mipi_dev = devm_kmalloc(&pdev->dev, sizeof(struct device), GFP_KERNEL);
 	mipi_dev->of_node = of_find_compatible_node(NULL, NULL, "syna,drm-dsi");
@@ -212,13 +241,46 @@ int syna_panel_dsi_init(struct platform_device *pdev)
 			synaPanelInfo.mipibl = NULL;
 	}
 
+	of_node_put(mipi_dev->of_node);
+
+	synaPanelInfo.supply = devm_regulator_get_optional(&pdev->dev, "power");
+	if (IS_ERR(synaPanelInfo.supply)) {
+		if (PTR_ERR(synaPanelInfo.supply) == -EPROBE_DEFER)
+			return -EPROBE_DEFER;
+		else {
+			pr_info("External Regulator not available \n");
+			synaPanelInfo.supply = NULL;
+		}
+	}
+
 	gpiod_set_value_cansleep(synaPanelInfo.mipirst, 0);
 	gpiod_set_value_cansleep(synaPanelInfo.mipibl, 1);
 
 	drm_panel_init(dsi_panel, mipi_dev, &syna_panel_dsi_funcs,
 					DRM_MODE_CONNECTOR_DSI);
 
+	np = of_parse_phandle(mipi_dev->of_node, "backlight", 0);
+	if (np) {
+		dsi_panel->backlight = of_find_backlight_by_node(np);
+		of_node_put(np);
+		if (!dsi_panel->backlight) {
+			put_device(&dsi_panel->backlight->dev);
+			return -EPROBE_DEFER;
+		}
+	} else {
+		pr_info("No external Backlight Device\n");
+		dsi_panel->backlight = NULL;
+	}
+
 	drm_panel_add(dsi_panel);
 
 	return err;
+}
+
+void syna_panel_dsi_deinit(void)
+{
+	if (dsi_panel->backlight)
+		put_device(&dsi_panel->backlight->dev);
+
+	return;
 }

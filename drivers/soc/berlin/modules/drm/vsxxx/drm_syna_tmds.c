@@ -8,6 +8,7 @@
 #include <drm/drm_crtc.h>
 #include "drm_syna_drv.h"
 #include "vpp_api.h"
+#include <drm/drm_panel.h>
 
 static void syna_tmds_encoder_helper_dpms(struct drm_encoder *encoder, int mode)
 {
@@ -23,6 +24,26 @@ syna_tmds_encoder_helper_mode_fixup(struct drm_encoder *encoder,
 
 static void syna_tmds_encoder_helper_prepare(struct drm_encoder *encoder)
 {
+	struct syna_drm_private *dev_priv = encoder->dev->dev_private;
+
+	if ((encoder->encoder_type == DRM_MODE_ENCODER_DPI) && dev_priv->panel[0])
+		drm_panel_prepare(dev_priv->panel[0]);
+}
+
+static void syna_tmds_encoder_helper_enable(struct drm_encoder *encoder)
+{
+	struct syna_drm_private *dev_priv = encoder->dev->dev_private;
+
+	if ((encoder->encoder_type == DRM_MODE_ENCODER_DPI) && dev_priv->panel[0])
+		drm_panel_enable(dev_priv->panel[0]);
+}
+
+static void syna_tmds_encoder_helper_disable(struct drm_encoder *encoder)
+{
+	struct syna_drm_private *dev_priv = encoder->dev->dev_private;
+
+	if ((encoder->encoder_type == DRM_MODE_ENCODER_DPI) && dev_priv->panel[0])
+		drm_panel_disable(dev_priv->panel[0]);
 }
 
 static void syna_tmds_encoder_helper_commit(struct drm_encoder *encoder)
@@ -90,6 +111,8 @@ static const struct drm_encoder_helper_funcs syna_tmds_encoder_helper_funcs = {
 	.dpms = syna_tmds_encoder_helper_dpms,
 	.mode_fixup = syna_tmds_encoder_helper_mode_fixup,
 	.prepare = syna_tmds_encoder_helper_prepare,
+	.enable = syna_tmds_encoder_helper_enable,
+	.disable = syna_tmds_encoder_helper_disable,
 	.commit = syna_tmds_encoder_helper_commit,
 	.mode_set = syna_tmds_encoder_helper_mode_set,
 };

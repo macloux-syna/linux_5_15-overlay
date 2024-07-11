@@ -103,6 +103,22 @@ syna_encoder_helper_mode_set(struct drm_encoder *encoder,
 	syna_vpp_load_config(encoder->index, &lcdcConfig);
 }
 
+static void syna_encoder_helper_enable(struct drm_encoder *encoder)
+{
+	struct syna_drm_private *dev_priv = encoder->dev->dev_private;
+
+	if(dev_priv->connector[encoder->index] && dev_priv->panel[encoder->index])
+		drm_panel_enable(dev_priv->panel[encoder->index]);
+}
+
+static void syna_encoder_helper_disable(struct drm_encoder *encoder)
+{
+	struct syna_drm_private *dev_priv = encoder->dev->dev_private;
+
+	if(dev_priv->connector[encoder->index] && dev_priv->panel[encoder->index])
+		drm_panel_disable(dev_priv->panel[encoder->index]);
+}
+
 static void syna_encoder_destroy(struct drm_encoder *encoder)
 {
 	if (encoder == NULL) {
@@ -118,6 +134,8 @@ static void syna_encoder_destroy(struct drm_encoder *encoder)
 
 static const struct drm_encoder_helper_funcs syna_encoder_helper_funcs = {
 	.mode_set = syna_encoder_helper_mode_set,
+	.enable = syna_encoder_helper_enable,
+	.disable = syna_encoder_helper_disable,
 };
 
 static const struct drm_encoder_funcs syna_encoder_funcs = {

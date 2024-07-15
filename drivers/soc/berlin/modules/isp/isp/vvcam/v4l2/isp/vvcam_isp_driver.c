@@ -122,6 +122,12 @@ struct vvcam_isp_mbus_fmt vvcam_isp_mp_fmts[] = {
     {
         .code = MEDIA_BUS_FMT_SGRBG12_1X12,  /*SGRBG12*/
     },
+    {
+        .code = MEDIA_BUS_FMT_BGR888_1X24,  /*BGR24*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_RGB888_1X24,  /*RGB24*/
+    },
 };
 
 struct vvcam_isp_mbus_fmt vvcam_isp_sp_fmts[] = {
@@ -157,6 +163,12 @@ struct vvcam_isp_mbus_fmt vvcam_isp_sp_fmts[] = {
     },
     {
         .code = MEDIA_BUS_FMT_SGRBG12_1X12,  /*SGRBG12*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_BGR888_1X24,  /*BGR24*/
+    },
+    {
+        .code = MEDIA_BUS_FMT_RGB888_1X24,  /*RGB24*/
     },
 };
 

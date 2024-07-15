@@ -117,6 +117,14 @@ static struct vvcam_video_fmt_info vvcam_formats_info[] = {
         .fourcc    = V4L2_PIX_FMT_SGRBG12,
         .mbus      = MEDIA_BUS_FMT_SGRBG12_1X12,
     },
+    {
+        .fourcc    = V4L2_PIX_FMT_BGR24,
+        .mbus      = MEDIA_BUS_FMT_BGR888_1X24,
+    },
+    {
+        .fourcc    = V4L2_PIX_FMT_RGB24,
+        .mbus      = MEDIA_BUS_FMT_RGB888_1X24,
+    },
 };
 
 static int vvcam_video_mbus_to_fourcc(uint32_t mbus, uint32_t *fourcc)

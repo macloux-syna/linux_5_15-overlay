@@ -765,7 +765,7 @@
 			compatible = "syna,myna2-clk";
 			reg = <0xf7ea0720 0x88>;
 			#clock-cells = <1>;
-			clocks = <&syspll0 0>, <&syspll0 1>, <&syspll1 0>, <&syspll1 1>;
+			clocks = <&syspll0 0>, <&apll0 0>, <&syspll0 1>, <&apll0 1>, <&syspll1 0>, <&syspll1 1>;
 		};
 
 		pinctrl: pinctrl@f7ea8000 {

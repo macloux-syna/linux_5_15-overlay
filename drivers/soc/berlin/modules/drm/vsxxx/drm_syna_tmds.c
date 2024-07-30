@@ -70,7 +70,7 @@ syna_tmds_encoder_helper_mode_set(struct drm_encoder *encoder,
 		dispParams.uiResId = res_id;
 		dispParams.uiDispId = VOUT_HDMI;
 	} else if (encoder->encoder_type == DRM_MODE_ENCODER_DPI) {
-
+#ifdef USE_DOLPHIN
 		if (dispParams.uiDisplayMode == VPP_VOUT_DUAL_MODE_PIP) {
 			// For Dual Display mode Fetch info with CPCB_2
 			cpcb = CPCB_2;
@@ -78,7 +78,7 @@ syna_tmds_encoder_helper_mode_set(struct drm_encoder *encoder,
 			MV_VPP_GetDispOutParams(cpcb, &dispParams);
 			dispParams.uiDisplayMode = VPP_VOUT_DUAL_MODE_PIP;
 		}
-
+#endif
 		dispParams.uiResId = RES_DSI_CUSTOM;
 		dispParams.uiDispId = VOUT_DSI;
 		dispParams.uiBitDepth = OUTPUT_BIT_DEPTH_8BIT;

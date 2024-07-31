@@ -323,7 +323,9 @@ static int syna_probe(struct platform_device *pdev)
 	if(ret)
 		DRM_ERROR("Sysfs suspend entry not created %d",ret);
 
-	drm_fbdev_generic_setup(ddev, 32);
+	if (IS_ENABLED(CONFIG_DRM_FBDEV_EMULATION) &&
+		IS_ENABLED(CONFIG_FRAMEBUFFER_CONSOLE))
+		drm_fbdev_generic_setup(ddev, 32);
 
 	return 0;
 

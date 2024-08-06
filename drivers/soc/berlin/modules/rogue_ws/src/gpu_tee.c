@@ -63,6 +63,8 @@ static struct dma_buf_attachment       *fw_buf_attach;
 static struct sg_table                 *fw_src_table;
 static struct sg_table                 *fw_table;
 
+extern int close_fd(unsigned int fd);
+
 phys_addr_t getFWSecureHeapPaddr(struct sg_table *fw_table)
 {
 	unsigned long ori = (unsigned long)PFN_PHYS(page_to_pfn(sg_page(fw_table->sgl)));
@@ -451,6 +453,7 @@ PVRSRV_ERROR syna_PFN_TD_SEND_FW_IMAGE(IMG_HANDLE hSysData, PVRSRV_TD_FW_PARAMS 
 		goto out;
 	}
 
+	get_dma_buf(fw_dma_buf); //take additional ref to account for fd close
 	srcShm = tee_shm_register_fd(tee_gpu_ctx, fw_src_fd);
 	if (IS_ERR(srcShm)) {
 		printk(KERN_ERR "tee_shm_register fail as:%d  (phyAddr=%llx  size=%d)\n",
@@ -539,11 +542,17 @@ PVRSRV_ERROR syna_PFN_TD_SEND_FW_IMAGE(IMG_HANDLE hSysData, PVRSRV_TD_FW_PARAMS 
 	}
 
 out:
-	if (dstShm)
+	if (dstShm) {
 		tee_shm_free(dstShm);
+		if (fw_dst_fd > 0)
+			close_fd(fw_dst_fd);
+	}
 
-	if (srcShm)
+	if (srcShm) {
 		tee_shm_free(srcShm);
+		if (fw_src_fd > 0)
+			close_fd(fw_src_fd);
+	}
 
 	return res;
 }

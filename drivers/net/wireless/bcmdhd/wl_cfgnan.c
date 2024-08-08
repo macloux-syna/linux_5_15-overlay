@@ -9733,7 +9733,7 @@ wl_cfgnan_register_nmi_ndev(struct bcm_cfg80211 *cfg)
 	wdev->wiphy = bcmcfg_to_wiphy(cfg);
 	wdev->iftype = NL80211_IFTYPE_STATION;
 
-	ret = register_netdev(ndev);
+	ret = dhd_register_net(ndev, true);
 	if (ret) {
 		WL_ERR((" NMI register_netdevice failed (%d)\n", ret));
 		goto fail;
@@ -9767,7 +9767,7 @@ wl_cfgnan_unregister_nmi_ndev(struct bcm_cfg80211 *cfg)
 		goto free_wdev;
 	}
 
-	unregister_netdev(cfg->nmi_ndev);
+	dhd_unregister_net(cfg->nmi_ndev, true);
 	free_netdev(cfg->nmi_ndev);
 
 	cfg->nmi_ndev = NULL;

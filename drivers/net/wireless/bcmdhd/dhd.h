@@ -4680,4 +4680,7 @@ int dhd_autosel_fwnv_name(dhd_pub_t *dhd, char *fw_path, char *nv_path);
 int dhd_autosel_blob_name(dhd_pub_t *dhd, char **blob_path);
 #endif /* DHD_AUTOSEL_BINARY_FILENAME */
 
+extern void dhd_unregister_net(struct net_device *net, bool need_rtnl_lock);
+extern int dhd_register_net(struct net_device *net, bool need_rtnl_lock);
+
 #endif /* _dhd_h_ */

@@ -13,6 +13,7 @@
 #include "vpp_intrs.h"
 
 #define VPP_ISR_MSGQ_SIZE 64
+#define VPP_INTR_NO_MAX 32
 
 extern vpp_config_params vpp_config_param;
 
@@ -24,6 +25,8 @@ static struct task_struct *vpp_isr_task;
 static struct semaphore vpp_vsync_sem;
 static struct semaphore vpp_vsync1_sem;
 static struct semaphore vpp_hdmitx_hpd_sem;
+
+static atomic_t vppintr_cnt[VPP_INTR_NO_MAX];
 
 static HRESULT wait_vpp_primary_vsync(int Id) {
 	struct semaphore *pSem;
@@ -48,18 +51,21 @@ static int VPP_IRQ_Handler(unsigned int irq, void *dev_id)
 
 	intr_num = ffs(irq) - 1;
 
-	VPP_SIGNAL_VSYNC(vpp_config_param.display_mode,
-				intr_num,
-				&vpp_vsync_sem,
-				&vpp_vsync1_sem);
+	if (atomic_read(&vppintr_cnt[intr_num])) {
+		pr_info("Vpp Isr: Dropped Intr %d\n", intr_num);
+		goto EXIT_ISR;
+	} else {
+		atomic_inc(&vppintr_cnt[intr_num]);
+	}
 
 	msg.m_MsgID = VPP_CC_MSG_TYPE_VPP;
 	msg.m_Param2 = 0;
-	msg.m_Param1 = bSETMASK(intr_num);
+	msg.m_Param1 = intr_num;
 	rc = AMPMsgQ_Add(&hVPPMsgQ, &msg);
 	if (likely(rc == S_OK))
 		up(&vpp_sem);
 
+EXIT_ISR:
 	return IRQ_HANDLED;
 }
 
@@ -67,6 +73,7 @@ static int VPP_ISR_Task(void *param)
 {
 	MV_CC_MSG_t msg;
 	HRESULT rc = MV_VPP_OK;
+	int intr_num;
 
 	while (!kthread_should_stop()) {
 		rc = down_interruptible(&vpp_sem);
@@ -78,12 +85,21 @@ static int VPP_ISR_Task(void *param)
 			return -EFAULT;
 		}
 		AMPMsgQ_ReadFinish(&hVPPMsgQ);
+
+		intr_num = msg.m_Param1;
+		msg.m_Param1 = bSETMASK(msg.m_Param1);
 		wrap_MV_VPPOBJ_IsrHandler(msg.m_MsgID, msg.m_Param1);
 #if defined VPP_DHUB_HDMITX_HPD_INTR  //all chips doesn't have hdmi interface
 		if (bSETMASK(VPP_DHUB_HDMITX_HPD_INTR) == msg.m_Param1)
 			up(&vpp_hdmitx_hpd_sem);
+		else
 #endif
+			VPP_SIGNAL_VSYNC(vpp_config_param.display_mode,
+				intr_num,
+				&vpp_vsync_sem,
+				&vpp_vsync1_sem);
 
+		atomic_dec(&vppintr_cnt[intr_num]);
 	}
 
 	return 0;

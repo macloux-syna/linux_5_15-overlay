@@ -31,8 +31,7 @@ static unsigned int vpp_intrs [] = {
 			do {\
 				if (VPP_DHUB_VOP1_INTR == INTRNO)\
 					up(VSYNC_SEM);\
-				else if (VPP_DHUB_VOP2_INTR == INTRNO)\
-				{\
+				else if (VPP_DHUB_VOP2_INTR == INTRNO) {\
 					if (MODE == VPP_VOUT_DUAL_MODE_PIP)\
 						up(VSYNC_SEM1);\
 					else\

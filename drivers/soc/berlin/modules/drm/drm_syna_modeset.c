@@ -45,12 +45,12 @@ void __weak syna_panel_dsi_deinit(void)
 	return;
 }
 
-void __weak syna_hdmi_add_debugfs_entry(struct drm_connector *connector)
+void __weak syna_hdmi_add_debugfs_entry(struct syna_drm_private *dev_priv)
 {
 	return;
 }
 
-void __weak syna_hdmi_remove_debugfs_entry(struct drm_connector *connector)
+void __weak syna_hdmi_remove_debugfs_entry(struct syna_drm_private *dev_priv)
 {
 	return;
 }
@@ -193,14 +193,14 @@ int syna_modeset_late_init(struct syna_drm_private *dev_priv)
 	struct drm_device *ddev = dev_priv->dev;
 
 	drm_mode_config_reset(ddev);
-	syna_hdmi_add_debugfs_entry(dev_priv->connector[VOUT_CONNECTOR_HDMI]);
+	syna_hdmi_add_debugfs_entry(dev_priv);
 
 	return 0;
 }
 
 void syna_modeset_early_cleanup(struct syna_drm_private *dev_priv)
 {
-	syna_hdmi_remove_debugfs_entry(dev_priv->connector[VOUT_CONNECTOR_HDMI]);
+	syna_hdmi_remove_debugfs_entry(dev_priv);
 }
 
 void syna_modeset_late_cleanup(struct syna_drm_private *dev_priv)

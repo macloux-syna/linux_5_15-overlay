@@ -94,8 +94,8 @@ void syna_crtc_set_vblank_enabled(struct drm_crtc *crtc, bool enable);
 void syna_crtc_irq_handler(struct drm_crtc *crtc);
 
 struct drm_connector *syna_hdmi_connector_create(struct drm_device *dev);
-void syna_hdmi_add_debugfs_entry(struct drm_connector *connector);
-void syna_hdmi_remove_debugfs_entry(struct drm_connector *connector);
+void syna_hdmi_add_debugfs_entry(struct syna_drm_private *dev_priv);
+void syna_hdmi_remove_debugfs_entry(struct syna_drm_private *dev_priv);
 struct drm_connector *syna_dsi_connector_create(struct drm_device *dev);
 struct drm_connector *syna_lcdc_connector_create(struct drm_device *dev);
 

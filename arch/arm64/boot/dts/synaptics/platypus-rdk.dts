@@ -267,6 +267,33 @@
 		enable-gpios = <&porta 17 GPIO_ACTIVE_HIGH>;
 		status = "okay";
 	};
+
+	ina3221@40{
+		compatible = "ti,ina3221";
+		reg = <0x40>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		input@0 {
+			reg = <0x0>;
+			label = "VCORE";
+		};
+
+		input@1 {
+			reg = <0x1>;
+			label = "VCPU";
+		};
+
+		input@2 {
+			reg = <0x2>;
+			label = "VDDM";
+		};
+	};
+
+	ina220@41 {
+		compatible = "ti,ina220";
+		reg = <0x41>;
+	};
 };
 
 &i2c1 {
@@ -338,6 +365,16 @@
 		compatible = "dallas,ds1339";
 		wakeup-source;
 		reg = <0x68>;
+	};
+
+	ina220@40 {
+		compatible = "ti,ina220";
+		reg = <0x40>;
+	};
+
+	ina220@41 {
+		compatible = "ti,ina220";
+		reg = <0x41>;
 	};
 };
 

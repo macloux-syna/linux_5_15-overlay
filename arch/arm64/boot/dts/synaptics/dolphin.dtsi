@@ -305,6 +305,11 @@
 			interrupt-names = "hdmi";
 		};
 
+		hdmi_in: hdmi-in {
+			 compatible = "syna,dolphin-hdmi-indai";
+			 status = "disabled";
+		};
+
 		i2s_mic1: i2s-mic1 {
 			compatible = "syna,dolphin-i2s-mic1";
 			status = "disabled";

@@ -952,6 +952,10 @@
 	status = "okay";
 };
 
+&hdmi_in {
+	status = "okay";
+};
+
 &dolphin_spdifi {
 	status = "disabled";
 	//pinctrl-0 = <&spdifi_pmux>;
@@ -1069,6 +1073,16 @@
 		link-name = "soc-hdmio";
 		format = "i2s";
 		cpu-node = <&hdmi_out>;
+		codec-name = "snd-soc-dummy";
+		codec-dai-name = "snd-soc-dummy-dai";
+		platform-node = <&dolphin_pcm>;
+	};
+
+	soc_hdmii: soc-hdmii {
+		status = "okay";
+		stream-name = "soc-hdmii";
+		link-name = "soc-hdmii";
+		cpu-node = <&hdmi_in>;
 		codec-name = "snd-soc-dummy";
 		codec-dai-name = "snd-soc-dummy-dai";
 		platform-node = <&dolphin_pcm>;

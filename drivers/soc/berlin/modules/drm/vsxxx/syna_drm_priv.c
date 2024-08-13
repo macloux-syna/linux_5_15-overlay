@@ -77,23 +77,25 @@ int syna_modeset_createEntries(struct syna_drm_private *dev_priv)
 	ENUM_CPCB_ID cpcb_id;
 	ENUM_VOUT_CONNECTOR vout_id;
 	unsigned int plane_possible_crtc_mask;
+	unsigned int pip_plane_possible_crtc_mask;
 	enum drm_plane_type plane_type;
 
-	plane_possible_crtc_mask = (1 << MAX_NUM_CPCBS) - 1;
+	plane_possible_crtc_mask = (1 << 0);
 
-	if (MAX_NUM_CPCBS > 1)
-	{
-		plane_possible_crtc_mask = \
-				(dev_priv->vpp_config_param.display_mode == \
-					VPP_VOUT_DUAL_MODE_PIP) ? \
-				plane_possible_crtc_mask : \
-				(1 << 0);
-	}
+#ifdef USE_DOLPHIN
+	pip_plane_possible_crtc_mask = (dev_priv->vpp_config_param.display_mode == \
+							VPP_VOUT_DUAL_MODE_PIP) ? (1 << CPCB_2) :\
+							(1 << CPCB_1);
+#else
+	pip_plane_possible_crtc_mask = plane_possible_crtc_mask;
+#endif
 
 	for (plane_id = FIRST_PLANE; plane_id < MAX_NUM_PLANES; plane_id++) {
 		plane_type = syna_modeset_getPlaneType(dev_priv, plane_id);
 		dev_priv->plane[plane_id] = syna_plane_create(dev,
-				plane_possible_crtc_mask, plane_id, plane_type);
+				(plane_id != PLANE_PIP) ? plane_possible_crtc_mask : \
+				pip_plane_possible_crtc_mask,
+				plane_id, plane_type);
 		if (IS_ERR(dev_priv->plane[plane_id])) {
 			 DRM_ERROR("failed to create a %d plane\n", plane_type);
 			 err = PTR_ERR(dev_priv->plane[plane_id]);

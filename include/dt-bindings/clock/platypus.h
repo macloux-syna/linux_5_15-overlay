@@ -40,6 +40,9 @@
 #define CLK_AIOSYS		29
 #define CLK_USIM		30
 #define CLK_PERIFTEST50MG0	31
+#define CLK_DSPSYS		32
+#define CLK_DSP0		33
+#define CLK_DSP1		34
 
 /* gate clks */
 #define CLK_USB0CORE		0

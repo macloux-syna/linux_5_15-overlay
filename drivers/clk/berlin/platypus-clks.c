@@ -39,10 +39,10 @@ static const struct clk_desc platypus_descs[] = {
 	{ "cfgclk",			0x20, CLK_IS_CRITICAL, CLK_RATE_NO_CHANGE },
 	{ "perifsysclk",		0x24, CLK_IS_CRITICAL, CLK_RATE_NO_CHANGE },
 	{ "atbclk",			0x28, CLK_IS_CRITICAL, CLK_RATE_NO_CHANGE },
-	{ "decoderclk",			0x2c, CLK_IS_CRITICAL, CLK_RATE_NO_CHANGE },
+	{ "decoderclk",			0x2c },
 	{ "encoderclk",			0x34, CLK_IS_CRITICAL, CLK_RATE_NO_CHANGE },
 	{ "ovpcoreclk",			0x38, CLK_IS_CRITICAL, CLK_RATE_NO_CHANGE },
-	{ "gfx3dcoreclk",		0x40, CLK_IS_CRITICAL, CLK_RATE_NO_CHANGE },
+	{ "gfx3dcoreclk",		0x40 },
 	{ "apbcoreclk",			0x80, CLK_IS_CRITICAL, CLK_RATE_NO_CHANGE },
 	{ "emmcclk",			0x90 },
 	{ "sd0clk",			0x94 },
@@ -66,6 +66,9 @@ static const struct clk_desc platypus_descs[] = {
 	{ "aiosysclk",			0x110 },
 	{ "usimclk",			0x114 },
 	{ "periftest50mg0clk",		0x118 },
+	{ "dspsysclk",			0x11c },
+	{ "dspclk0",			0x120 },
+	{ "dspclk1",			0x124 },
 };
 
 static int platypus_clk_setup(struct platform_device *pdev)

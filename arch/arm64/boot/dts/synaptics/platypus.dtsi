@@ -809,6 +809,31 @@
 			#reset-cells = <4>;
 		};
 
+		vcore_opp_table: vcore_opp_table {
+			compatible = "operating-points-v2";
+
+			opp@800000000 {
+				opp-hz = /bits/ 64 <800000000>;
+				opp-microvolt = <850000 850000 875000>;
+			};
+
+			opp@900000000 {
+				opp-hz = /bits/ 64 <900000000>;
+				opp-microvolt = <900000 900000 900000>;
+			};
+		};
+
+		dvfs: dvfs {
+			compatible = "syna,dvfs";
+			clocks = <&clk CLK_DECODER>, <&clk CLK_GFX3DCORE>, <&clk CLK_DSP0>,
+				 <&clk CLK_DSP1>, <&syspll0 1>, <&syspll1 1>;
+			clock-names = "dvfs_clk0", "dvfs_clk1", "dvfs_clk2",
+				"dvfs_clk3", "clk_high", "clk_low";
+			operating-points-v2 = <&vcore_opp_table>;
+			force-set-voltage;
+			status = "disabled";
+		};
+
 		syspll0: syspll0 {
 			compatible = "syna,dolphin-pll";
 			reg = <0xf7ea0200 0x20>, <0xf7ea0710 0x4>;

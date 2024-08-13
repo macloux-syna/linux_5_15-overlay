@@ -958,3 +958,8 @@
 	pinctrl-0 = <&pwm2_pmux>;
 	status = "okay";
 };
+
+&dvfs {
+	vcore-supply = <&vcore>;
+	status = "okay";
+};

@@ -645,7 +645,7 @@ int VPP_CA_ObjConfig(const int *pvinport_cfg, const int *pdv_cfg,
 	memcpy(&cfg_mem[(plane_size*3)], pvoutport_cfg, vout_size);
 	memcpy(&cfg_mem[(plane_size*3)+vout_size], pfeature_cfg, feature_size);
 
-	Ret = VPP_PassShm_InBuffer(&cfg_mem[0], VPP_OBJCONFIG, 256);
+	Ret = VPP_CA_PassShm_InBuffer(&cfg_mem[0], VPP_OBJCONFIG, 256);
 
 	return Ret;
 }

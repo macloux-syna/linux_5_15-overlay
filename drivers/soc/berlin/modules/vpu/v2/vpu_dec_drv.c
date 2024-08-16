@@ -266,6 +266,7 @@ static int vidioc_vdec_s_ctrl(struct v4l2_ctrl *ctrl)
 	switch (ctrl->id) {
 	case V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY_ENABLE:
 		ctx->enable_user_dpb = ctrl->val;
+		ret = 0;
 		break;
 	case V4L2_CID_MPEG_VIDEO_DEC_DISPLAY_DELAY:
 		ctx->n_user_dpb = ctrl->val;
@@ -283,6 +284,7 @@ static int vidioc_vdec_s_ctrl(struct v4l2_ctrl *ctrl)
 				break;
 			}
 		}
+		ret = 0;
 		/* Firmware can't update this value during the decoding */
 		break;
 	default:
@@ -306,6 +308,7 @@ static int vidioc_g_volatile_ctrl(struct v4l2_ctrl *ctrl)
 	switch (ctrl->id) {
 	case V4L2_CID_MIN_BUFFERS_FOR_CAPTURE:
 		ctrl->val = ctx->req_dpb_size;
+		ret = 0;
 		break;
 	default:
 		ret = -EINVAL;
@@ -2020,6 +2023,7 @@ static void syna_record_free_ref_display_buf(struct syna_vcodec_ctx *ctx)
 			set_bit(idx, &ctx->ref_slots);
 		}
 	} else {
+		i = 0;
 		v4l2_m2m_for_each_dst_buf_safe(m2m_ctx, buf, n) {
 			idx = buf->vb.vb2_buf.index;
 

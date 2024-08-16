@@ -118,7 +118,7 @@ static struct syna_vpu_dh_memdev *alloc_memdev(const char *heap_name,
 	return memdev;
 }
 
-int syna_vpu_dh_memdev_alloc()
+int syna_vpu_dh_memdev_alloc(void)
 {
 	struct syna_vpu_dh_memdev *memdev;
 	const char *cma_heap_name = "CMA-CUST-reserved";
@@ -671,7 +671,7 @@ static int vb2_syna_dh_dmabuf_ops_vmap(struct dma_buf *dbuf,
 				       struct dma_buf_map *map)
 {
 	struct vb2_syna_bm_buf *buf = dbuf->priv;
-	int ret;
+	int ret = -EINVAL;
 
 	if (!buf->vaddr) {
 		if (buf->db_attach) {

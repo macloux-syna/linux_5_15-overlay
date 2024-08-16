@@ -973,7 +973,8 @@ static int syna_vepu_push_queued_cap(struct syna_vcodec_ctx *ctx)
 static int vepu_configure_stream(struct syna_vcodec_ctx *ctx)
 {
 	struct syna_vpu_ctrl *ctrl = syna_vpu_get_ctrl_shm_buffer(ctx);
-	int ret;
+	int ret = -EBUSY;
+
 	if (!test_bit(SYNA_VPU_STATUS_SET_FMT, &ctx->status)) {
 		vpu_enc_ctrls_v4l2_to_h1(&ctx->v4l2_ctrls,
 					 ctx->dst_fmt.pixelformat, 0,

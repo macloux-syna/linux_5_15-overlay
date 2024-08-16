@@ -2088,29 +2088,17 @@ static int vdec_job_ready(void *priv)
 	return !vpu_srv_push_to_pending(ctx->vpu->srv, ctx);
 }
 
-static void set_last_buf_done(struct syna_vcodec_ctx *ctx)
+static void mark_empty_last(struct v4l2_m2m_ctx *m2m_ctx,
+			    struct vb2_buffer *dst_vb)
 {
-	struct v4l2_m2m_ctx *m2m_ctx = ctx->fh.m2m_ctx;
-	struct vb2_v4l2_buffer *vb;
-	int i;
+	struct vb2_v4l2_buffer *dst_buf;
+	u32 i;
 
-	vb = v4l2_m2m_dst_buf_remove(m2m_ctx);
-	if (!vb) {
-		m2m_ctx->is_draining = true;
-		m2m_ctx->next_buf_last = true;
-		return;
-	}
-	for (i = 0; i < vb->vb2_buf.num_planes; i++)
-		vb2_set_plane_payload(&vb->vb2_buf, i, 0);
-	vb->field = V4L2_FIELD_NONE;
-	vb->vb2_buf.timestamp = 0;
+	dst_buf = to_vb2_v4l2_buffer(dst_vb);
+	for (i = 0; i < dst_vb->num_planes; i++)
+		vb2_set_plane_payload(dst_vb, i, 0);
 
-	if (test_bit(vb->vb2_buf.index, &ctx->dst_vb_bits))
-		vdpu_err(ctx->vpu, "[%p] warning: return buffer %d in using",
-			 m2m_ctx, vb->vb2_buf.index);
-	v4l2_m2m_last_buffer_done(m2m_ctx, vb);
-	vdpu_dbg(ctx->vpu, 1, "[%p]set last buf done %d\n", m2m_ctx,
-		 vb->vb2_buf.index);
+	v4l2_m2m_last_buffer_done(m2m_ctx, dst_buf);
 }
 
 static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
@@ -2124,6 +2112,7 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 	struct syna_vpu_tz_buf *vpu_buf;
 	u32 idx, i, j;
 	u32 mtr_flags;
+	bool mark_last_buf;
 
 	vdpu_dbg(vpu, 3, "[%p] dbuf.pop %d, sbuf.pop %d, rbuf.pop %d\n", m2m_ctx,
 		 ctrl->dbuf.pop, ctrl->sbuf.pop, ctrl->rbuf.pop);
@@ -2172,6 +2161,18 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 
 		vpu_buf += dst_vb->index;
 
+		if ((i == (ctrl->dbuf.pop - 1))
+		    && (ctx->cap_resetup || ctx->eos))
+			WRITE_ONCE(mark_last_buf, true);
+
+		if (READ_ONCE(mark_last_buf)) {
+			if ((vpu_buf->flags & BERLIN_BUF_FLAG_ERROR)
+			    || !(vpu_buf->flags & BERLIN_BUF_FLAG_DONE)) {
+				mark_empty_last(m2m_ctx, dst_vb);
+				break;
+			}
+		}
+
 		if (vpu_buf->flags & BERLIN_BUF_FLAG_ERROR) {
 			v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_ERROR);
 			vdpu_dbg(vpu, 5, "[%p] dst done err %d", m2m_ctx, idx);
@@ -2210,7 +2211,11 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 				       mtr_flags);
 		vb2_syna_fill_mtr_meta(dst_vb, 1, &vpu_buf->mtr_cfg1[0],
 				       mtr_flags);
-		v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_DONE);
+
+		if (READ_ONCE(mark_last_buf))
+			v4l2_m2m_last_buffer_done(m2m_ctx, dst_buf);
+		else
+			v4l2_m2m_buf_done(dst_buf, VB2_BUF_STATE_DONE);
 		vdpu_dbg(vpu, 5, "[%p] dst done %d %d", m2m_ctx, idx,
 			 dst_buf->sequence);
 	}
@@ -2395,9 +2400,6 @@ decoding:
 	}
 
 	ret = syna_vdec_update_pop_status(ctx);
-
-	if (ctx->eos || ctx->cap_resetup)
-		set_last_buf_done(ctx);
 
 bail:
 	if (READ_ONCE(switchpoint)) {

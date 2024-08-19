@@ -2161,6 +2161,7 @@ static int syna_vdec_update_pop_status(struct syna_vcodec_ctx *ctx)
 
 		vpu_buf += dst_vb->index;
 
+		mark_last_buf = false;
 		if ((i == (ctrl->dbuf.pop - 1))
 		    && (ctx->cap_resetup || ctx->eos))
 			WRITE_ONCE(mark_last_buf, true);

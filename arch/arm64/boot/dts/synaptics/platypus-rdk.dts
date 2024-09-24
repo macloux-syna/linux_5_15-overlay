@@ -435,9 +435,9 @@
  	 * Supported types:	0 - HDMI
 	 * 		  	3 - MIPI-DSI
 	 */
-	disp-mode = <0>;
-	disp1-res-id = <24>;
-	disp1-type = <0>;
+	disp-mode = <1>;
+    disp1-res-id = <102>;
+    disp1-type = <3>;
 
 	dsi_panel {
 		status= "okay";

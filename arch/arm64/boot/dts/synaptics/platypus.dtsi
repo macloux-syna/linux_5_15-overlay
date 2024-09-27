@@ -1055,9 +1055,9 @@
 			compatible = "marvell,berlin-fb";
 			status = "disabled";
 			frame-size-ndx = <1>;
-			disp-mode = <0>;
-			disp1-res-id = <24>;
-			disp1-type = <0>;
+			disp-mode = <1>;
+    		disp1-res-id = <102>;
+    		disp1-type = <3>;
 		};
 	};
 };
